@@ -6,7 +6,7 @@ const fail = (status, message) => Object.assign(new Error(message), { status });
 
 // trustProxy: read the client address from X-Forwarded-For (set it on Vercel or behind your own proxy).
 export function createApi(store, { trustProxy = false } = {}) {
-  const clientAddress = req => (trustProxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress || 'unknown';
+  const clientAddress = req => (trustProxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket?.remoteAddress || 'unknown';
   const send = (res, status, data, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); res.end(JSON.stringify(data)); };
   const maxBody = 4 * 1024 * 1024;
   const readBody = async req => {
@@ -199,7 +199,8 @@ export function createApi(store, { trustProxy = false } = {}) {
       // Validation errors are plain Errors; database and programming errors are not shown to the browser.
       if (error.status || error.constructor === Error && !error.code) return send(res, error.status || 400, { error: error.message || 'Request failed.' });
       console.error(error);
-      return send(res, 500, { error: 'Something went wrong. Try again.' });
+      // The error type (never its message) helps diagnose production problems from the browser console.
+      return send(res, 500, { error: 'Something went wrong. Try again.', ref: String(error.code || error.name || 'Error').slice(0, 40) });
     }
   };
 }

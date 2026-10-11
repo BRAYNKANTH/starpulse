@@ -38,7 +38,7 @@ export function readCookie(req, name) {
 
 export function sessionCookie(req, token, maxAge = SESSION_DAYS * 86400) {
   // Secure whenever the browser reached us over HTTPS, including through a TLS-terminating proxy.
-  const secure = req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https';
+  const secure = req.socket?.encrypted || req.headers['x-forwarded-proto'] === 'https';
   return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
 }
 
