@@ -1,12 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { createServer } from 'node:http';
 import { createStore, validateProfile } from '../server/store.mjs';
 import { createApi } from '../server/api.mjs';
 import { hashPassword } from '../server/auth.mjs';
+import { localDatabase } from '../server/db.mjs';
 import { qrPayload, normalizeQrDesign, contrastRatio } from '../src/data/qrDesign.js';
 
 test('static payloads escape Wi-Fi delimiters, validate URLs, and preserve WhatsApp messages', () => {
@@ -22,11 +20,11 @@ test('static payloads escape Wi-Fi delimiters, validate URLs, and preserve Whats
 });
 
 test('printed dynamic links follow updated destinations, persist visits, and respect publishing and owner access', async () => {
-  const directory = mkdtempSync(join(tmpdir(), 'qr-studio-'));
-  const store = createStore(directory);
-  const owner = store.createUser({ email: 'owner@example.com', name: 'Owner', passwordHash: await hashPassword('correct horse') });
+  const db = await localDatabase();
+  const store = await createStore(db);
+  const owner = await store.createUser({ email: 'owner@example.com', name: 'Owner', passwordHash: await hashPassword('correct horse') });
   const profile = { name: 'Cafe', published: true, qrDestination: 'menu', qrDesign: { foreground: '#254c3c', label: ' OUR MENU ' } };
-  store.save(validateProfile(profile, 'cafe'), owner.id);
+  await store.save(validateProfile(profile, 'cafe'), owner.id);
   const handler = createApi(store);
   const server = createServer((req, res) => handler(req, res, () => { res.writeHead(404); res.end(); }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -36,37 +34,35 @@ test('printed dynamic links follow updated destinations, persist visits, and res
     let response = await visit();
     assert.equal(response.status, 302); assert.equal(response.headers.get('location'), '/?biz=cafe&view=menu');
     assert.equal(response.headers.get('cache-control'), 'no-store');
-    assert.equal(store.visits('cafe').count, 1);
-    await visit('cafe', 'HEAD'); assert.equal(store.visits('cafe').count, 1);
-    store.save(validateProfile({ ...profile, qrDestination: 'url', qrUrl: 'https://example.com/new' }, 'cafe'), owner.id);
+    assert.equal((await store.visits('cafe')).count, 1);
+    await visit('cafe', 'HEAD'); assert.equal((await store.visits('cafe')).count, 1);
+    await store.save(validateProfile({ ...profile, qrDestination: 'url', qrUrl: 'https://example.com/new' }, 'cafe'), owner.id);
     response = await visit(); assert.equal(response.headers.get('location'), 'https://example.com/new');
-    const reopened = createStore(directory);
-    assert.equal(reopened.visits('cafe').count, 2);
-    assert.equal(reopened.profile('cafe').qrDesign.label, ' OUR MENU ');
-    reopened.close();
+    const reopened = await createStore(db);
+    assert.equal((await reopened.visits('cafe')).count, 2);
+    assert.equal((await reopened.profile('cafe')).qrDesign.label, ' OUR MENU ');
     response = await fetch(`${base}/api/admin/businesses/cafe/analytics`); assert.equal(response.status, 401);
     const login = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'owner@example.com', password: 'correct horse' }) });
     const cookie = login.headers.get('set-cookie').split(';')[0];
     response = await fetch(`${base}/api/admin/businesses/cafe/analytics`, { headers: { Cookie: cookie } }); assert.equal((await response.json()).count, 2);
     assert.equal((await visit('missing')).status, 404);
     assert.equal((await visit('cafe', 'POST')).status, 405);
-    store.save(validateProfile({ ...profile, published: false }, 'cafe'), owner.id);
-    assert.equal((await visit()).status, 404); assert.equal(store.visits('cafe').count, 2);
-    store.save(validateProfile({ ...profile, qrDestination: 'url', qrUrl: '' }, 'cafe'), owner.id);
+    await store.save(validateProfile({ ...profile, published: false }, 'cafe'), owner.id);
+    assert.equal((await visit()).status, 404); assert.equal((await store.visits('cafe')).count, 2);
+    await store.save(validateProfile({ ...profile, qrDestination: 'url', qrUrl: '' }, 'cafe'), owner.id);
     assert.equal((await visit()).status, 404);
-  } finally { await new Promise(resolve => server.close(resolve)); store.close(); rmSync(directory, { recursive: true }); }
+  } finally { await new Promise(resolve => server.close(resolve)); await store.close(); }
 });
 
-test('daily visit counts older than 120 days are pruned while the all-time total is kept', t => {
-  const directory = mkdtempSync(join(tmpdir(), 'qr-visits-'));
-  const store = createStore(directory);
+test('daily visit counts older than 120 days are pruned while the all-time total is kept', async t => {
+  const store = await createStore(await localDatabase());
   try {
-    store.save(validateProfile({ name: 'Cafe' }, 'cafe'), null);
+    await store.save(validateProfile({ name: 'Cafe' }, 'cafe'), null);
     t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-01-01T12:00:00') });
-    store.recordVisit('cafe');
+    await store.recordVisit('cafe');
     t.mock.timers.setTime(Date.parse('2026-06-01T12:00:00'));
-    store.recordVisit('cafe');
-    assert.equal(store.visits('cafe').count, 2);
-    assert.deepEqual(Object.keys(store.visits('cafe').daily), ['2026-06-01']);
-  } finally { t.mock.timers.reset(); store.close(); rmSync(directory, { recursive: true }); }
+    await store.recordVisit('cafe');
+    assert.equal((await store.visits('cafe')).count, 2);
+    assert.deepEqual(Object.keys((await store.visits('cafe')).daily), ['2026-06-01']);
+  } finally { t.mock.timers.reset(); await store.close(); }
 });

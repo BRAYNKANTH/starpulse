@@ -1,18 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { createServer } from 'node:http';
 import { createStore } from '../server/store.mjs';
 import { createApi } from '../server/api.mjs';
 import { hashPassword } from '../server/auth.mjs';
+import { localDatabase } from '../server/db.mjs';
 
-// Starts an API server on a fresh data directory. Each client keeps its own session cookie, like a browser.
-async function setup(prepare) {
-  const directory = mkdtempSync(join(tmpdir(), 'starpulse-test-'));
-  prepare?.(directory);
-  const store = createStore(directory);
+// Starts an API server on a fresh in-memory Postgres. Each client keeps its own session cookie, like a browser.
+async function setup() {
+  const db = await localDatabase();
+  const store = await createStore(db);
   const api = createApi(store);
   const server = createServer((req, res) => api(req, res, () => { res.writeHead(404); res.end(); }));
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -27,25 +24,25 @@ async function setup(prepare) {
     };
     // Accounts are created by an administrator; tests create them in the store and sign in normally.
     request.signup = async (email, name = 'Owner', password = 'correct horse', options = {}) => {
-      store.createUser({ email: email.toLowerCase(), name, passwordHash: await hashPassword(password), ...options });
+      await store.createUser({ email: email.toLowerCase(), name, passwordHash: await hashPassword(password), ...options });
       return request('/api/auth/login', 'POST', { email, password });
     };
     return request;
   };
-  const close = async () => { await new Promise(resolve => server.close(resolve)); store.close(); rmSync(directory, { recursive: true }); };
-  return { store, client, close, base, directory };
+  const close = async () => { await new Promise(resolve => server.close(resolve)); await store.close(); };
+  return { store, client, close, base, db };
 }
 
 const profile = name => ({ name, published: true, currency: 'LKR', menu: [{ id: 'latte', name: 'Latte', price: 650, category: 'Coffee', available: true }], quickTags: ['Great service'] });
 
 test('shops persist, public links resolve exact published shops, feedback reaches only the correct inbox', async () => {
-  const { store, client, close, directory } = await setup();
+  const { store, client, close, db } = await setup();
   const owner = client(), guest = client();
   try {
     assert.equal((await guest('/api/admin/profiles')).status, 401);
     assert.equal((await guest('/api/admin/businesses/shop-a', 'PUT', profile('Shop A'))).status, 401);
     assert.equal((await owner.signup('a@example.com')).status, 200);
-    store.updateUser(store.userByEmail('a@example.com').id, { plan: 'pro' });
+    await store.updateUser((await store.userByEmail('a@example.com')).id, { plan: 'pro' });
     assert.equal((await owner('/api/admin/businesses/shop-a', 'PUT', profile('Shop A'))).status, 200);
     await owner('/api/admin/businesses/shop-b', 'PUT', profile('Shop B'));
     assert.equal((await guest('/api/businesses/shop-a')).body.name, 'Shop A');
@@ -59,10 +56,10 @@ test('shops persist, public links resolve exact published shops, feedback reache
     assert.equal(publicShop.menuDesign.layout, 'list');
     assert.equal(publicShop.menuDesign.title, 'Evening menu');
     assert.equal(publicShop.menuDesign.showPrices, false);
-    const reopened = createStore(directory);
-    assert.equal(reopened.profile('shop-a').menuDesign.accent, '#dab86b');
-    assert.equal(reopened.profile('shop-a').name, 'Edited A');
-    reopened.close();
+    // Setting up the schema again (a new server instance) keeps existing data.
+    const reopened = await createStore(db);
+    assert.equal((await reopened.profile('shop-a')).menuDesign.accent, '#dab86b');
+    assert.equal((await reopened.profile('shop-a')).name, 'Edited A');
     assert.equal((await guest('/api/businesses/shop-b')).body.menuDesign.template, 'garden');
     assert.equal((await guest('/api/businesses/shop-a/feedback', 'POST', { rating: 1, note: 'Please improve', selectedTags: ['Great service', 'untrusted'] })).status, 201);
     const feedback = (await owner('/api/admin/businesses/shop-a/feedback')).body;
@@ -70,7 +67,7 @@ test('shops persist, public links resolve exact published shops, feedback reache
     assert.equal((await owner('/api/admin/businesses/shop-b/feedback')).body.length, 0);
     await guest('/api/businesses/shop-b/feedback', 'POST', { rating: 5, note: 'Good' });
     await owner('/api/admin/businesses/shop-a/feedback', 'DELETE', {});
-    assert.equal(store.feedback('shop-a').length, 0); assert.equal(store.feedback('shop-b').length, 1);
+    assert.equal((await store.feedback('shop-a')).length, 0); assert.equal((await store.feedback('shop-b')).length, 1);
     assert.equal((await guest('/api/businesses/shop-a/feedback', 'POST', { rating: 6, note: '' })).status, 400);
     assert.equal((await owner('/api/admin/businesses/shop-a', 'PUT', { ...edited, googleReviewUrl: 'javascript:alert(1)' })).status, 400);
     assert.equal((await owner('/api/admin/businesses/shop-a', 'PUT', { ...edited, menu: [{ name: 'Bad', price: -1 }] })).status, 400);
@@ -159,7 +156,7 @@ test('sign-in, sessions, plan limits and password changes; there is no public si
   const owner = client(), laptop = client(), stranger = client();
   try {
     assert.notEqual((await stranger('/api/auth/signup', 'POST', { name: 'Sam', email: 'sam@example.com', password: 'long enough' })).status, 201);
-    assert.equal(store.userByEmail('sam@example.com'), undefined, 'public sign-up does not exist');
+    assert.equal(await store.userByEmail('sam@example.com'), undefined, 'public sign-up does not exist');
     const created = await owner.signup('Sam@Example.com', 'Sam');
     assert.equal(created.status, 200);
     assert.equal(created.body.user.email, 'sam@example.com');
@@ -176,7 +173,7 @@ test('sign-in, sessions, plan limits and password changes; there is no public si
     assert.equal((await owner('/api/admin/businesses/one', 'PUT', profile('One again'))).status, 200);
     const limited = await owner('/api/admin/businesses/two', 'PUT', profile('Two'));
     assert.equal(limited.status, 403); assert.match(limited.body.error, /Free plan/);
-    store.updateUser(created.body.user.id, { plan: 'pro' });
+    await store.updateUser(created.body.user.id, { plan: 'pro' });
     assert.equal((await owner('/api/admin/businesses/two', 'PUT', profile('Two'))).status, 200);
     assert.deepEqual((await owner('/api/auth/me')).body.usage, { shops: 2 });
     assert.equal((await owner('/api/admin/businesses/two', 'DELETE', {})).status, 200);
@@ -243,25 +240,26 @@ test('administrators create client accounts with temporary passwords, manage pla
     const self = (await admin('/api/auth/me')).body.user.id;
     assert.equal((await admin(`/api/accounts/${self}`, 'DELETE', {})).status, 400, 'admins cannot delete themselves');
     assert.equal((await admin(`/api/accounts/${id}`, 'DELETE', {})).status, 200);
-    assert.equal(store.profile('nimal-cafe'), undefined, 'deleting an account deletes its shops');
+    assert.equal(await store.profile('nimal-cafe'), undefined, 'deleting an account deletes its shops');
     assert.equal((await admin(`/api/accounts/${id}`, 'DELETE', {})).status, 404);
   } finally { await close(); }
 });
 
 test('the old single-owner JSON store is imported once and can be claimed by an account', async () => {
   const legacy = { profiles: [{ ...profile('Legacy Cafe'), id: 'legacy-cafe' }], feedback: [{ id: 'f1', businessId: 'legacy-cafe', rating: 5, note: 'Lovely', selectedTags: [], redirectedToGoogle: false, status: 'Private Feedback', read: false, timestamp: '2026-01-02T10:00:00.000Z' }] };
-  const { store, client, close } = await setup(directory => {
-    writeFileSync(join(directory, 'store.json'), JSON.stringify(legacy));
-    writeFileSync(join(directory, 'visits.json'), JSON.stringify({ 'legacy-cafe': { count: 7, lastVisited: '2026-01-02T10:00:00.000Z', daily: { '2026-01-02': 7 } } }));
-  });
+  const { store, client, close } = await setup();
   const owner = client(), guest = client();
   try {
+    const visits = { 'legacy-cafe': { count: 7, lastVisited: '2026-01-02T10:00:00.000Z', daily: { '2026-01-02': 7 } } };
+    assert.equal(await store.importLegacy({ ...legacy, visits }), 1);
+    assert.equal(await store.importLegacy({ ...legacy, visits }), 0, 'importing twice adds nothing');
     assert.equal((await guest('/api/businesses/legacy-cafe')).body.name, 'Legacy Cafe', 'imported shops stay online');
     await owner.signup('first@example.com');
     assert.equal((await owner('/api/admin/businesses/legacy-cafe', 'PUT', profile('Taken'))).status, 404, 'unclaimed shops cannot be taken over through the API');
     assert.deepEqual((await owner('/api/admin/profiles')).body, []);
-    assert.equal(store.claimUnowned(store.userByEmail('first@example.com').id), 1);
+    assert.equal(await store.claimUnowned((await store.userByEmail('first@example.com')).id), 1);
     const [overview] = (await owner('/api/admin/overview')).body;
     assert.equal(overview.visits.count, 7); assert.equal(overview.feedback.total, 1);
+    assert.equal(overview.feedback.recent[0].timestamp, '2026-01-02T10:00:00.000Z');
   } finally { await close(); }
 });

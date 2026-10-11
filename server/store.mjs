@@ -1,6 +1,3 @@
-import { mkdirSync, existsSync, readFileSync } from 'node:fs';
-import { DatabaseSync } from 'node:sqlite';
-import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { normalizeQrDesign } from '../src/data/qrDesign.js';
 import { normalizeMenuDesign } from '../src/data/menuDesign.js';
@@ -27,160 +24,159 @@ export function validateProfile(input, id) {
   return { id, name, tagline: text(input.tagline), category: text(input.category, 80), address: text(input.address), phone: text(input.phone, 80), email: text(input.email, 150), hours: text(input.hours), logo: url(input.logo, true), coverImage: url(input.coverImage, true), googleReviewUrl: url(input.googleReviewUrl), googlePlaceId: text(input.googlePlaceId, 200), accentColor: /^#[0-9a-f]{6}$/i.test(input.accentColor) ? input.accentColor : '#F59E0B', customPrompt: text(input.customPrompt), notePlaceholder: text(input.notePlaceholder), quickTags: Array.isArray(input.quickTags) ? input.quickTags.filter(t => typeof t === 'string').slice(0, 20).map(t => text(t, 80)) : [], currency: /^[A-Z]{3}$/.test(input.currency) ? input.currency : 'LKR', menu, menuDesign: normalizeMenuDesign(input.menuDesign), qrDesign: normalizeQrDesign(input.qrDesign), qrDestination: ['landing', 'menu', 'review', 'url'].includes(input.qrDestination) ? input.qrDestination : 'landing', qrUrl: url(input.qrUrl), published: input.published === true, themeMode: 'dark' };
 }
 
-const SCHEMA = `
-  CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE, name TEXT NOT NULL,
-    password_hash TEXT NOT NULL, plan TEXT NOT NULL DEFAULT 'free', created_at TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'owner', must_change_password INTEGER NOT NULL DEFAULT 0);
-  CREATE TABLE IF NOT EXISTS sessions (
+// Statements run one at a time: the Neon HTTP driver accepts a single statement per query.
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY, email TEXT NOT NULL, name TEXT NOT NULL, password_hash TEXT NOT NULL,
+    plan TEXT NOT NULL DEFAULT 'free', role TEXT NOT NULL DEFAULT 'owner', must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users (lower(email))',
+  `CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL);
-  CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
-  CREATE TABLE IF NOT EXISTS businesses (
-    id TEXT PRIMARY KEY, owner_id TEXT REFERENCES users(id) ON DELETE CASCADE,
-    data TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
-  CREATE INDEX IF NOT EXISTS businesses_owner ON businesses(owner_id);
-  CREATE TABLE IF NOT EXISTS feedback (
+    expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE INDEX IF NOT EXISTS sessions_user ON sessions (user_id)',
+  `CREATE TABLE IF NOT EXISTS businesses (
+    id TEXT PRIMARY KEY, owner_id TEXT REFERENCES users(id) ON DELETE CASCADE, data JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE INDEX IF NOT EXISTS businesses_owner ON businesses (owner_id)',
+  `CREATE TABLE IF NOT EXISTS feedback (
     id TEXT PRIMARY KEY, business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-    rating INTEGER NOT NULL, note TEXT NOT NULL, selected_tags TEXT NOT NULL, redirected_to_google INTEGER NOT NULL,
-    status TEXT NOT NULL, read INTEGER NOT NULL DEFAULT 0, timestamp TEXT NOT NULL);
-  CREATE INDEX IF NOT EXISTS feedback_business ON feedback(business_id, timestamp DESC);
-  CREATE TABLE IF NOT EXISTS visit_totals (
-    business_id TEXT PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE, count INTEGER NOT NULL, last_visited TEXT);
-  CREATE TABLE IF NOT EXISTS visit_days (
+    rating INTEGER NOT NULL, note TEXT NOT NULL, selected_tags JSONB NOT NULL, redirected_to_google BOOLEAN NOT NULL,
+    status TEXT NOT NULL, read BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE INDEX IF NOT EXISTS feedback_business ON feedback (business_id, created_at DESC)',
+  `CREATE TABLE IF NOT EXISTS visit_totals (
+    business_id TEXT PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE, count INTEGER NOT NULL, last_visited TIMESTAMPTZ)`,
+  `CREATE TABLE IF NOT EXISTS visit_days (
     business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE, day TEXT NOT NULL, count INTEGER NOT NULL,
-    PRIMARY KEY (business_id, day));
-`;
+    PRIMARY KEY (business_id, day))`,
+  'CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at TIMESTAMPTZ NOT NULL)',
+];
 
 const keepDays = 120;
-const dayKey = date => date.toLocaleDateString('en-CA'); // YYYY-MM-DD in the server's time zone (set TZ to choose it)
-const toFeedback = row => ({ id: row.id, businessId: row.business_id, rating: row.rating, note: row.note, selectedTags: JSON.parse(row.selected_tags), redirectedToGoogle: row.redirected_to_google === 1, status: row.status, read: row.read === 1, timestamp: row.timestamp });
-const toUser = row => row && { id: row.id, email: row.email, name: row.name, plan: row.plan, role: row.role, mustChangePassword: row.must_change_password === 1, createdAt: row.created_at };
+// Daily figures use APP_TIME_ZONE (for example Asia/Colombo); Vercel servers run in UTC.
+const dayKey = date => date.toLocaleDateString('en-CA', { timeZone: process.env.APP_TIME_ZONE || undefined });
+const iso = value => value == null ? null : new Date(value).toISOString();
+const toFeedback = row => ({ id: row.id, businessId: row.business_id, rating: row.rating, note: row.note, selectedTags: row.selected_tags, redirectedToGoogle: row.redirected_to_google, status: row.status, read: row.read, timestamp: iso(row.created_at) });
+const toUser = row => row && { id: row.id, email: row.email, name: row.name, plan: row.plan, role: row.role, mustChangePassword: row.must_change_password, createdAt: iso(row.created_at) };
+const emptyVisits = () => ({ count: 0, lastVisited: null, daily: {} });
+const summary = items => {
+  const distribution = [1, 2, 3, 4, 5].map(rating => items.filter(f => f.rating === rating).length);
+  const daily = {};
+  for (const item of items) { const key = dayKey(new Date(item.timestamp)); daily[key] = (daily[key] || 0) + 1; }
+  return { total: items.length, unread: items.filter(f => !f.read).length, average: items.length ? items.reduce((sum, f) => sum + f.rating, 0) / items.length : null, distribution, googleClicks: items.filter(f => f.redirectedToGoogle).length, daily, recent: items.slice(0, 5) };
+};
 
-export function createStore(directory) {
-  mkdirSync(directory, { recursive: true });
-  const db = new DatabaseSync(join(directory, 'starpulse.db'));
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
-  db.exec(SCHEMA);
-  // Columns added after the first database release.
-  const userColumns = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
-  if (!userColumns.includes('role')) db.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'owner'");
-  if (!userColumns.includes('must_change_password')) db.exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0');
-  const q = sql => db.prepare(sql);
-  const tx = fn => { db.exec('BEGIN IMMEDIATE'); try { const result = fn(); db.exec('COMMIT'); return result; } catch (error) { db.exec('ROLLBACK'); throw error; } };
+// `db` comes from server/db.mjs: { query(text, params) → rows, close() }.
+export async function createStore(db) {
+  for (const statement of SCHEMA) await db.query(statement);
+  const q = (text, ...params) => db.query(text, params);
+  const one = async (text, ...params) => (await db.query(text, params))[0];
 
-  // One-time import of the old single-owner JSON store. Imported shops have no owner until claimed (npm run claim-shops).
-  const legacyFile = join(directory, 'store.json');
-  if (existsSync(legacyFile) && !q("SELECT 1 FROM meta WHERE key = 'legacy_imported'").get()) {
-    const legacy = JSON.parse(readFileSync(legacyFile, 'utf8'));
-    const legacyVisitsFile = join(directory, 'visits.json');
-    const legacyVisits = existsSync(legacyVisitsFile) ? JSON.parse(readFileSync(legacyVisitsFile, 'utf8')) : legacy.visits || {};
-    if (!Array.isArray(legacy.profiles) || !Array.isArray(legacy.feedback)) throw new Error('Invalid legacy store.json. Restore your data backup before starting.');
-    tx(() => {
-      const now = new Date().toISOString();
-      const ids = new Set();
-      for (const profile of legacy.profiles) {
-        if (!/^[a-z0-9-]{1,80}$/.test(profile?.id || '')) continue;
-        q('INSERT OR IGNORE INTO businesses (id, owner_id, data, created_at, updated_at) VALUES (?, NULL, ?, ?, ?)').run(profile.id, JSON.stringify(profile), now, now);
-        ids.add(profile.id);
-      }
-      for (const f of legacy.feedback) if (ids.has(f.businessId)) q('INSERT OR IGNORE INTO feedback (id, business_id, rating, note, selected_tags, redirected_to_google, status, read, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(f.id || randomUUID(), f.businessId, f.rating, f.note || '', JSON.stringify(f.selectedTags || []), f.redirectedToGoogle ? 1 : 0, f.status || 'Private Feedback', f.read ? 1 : 0, f.timestamp || now);
-      for (const [id, v] of Object.entries(legacyVisits)) {
-        if (!ids.has(id)) continue;
-        q('INSERT OR IGNORE INTO visit_totals (business_id, count, last_visited) VALUES (?, ?, ?)').run(id, v.count || 0, v.lastVisited || null);
-        for (const [day, count] of Object.entries(v.daily || {})) q('INSERT OR IGNORE INTO visit_days (business_id, day, count) VALUES (?, ?, ?)').run(id, day, count);
-      }
-      q("INSERT INTO meta (key, value) VALUES ('legacy_imported', ?)").run(now);
-    });
-  }
-
-  const readProfile = row => row && JSON.parse(row.data);
-  const visits = id => {
-    const total = q('SELECT count, last_visited FROM visit_totals WHERE business_id = ?').get(id);
-    const daily = Object.fromEntries(q('SELECT day, count FROM visit_days WHERE business_id = ?').all(id).map(r => [r.day, r.count]));
-    return { count: total?.count || 0, lastVisited: total?.last_visited || null, daily };
+  const visits = async id => {
+    const [total, days] = await Promise.all([one('SELECT count, last_visited FROM visit_totals WHERE business_id = $1', id), q('SELECT day, count FROM visit_days WHERE business_id = $1', id)]);
+    return { count: total?.count || 0, lastVisited: iso(total?.last_visited), daily: Object.fromEntries(days.map(r => [r.day, r.count])) };
   };
-  const feedback = id => q('SELECT * FROM feedback WHERE business_id = ? ORDER BY timestamp DESC').all(id).map(toFeedback);
-  const summary = id => {
-    const items = feedback(id);
-    const distribution = [1, 2, 3, 4, 5].map(rating => items.filter(f => f.rating === rating).length);
-    const daily = {};
-    for (const item of items) { const key = dayKey(new Date(item.timestamp)); daily[key] = (daily[key] || 0) + 1; }
-    return { total: items.length, unread: items.filter(f => !f.read).length, average: items.length ? items.reduce((sum, f) => sum + f.rating, 0) / items.length : null, distribution, googleClicks: items.filter(f => f.redirectedToGoogle).length, daily, recent: items.slice(0, 5) };
-  };
+  const feedback = async id => (await q('SELECT * FROM feedback WHERE business_id = $1 ORDER BY created_at DESC', id)).map(toFeedback);
 
   return {
     close: () => db.close(),
 
     // Accounts and sessions
-    createUser: ({ email, name, passwordHash, plan = 'free', role = 'owner', mustChangePassword = false }) => {
-      const id = randomUUID();
-      try { q('INSERT INTO users (id, email, name, password_hash, plan, role, must_change_password, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(id, email, name, passwordHash, plan, role, mustChangePassword ? 1 : 0, new Date().toISOString()); }
-      catch (error) { if (/UNIQUE/.test(error.message)) throw Object.assign(new Error('An account with this email already exists.'), { status: 409 }); throw error; }
-      return toUser(q('SELECT * FROM users WHERE id = ?').get(id));
+    createUser: async ({ email, name, passwordHash, plan = 'free', role = 'owner', mustChangePassword = false }) => {
+      try { return toUser(await one('INSERT INTO users (id, email, name, password_hash, plan, role, must_change_password) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *', randomUUID(), email, name, passwordHash, plan, role, mustChangePassword)); }
+      catch (error) { if (error.code === '23505') throw Object.assign(new Error('An account with this email already exists.'), { status: 409 }); throw error; }
     },
-    users: () => q('SELECT users.*, (SELECT COUNT(*) FROM businesses WHERE owner_id = users.id) AS shops FROM users ORDER BY created_at').all().map(row => ({ ...toUser(row), shops: row.shops })),
-    user: id => toUser(q('SELECT * FROM users WHERE id = ?').get(id)),
-    userByEmail: email => toUser(q('SELECT * FROM users WHERE email = ?').get(email)),
-    passwordHash: id => q('SELECT password_hash FROM users WHERE id = ?').get(id)?.password_hash,
-    updateUser: (id, changes) => {
+    users: async () => (await q('SELECT users.*, (SELECT COUNT(*)::int FROM businesses WHERE owner_id = users.id) AS shops FROM users ORDER BY created_at')).map(row => ({ ...toUser(row), shops: row.shops })),
+    user: async id => toUser(await one('SELECT * FROM users WHERE id = $1', id)),
+    userByEmail: async email => toUser(await one('SELECT * FROM users WHERE lower(email) = lower($1)', email.trim())),
+    passwordHash: async id => (await one('SELECT password_hash FROM users WHERE id = $1', id))?.password_hash,
+    updateUser: async (id, changes) => {
       const columns = { name: 'name', passwordHash: 'password_hash', plan: 'plan', role: 'role', mustChangePassword: 'must_change_password' };
-      for (const [key, column] of Object.entries(columns)) if (changes[key] !== undefined) q(`UPDATE users SET ${column} = ? WHERE id = ?`).run(typeof changes[key] === 'boolean' ? Number(changes[key]) : changes[key], id);
-      return toUser(q('SELECT * FROM users WHERE id = ?').get(id));
+      for (const [key, column] of Object.entries(columns)) if (changes[key] !== undefined) await q(`UPDATE users SET ${column} = $1 WHERE id = $2`, changes[key], id);
+      return toUser(await one('SELECT * FROM users WHERE id = $1', id));
     },
-    deleteUser: id => q('DELETE FROM users WHERE id = ?').run(id).changes > 0,
-    createSession: (tokenHash, userId, expiresAt) => {
-      const now = Date.now();
-      q('DELETE FROM sessions WHERE expires_at < ?').run(now);
-      q('INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)').run(tokenHash, userId, expiresAt, now);
+    deleteUser: async id => (await q('DELETE FROM users WHERE id = $1 RETURNING id', id)).length > 0,
+    createSession: async (tokenHash, userId, expiresAt) => {
+      await q('DELETE FROM sessions WHERE expires_at < now()');
+      await q('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)', tokenHash, userId, new Date(expiresAt).toISOString());
     },
-    sessionUser: tokenHash => toUser(q('SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE token_hash = ? AND expires_at > ?').get(tokenHash, Date.now())),
-    deleteSession: tokenHash => { q('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash); },
-    deleteOtherSessions: (userId, keepHash) => { q('DELETE FROM sessions WHERE user_id = ? AND token_hash != ?').run(userId, keepHash); },
-    deleteSessions: userId => { q('DELETE FROM sessions WHERE user_id = ?').run(userId); },
-    claimUnowned: userId => Number(q('UPDATE businesses SET owner_id = ? WHERE owner_id IS NULL').run(userId).changes),
+    sessionUser: async tokenHash => toUser(await one('SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE token_hash = $1 AND expires_at > now()', tokenHash)),
+    deleteSession: async tokenHash => { await q('DELETE FROM sessions WHERE token_hash = $1', tokenHash); },
+    deleteOtherSessions: async (userId, keepHash) => { await q('DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2', userId, keepHash); },
+    deleteSessions: async userId => { await q('DELETE FROM sessions WHERE user_id = $1', userId); },
+    claimUnowned: async userId => (await q('UPDATE businesses SET owner_id = $1 WHERE owner_id IS NULL RETURNING id', userId)).length,
+
+    // Counts a request against a fixed window shared by every server instance. Returns false once over the limit.
+    allow: async (key, limit, windowSeconds) => {
+      const row = await one(`INSERT INTO rate_limits (key, count, reset_at) VALUES ($1, 1, now() + make_interval(secs => $2))
+        ON CONFLICT (key) DO UPDATE SET
+          count = CASE WHEN rate_limits.reset_at < now() THEN 1 ELSE rate_limits.count + 1 END,
+          reset_at = CASE WHEN rate_limits.reset_at < now() THEN excluded.reset_at ELSE rate_limits.reset_at END
+        RETURNING count`, key, windowSeconds);
+      if (Math.random() < 0.01) await q("DELETE FROM rate_limits WHERE reset_at < now() - interval '1 day'");
+      return row.count <= limit;
+    },
 
     // Shops. Owner-scoped lists never include another account's shops.
-    profile: id => readProfile(q('SELECT data FROM businesses WHERE id = ?').get(id)),
-    ownerOf: id => { const row = q('SELECT owner_id FROM businesses WHERE id = ?').get(id); return row ? row.owner_id : undefined; },
-    profiles: ownerId => q('SELECT data FROM businesses WHERE owner_id = ? ORDER BY created_at, id').all(ownerId).map(readProfile),
-    countProfiles: ownerId => q('SELECT COUNT(*) AS n FROM businesses WHERE owner_id = ?').get(ownerId).n,
-    save: (profile, ownerId) => {
-      const now = new Date().toISOString();
-      q('INSERT INTO businesses (id, owner_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at').run(profile.id, ownerId, JSON.stringify(profile), now, now);
+    profile: async id => (await one('SELECT data FROM businesses WHERE id = $1', id))?.data,
+    ownerOf: async id => { const row = await one('SELECT owner_id FROM businesses WHERE id = $1', id); return row ? row.owner_id : undefined; },
+    profiles: async ownerId => (await q('SELECT data FROM businesses WHERE owner_id = $1 ORDER BY created_at, id', ownerId)).map(row => row.data),
+    countProfiles: async ownerId => (await one('SELECT COUNT(*)::int AS n FROM businesses WHERE owner_id = $1', ownerId)).n,
+    save: async (profile, ownerId) => {
+      await q('INSERT INTO businesses (id, owner_id, data) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO UPDATE SET data = excluded.data, updated_at = now()', profile.id, ownerId ?? null, JSON.stringify(profile));
       return profile;
     },
-    allShops: () => q('SELECT id, owner_id, data FROM businesses ORDER BY created_at, id').all().map(row => { const data = JSON.parse(row.data); return { id: row.id, name: data.name, published: data.published === true, ownerId: row.owner_id }; }),
-    setOwner: (id, ownerId) => q('UPDATE businesses SET owner_id = ? WHERE id = ?').run(ownerId, id).changes > 0,
-    deleteProfile: id => q('DELETE FROM businesses WHERE id = ?').run(id).changes > 0,
-    overview: ownerId => q('SELECT id FROM businesses WHERE owner_id = ? ORDER BY created_at, id').all(ownerId).map(({ id }) => ({ id, visits: visits(id), feedback: summary(id) })),
+    allShops: async () => (await q('SELECT id, owner_id, data FROM businesses ORDER BY created_at, id')).map(row => ({ id: row.id, name: row.data.name, published: row.data.published === true, ownerId: row.owner_id })),
+    setOwner: async (id, ownerId) => (await q('UPDATE businesses SET owner_id = $1 WHERE id = $2 RETURNING id', ownerId, id)).length > 0,
+    deleteProfile: async id => (await q('DELETE FROM businesses WHERE id = $1 RETURNING id', id)).length > 0,
+    overview: async ownerId => {
+      const [shops, items, totals, days] = await Promise.all([
+        q('SELECT id FROM businesses WHERE owner_id = $1 ORDER BY created_at, id', ownerId),
+        q('SELECT f.* FROM feedback f JOIN businesses b ON b.id = f.business_id WHERE b.owner_id = $1 ORDER BY f.created_at DESC', ownerId),
+        q('SELECT t.* FROM visit_totals t JOIN businesses b ON b.id = t.business_id WHERE b.owner_id = $1', ownerId),
+        q('SELECT d.* FROM visit_days d JOIN businesses b ON b.id = d.business_id WHERE b.owner_id = $1', ownerId),
+      ]);
+      const feedbackItems = items.map(toFeedback);
+      return shops.map(({ id }) => {
+        const total = totals.find(t => t.business_id === id);
+        const daily = Object.fromEntries(days.filter(d => d.business_id === id).map(d => [d.day, d.count]));
+        return { id, visits: total ? { count: total.count, lastVisited: iso(total.last_visited), daily } : { ...emptyVisits(), daily }, feedback: summary(feedbackItems.filter(f => f.businessId === id)) };
+      });
+    },
 
     // QR visits
     visits,
-    recordVisit: id => {
+    recordVisit: async id => {
       const now = new Date();
-      tx(() => {
-        q('INSERT INTO visit_totals (business_id, count, last_visited) VALUES (?, 1, ?) ON CONFLICT(business_id) DO UPDATE SET count = count + 1, last_visited = excluded.last_visited').run(id, now.toISOString());
-        q('INSERT INTO visit_days (business_id, day, count) VALUES (?, ?, 1) ON CONFLICT(business_id, day) DO UPDATE SET count = count + 1').run(id, dayKey(now));
-        q('DELETE FROM visit_days WHERE business_id = ? AND day <= ?').run(id, dayKey(new Date(now.getTime() - keepDays * 86400000)));
-      });
+      await q('INSERT INTO visit_totals (business_id, count, last_visited) VALUES ($1, 1, $2) ON CONFLICT (business_id) DO UPDATE SET count = visit_totals.count + 1, last_visited = excluded.last_visited', id, now.toISOString());
+      await q('INSERT INTO visit_days (business_id, day, count) VALUES ($1, $2, 1) ON CONFLICT (business_id, day) DO UPDATE SET count = visit_days.count + 1', id, dayKey(now));
+      await q('DELETE FROM visit_days WHERE business_id = $1 AND day <= $2', id, dayKey(new Date(now.getTime() - keepDays * 86400000)));
     },
 
     // Feedback
     feedback,
-    addFeedback: f => {
-      const item = { ...f, id: randomUUID(), timestamp: new Date().toISOString(), read: false };
-      q('INSERT INTO feedback (id, business_id, rating, note, selected_tags, redirected_to_google, status, read, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)').run(item.id, item.businessId, item.rating, item.note, JSON.stringify(item.selectedTags), item.redirectedToGoogle ? 1 : 0, item.status, item.timestamp);
-      return item;
+    addFeedback: async f => toFeedback(await one('INSERT INTO feedback (id, business_id, rating, note, selected_tags, redirected_to_google, status) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7) RETURNING *', randomUUID(), f.businessId, f.rating, f.note, JSON.stringify(f.selectedTags), f.redirectedToGoogle, f.status)),
+    markFeedback: async (id, ids, read) => ids === 'all'
+      ? (await q('UPDATE feedback SET read = $1 WHERE business_id = $2 AND read <> $1 RETURNING id', read, id)).length
+      : (await q('UPDATE feedback SET read = $1 WHERE business_id = $2 AND id = ANY($3::text[]) AND read <> $1 RETURNING id', read, id, ids)).length,
+    deleteFeedback: async (id, feedbackId) => (await q('DELETE FROM feedback WHERE business_id = $1 AND id = $2 RETURNING id', id, feedbackId)).length > 0,
+    clearFeedback: async id => { await q('DELETE FROM feedback WHERE business_id = $1', id); },
+
+    // One-time import of the old single-owner JSON store (npm run import-json). Imported shops have no owner until assigned.
+    importLegacy: async ({ profiles = [], feedback: items = [], visits: legacyVisits = {} }) => {
+      const ids = new Set();
+      for (const profile of profiles) {
+        if (!/^[a-z0-9-]{1,80}$/.test(profile?.id || '')) continue;
+        const inserted = await q('INSERT INTO businesses (id, owner_id, data) VALUES ($1, NULL, $2::jsonb) ON CONFLICT (id) DO NOTHING RETURNING id', profile.id, JSON.stringify(profile));
+        if (inserted.length) ids.add(profile.id);
+      }
+      for (const f of items) if (ids.has(f.businessId)) await q('INSERT INTO feedback (id, business_id, rating, note, selected_tags, redirected_to_google, status, read, created_at) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING', f.id || randomUUID(), f.businessId, f.rating, f.note || '', JSON.stringify(f.selectedTags || []), f.redirectedToGoogle === true, f.status || 'Private Feedback', f.read === true, f.timestamp || new Date().toISOString());
+      for (const [id, v] of Object.entries(legacyVisits)) {
+        if (!ids.has(id)) continue;
+        await q('INSERT INTO visit_totals (business_id, count, last_visited) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', id, v.count || 0, v.lastVisited || null);
+        for (const [day, count] of Object.entries(v.daily || {})) await q('INSERT INTO visit_days (business_id, day, count) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', id, day, count);
+      }
+      return ids.size;
     },
-    markFeedback: (id, ids, read) => {
-      const value = read ? 1 : 0;
-      if (ids === 'all') return Number(q('UPDATE feedback SET read = ? WHERE business_id = ? AND read != ?').run(value, id, value).changes);
-      const update = q('UPDATE feedback SET read = ? WHERE business_id = ? AND id = ? AND read != ?');
-      return tx(() => ids.reduce((changed, feedbackId) => changed + Number(update.run(value, id, feedbackId, value).changes), 0));
-    },
-    deleteFeedback: (id, feedbackId) => q('DELETE FROM feedback WHERE business_id = ? AND id = ?').run(id, feedbackId).changes > 0,
-    clearFeedback: id => { q('DELETE FROM feedback WHERE business_id = ?').run(id); },
   };
 }

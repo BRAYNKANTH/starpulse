@@ -1,17 +1,17 @@
 # StarPulse — shop pages, menus and QR posters
 
-React + Vite owner studio with a Node.js API. Business owners sign up for their own account; each shop has its own saved profile, landing page, searchable menu, QR destinations and feedback inbox.
+React + Vite owner studio with a Node.js API and Postgres, built to host on Vercel with Neon. Each business owner has an account created by an administrator; each shop has its own saved profile, landing page, searchable menu, QR destinations and feedback inbox.
 
 ## Development
 
-Use Node.js 22.13 or later (the database uses the built-in `node:sqlite` module, so there is nothing native to install).
+Use Node.js 22. Without `DATABASE_URL`, development uses an embedded Postgres (PGlite) stored in `.data/pglite`, so you do not need a database server. Only one process can open it at a time: stop `npm run dev` before running the `npm run create-admin` style commands locally.
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Open the address printed by Vite (normally http://127.0.0.1:5173). The development API is built into Vite and uses the same accounts and database as production. Customer pages use the same API as production.
+Open the address printed by Vite (normally http://127.0.0.1:5173). The development API is built into Vite and is the same code that runs on Vercel. To develop against your Neon database instead, run `vercel env pull .env.local` first; the dev server and the admin commands read `DATABASE_URL` from it.
 
 1. Create an administrator with `npm run create-admin` (see Accounts and plans), sign in, then register a shop and enter its branding, contact information and optional Google review URL.
 2. Open Menu Builder; add items, categories, prices, descriptions and optional image URLs. Set unavailable items off to hide them.
@@ -28,13 +28,13 @@ The owner studio uses a sidebar layout with a shop switcher, light and dark them
 - **Feedback** has read and unread states, search, rating and type filters, CSV export of the filtered list, single deletes and mark-all-as-read. The sidebar shows the unread count.
 - **Menu** groups items by category. Categories can be added, renamed, reordered and deleted. Items can be dragged between positions and categories, duplicated, labelled (Popular, New, Vegetarian, Vegan, Spicy, Gluten-free) and set to Available, Sold out (shown with a label) or Hidden (left out of the public API).
 
-Daily scan and feedback counts use the server's local date. Set `TZ` (for example `TZ=Asia/Colombo`) to choose the time zone. Daily scan counts are kept for 120 days; the all-time total is kept indefinitely. Scans are written straight to the database.
+Daily scan and feedback counts use the date in `APP_TIME_ZONE` (for example `Asia/Colombo`); without it, the server's own time zone, which is UTC on Vercel. Daily scan counts are kept for 120 days; the all-time total is kept indefinitely. Scans are written straight to the database.
 
 ## Accounts and plans
 
 There is no public sign-up. An administrator creates every account and gives the client their sign-in details.
 
-**First administrator.** Create it once from the server, then sign in with the printed temporary password:
+**First administrator.** Create it once from your computer, then sign in with the printed temporary password. For the live site, run `vercel env pull .env.local` first so the command writes to Neon:
 
 ```powershell
 npm run create-admin -- you@example.com "Your Name"
@@ -56,31 +56,50 @@ A client signing in with a temporary password must choose their own password (at
 
 **Account & plan** shows an owner's plan usage and lets them change their name and password. Changing the password signs out their other devices. **All shops** can delete a single shop.
 
-**Plans** limit how many shops an owner can create: Free 1, Pro 5, Business 50 (see `src/data/plans.js`). Billing is not connected yet. Administrators set plans on the Accounts page, or from the server:
+**Plans** limit how many shops an owner can create: Free 1, Pro 5, Business 50 (see `src/data/plans.js`). Billing is not connected yet. Administrators set plans on the Accounts page, or with:
 
 ```powershell
 npm run set-plan -- owner@example.com pro
 ```
 
-## Production
+## Deploy to Vercel with Neon
+
+1. Push this repository to GitHub and import it in Vercel (**Add New → Project**). Vercel reads `vercel.json`: the Vite build is served as static files, and `/api/*` and `/q/*` run the function in `api/index.js`.
+2. In the project, open **Storage → Create Database → Neon** (Serverless Postgres) and connect it to the project for all environments. This adds `DATABASE_URL`. Tables are created automatically on the first request.
+3. Under **Settings → Environment Variables**, add `APP_TIME_ZONE` = `Asia/Colombo` (or your time zone). Redeploy after adding variables.
+4. Create your administrator against Neon from your computer:
+
+   ```powershell
+   npm i -g vercel
+   vercel link
+   vercel env pull .env.local
+   npm run create-admin -- you@example.com "Your Name"
+   ```
+
+5. Optional: bring in shops from the old single-owner version, then assign them under **Accounts → Shop ownership**:
+
+   ```powershell
+   npm run import-json -- .data
+   ```
+
+   `npm run claim-shops -- you@example.com` gives every unassigned shop to one account.
+
+`.env.local` holds the database password. It is ignored by Git; do not commit or share it. Neon keeps point-in-time backups; check your plan's retention.
+
+Rate limits are stored in the database, so they apply across all Vercel instances. Requests are limited to 4 MB, below Vercel's 4.5 MB function limit, so keep uploaded images small.
+
+### Self-hosting
+
+The same app also runs as a single Node server:
 
 ```powershell
 npm run build
+$env:DATABASE_URL = 'postgres://…'
 $env:PORT = '3000'
 npm start
 ```
 
-The Node server serves both `dist` and `/api`. Deploy the entire application behind HTTPS. The default listen address is 127.0.0.1; set HOST=0.0.0.0 when your hosting platform requires it. Hosting only the static dist directory will not provide menus, profiles or feedback.
-
-Accounts, sessions, shops, feedback and QR visit counts are stored in the SQLite database `.data/starpulse.db` (WAL mode, ignored by Git). Set DATA_DIR to an absolute persistent storage directory on your host, and back up the `.db` file together with its `-wal` file, or use `sqlite3 starpulse.db ".backup backup.db"`. Run one server per data directory. For several servers behind a load balancer, move to a networked database such as Postgres.
-
-**Upgrading from the single-owner version:** on first start, an existing `.data/store.json` (and `visits.json`) is imported into the database once. The old files are left in place as a backup. Imported shops keep working for customers and their printed QR codes, but no account owns them yet. Assign each one to an account under **Accounts → Shop ownership**, or give them all to one account from the server:
-
-```powershell
-npm run claim-shops -- you@example.com
-```
-
-`OWNER_KEY` is no longer used.
+The Node server serves both `dist` and `/api`. Without `DATABASE_URL` it uses the embedded Postgres in `DATA_DIR` (default `.data`), which suits one small server only. Deploy behind HTTPS, set HOST=0.0.0.0 when your platform requires it, and set TRUST_PROXY=true behind a reverse proxy so rate limits see real client addresses.
 
 Permanent links use `/?biz=<shop-id>` for the landing page and `/?biz=<shop-id>&view=menu` for its menu. Edits to the published shop update the same URL; printed QR codes do not need to change. Unknown IDs and unpublished shops display an unavailable message. Do not put a localhost address on a customer-facing QR code.
 
@@ -100,7 +119,7 @@ npm test
 npm run build
 ```
 
-Tests cover administrator-created accounts, temporary passwords, password resets, shop hand-over, sign-in, sessions, password changes, account deletion, isolation between accounts, plan limits, import of the old JSON store, shop profiles, updates, draft visibility, persistence across restarts, cross-origin and non-JSON write rejection, per-shop feedback, visit pruning, malformed browser storage, URL validation and menu prices.
+Tests run against an in-memory Postgres and cover administrator-created accounts, temporary passwords, password resets, shop hand-over, sign-in, sessions, password changes, account deletion, isolation between accounts, plan limits, import of the old JSON store, shop profiles, updates, draft visibility, persistence across restarts, cross-origin and non-JSON write rejection, per-shop feedback, visit pruning, malformed browser storage, URL validation and menu prices.
 
 ## Menu templates and design settings
 

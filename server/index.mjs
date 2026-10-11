@@ -3,12 +3,12 @@ import { createReadStream, existsSync } from 'node:fs';
 import { resolve, extname, sep } from 'node:path';
 import { createStore } from './store.mjs';
 import { createApi } from './api.mjs';
+import { openDatabase } from './db.mjs';
 
 const root = resolve('dist');
-const store = createStore(resolve(process.env.DATA_DIR || '.data'));
-const api = createApi(store);
-process.on('exit', () => store.close());
-for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(0));
+const store = await createStore(await openDatabase());
+const api = createApi(store, { trustProxy: process.env.TRUST_PROXY === 'true' });
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { await store.close(); process.exit(0); });
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
 createServer((req, res) => api(req, res, () => {
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
