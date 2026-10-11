@@ -1,0 +1,33 @@
+{
+  "name": "starpulse",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node --disable-warning=ExperimentalWarning server/index.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.mjs",
+    "lint": "oxlint src server",
+    "create-admin": "node --disable-warning=ExperimentalWarning server/admin.mjs create-admin",
+    "claim-shops": "node --disable-warning=ExperimentalWarning server/admin.mjs claim-shops",
+    "set-plan": "node --disable-warning=ExperimentalWarning server/admin.mjs set-plan"
+  },
+  "dependencies": {
+    "lucide-react": "^1.33.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "oxlint": "^1.75.0",
+    "vite": "^5.4.11"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

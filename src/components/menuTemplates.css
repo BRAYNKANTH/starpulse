@@ -1,0 +1,80 @@
+/* Decorative details for the newer menu templates. Structure comes from each template's option defaults. */
+
+/* Trattoria Rosso: gingham strip and an italic red title. */
+.menu-template-trattoria .shop-menu-main { max-width: 1000px; }
+.menu-template-trattoria .shop-menu-main::before { content: ''; display: block; height: 14px; margin-bottom: 30px; border-radius: 2px; background: repeating-conic-gradient(color-mix(in srgb, var(--menu-accent) 85%, transparent) 0 25%, transparent 0 50%) 0 0 / 14px 14px; }
+.menu-template-trattoria .menu-public-heading h1 { font-style: italic; color: var(--menu-accent); }
+.menu-template-trattoria .menu-category-heading h2 { font-style: italic; }
+
+/* Slice Pizzeria */
+.menu-template-pizzeria .menu-public-heading h1 { color: var(--menu-accent); }
+.menu-template-pizzeria .food-brand-mark { background: var(--menu-accent); color: #fff; border: 0; }
+
+/* Sakura Sushi: rising-sun mark and airy type. */
+.menu-template-sushi .food-menu-brand strong { letter-spacing: .25em; text-transform: uppercase; font-weight: 400; font-size: .8em; }
+.menu-template-sushi .food-brand-mark { border-color: transparent; background: var(--menu-accent); color: #fff; }
+.menu-template-sushi .menu-public-heading h1 { font-weight: 300; letter-spacing: .3em; }
+.menu-template-sushi .menu-category-heading h2 { font-weight: 400; letter-spacing: .2em; font-size: 1rem; }
+
+/* Spice Route: framed page with saffron headings. */
+.menu-template-spice .shop-menu-main { max-width: 1000px; margin-top: 32px; margin-bottom: 32px; border: 1px solid var(--menu-border); outline: 1px solid var(--menu-border); outline-offset: 6px; }
+.menu-template-spice .menu-public-heading h1, .menu-template-spice .menu-category-heading h2 { color: var(--menu-accent); }
+.menu-template-spice .menu-public-heading h1 { font-style: italic; }
+.menu-template-spice .food-brand-mark { background: var(--menu-accent); color: var(--menu-bg); border: 0; }
+
+/* Chalkboard Café: wooden frame and chalk colours. */
+.menu-template-chalkboard .shop-menu-main { max-width: 1000px; margin: 28px auto; border: 12px solid #6b4f34; border-radius: 6px; box-shadow: inset 0 0 40px rgba(0, 0, 0, .45), 0 10px 30px rgba(0, 0, 0, .35); }
+.menu-template-chalkboard .menu-public-heading h1 { color: #fff; transform: rotate(-1.5deg); }
+.menu-template-chalkboard .menu-category-heading h2 { color: var(--menu-accent); font-size: 2rem; }
+.menu-template-chalkboard .public-item-title h3 { font-size: 1.45rem; font-weight: 600; }
+.menu-template-chalkboard .public-item-title strong { color: var(--menu-accent); font-size: 1rem; }
+.menu-template-chalkboard .layout-compact .public-menu-item > img { display: none; }
+
+/* Taquería Sol: papel picado banner. */
+.menu-template-taqueria .shop-menu-main::before { content: ''; display: block; height: 22px; margin-bottom: 28px; background: linear-gradient(90deg, #e4572e 0 20%, #ffc914 20% 40%, #17bebb 40% 60%, #76b041 60% 80%, #e84393 80%); -webkit-mask: radial-gradient(circle at 11px 22px, transparent 7px, #000 7.5px) 0 0 / 22px 22px; mask: radial-gradient(circle at 11px 22px, transparent 7px, #000 7.5px) 0 0 / 22px 22px; }
+.menu-template-taqueria .menu-public-heading h1 { color: var(--menu-accent); }
+
+/* Green Bowl */
+.menu-template-greenbowl .menu-public-heading .shop-kicker { display: inline-block; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 14%, transparent); }
+
+/* Harbour Seafood */
+.menu-template-harbour .menu-category-heading h2 { font-style: italic; }
+.menu-template-harbour .menu-public-heading h1 { color: var(--menu-text); }
+
+/* Smoke & Ember */
+.menu-template-ember .shop-menu-main { max-width: 1040px; }
+.menu-template-ember .menu-public-heading h1 { color: var(--menu-accent); letter-spacing: .06em; }
+.menu-template-ember .public-item-title h3 { letter-spacing: .03em; text-transform: uppercase; font-size: 1.1rem; }
+.menu-template-ember .public-menu-item > img { filter: saturate(.85) contrast(1.08); }
+
+/* Sweet Scoop */
+.menu-template-scoop .menu-public-heading h1 { color: var(--menu-accent); }
+.menu-template-scoop .public-menu-item { transition: transform .2s ease; }
+.menu-template-scoop .public-menu-item:hover { transform: translateY(-3px); }
+
+/* Maison: tasting menu spacing. */
+.menu-template-maison .shop-menu-main { max-width: 760px; }
+.menu-template-maison .menu-public-heading h1 { font-weight: 500; letter-spacing: .22em; }
+.menu-template-maison .menu-category-heading h2 { color: var(--menu-accent); font-size: .95rem; letter-spacing: .3em; font-weight: 600; }
+.menu-template-maison .public-item-title h3 { font-size: 1.4rem; font-weight: 500; }
+.menu-template-maison .layout-list .public-menu-item { padding: 18px 0; }
+.menu-template-maison .public-item-title strong { font-weight: 500; }
+
+/* Wok Street */
+.menu-template-wok .menu-public-heading h1 { color: var(--menu-accent); }
+.menu-template-wok .menu-public-heading p:not(.shop-kicker) { color: var(--menu-muted); }
+.menu-template-wok .food-brand-mark { background: var(--menu-accent); color: #b8141c; border: 0; }
+
+/* Sunny Side */
+.menu-template-brunch .menu-public-heading h1 { position: relative; }
+.menu-template-brunch .public-item-title strong { color: var(--menu-accent); }
+
+/* Copper Lounge */
+.menu-template-copper .shop-menu-main { max-width: 900px; }
+.menu-template-copper .menu-public-heading h1 { font-weight: 500; letter-spacing: .2em; color: var(--menu-accent); }
+.menu-template-copper .menu-category-heading h2 { color: var(--menu-accent); letter-spacing: .25em; font-size: 1rem; }
+.menu-template-copper .layout-compact .public-menu-item > img { width: 48px; height: 48px; border-radius: 50%; }
+
+/* Retro Diner: checkerboard strip and offset title. */
+.menu-template-diner .shop-menu-main::before { content: ''; display: block; height: 16px; margin-bottom: 30px; background: repeating-conic-gradient(var(--menu-text) 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
+.menu-template-diner .menu-public-heading h1 { color: var(--menu-accent); text-shadow: 3px 3px 0 color-mix(in srgb, var(--menu-text) 18%, transparent); }

@@ -1,0 +1,170 @@
+/* Menu design options.
+   Each option is a class on .shop-public (mo-<option>-<value>), set from the template's defaults or the owner's
+   choice. Selectors use :is(.class, #_) so an option outranks a template's own rules: :is() takes the
+   specificity of its most specific argument (the id), while still matching by class. */
+
+/* Layouts added alongside cards, list and compact. */
+.layout-horizontal .public-menu-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.layout-horizontal .public-menu-item { display: flex; align-items: stretch; }
+.layout-horizontal .public-menu-item > img { width: 132px; height: auto; min-height: 132px; flex-shrink: 0; object-fit: cover; }
+.layout-horizontal .public-menu-item > .public-menu-item-body { flex: 1; min-width: 0; padding: 18px 20px; }
+.layout-horizontal .menu-item-image-placeholder { display: none; }
+.layout-tiles .public-menu-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+.layout-tiles .public-menu-item { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 300px; border: 0; color: #fff; background: color-mix(in srgb, var(--menu-accent) 80%, #000); isolation: isolate; }
+.layout-tiles .public-menu-item > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.layout-tiles .public-menu-item::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgba(0, 0, 0, .85), rgba(0, 0, 0, .2) 62%, transparent); }
+.layout-tiles .public-menu-item > .public-menu-item-body { padding: 20px; }
+.layout-tiles .public-item-title h3, .layout-tiles .public-item-title strong, .layout-tiles .public-menu-item p { color: #fff; }
+.layout-tiles .public-menu-item p { opacity: .86; }
+.layout-tiles .menu-item-image-placeholder { display: none; }
+.layout-tiles .menu-label { border-color: rgba(255, 255, 255, .45); background: rgba(255, 255, 255, .12); }
+:is(.mo-font, #_) .layout-tiles .public-item-title h3 { color: #fff; }
+
+/* The active shop tab sits on the card surface, so it uses the card text colour. */
+.shop-public-nav nav button.active { color: var(--menu-card-text, var(--menu-text)); }
+.shop-public .menu-search, .shop-public .menu-search input { color: var(--menu-card-text, var(--menu-text)); }
+.shop-public .menu-search input::placeholder { color: color-mix(in srgb, var(--menu-card-text, var(--menu-text)) 55%, var(--menu-surface)); }
+
+/* Colours for item cards when the card surface and the page text differ. */
+:is(.mo-cardcolors, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-menu-item { color: var(--menu-card-text); }
+:is(.mo-cardcolors, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-item-title h3 { color: var(--menu-card-text); }
+:is(.mo-cardcolors, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-menu-item p { color: color-mix(in srgb, var(--menu-card-text) 70%, var(--menu-surface)); }
+
+/* Typography */
+:is(.mo-font, #_) { font-family: var(--menu-body-font); }
+:is(.mo-font, #_) :is(h1, h2, h3, .food-menu-brand strong, .shop-wordmark span) { font-family: var(--menu-heading-font); font-weight: var(--menu-heading-weight); }
+:is(.mo-font, #_) .public-item-title h3 { font-weight: var(--menu-heading-weight); }
+:is(.mo-headingCase-upper, #_) :is(.menu-public-heading h1, .menu-category-heading h2) { text-transform: uppercase; letter-spacing: .05em; }
+:is(.mo-headingCase-normal, #_) :is(.menu-public-heading h1, .menu-category-heading h2) { text-transform: none; }
+:is(.mo-headingSize-small, #_) .menu-public-heading h1 { font-size: clamp(1.8rem, 4vw, 2.3rem); }
+:is(.mo-headingSize-small, #_) .menu-category-heading h2 { font-size: 1.1rem; }
+:is(.mo-headingSize-medium, #_) .menu-public-heading h1 { font-size: clamp(2.2rem, 5vw, 3rem); }
+:is(.mo-headingSize-medium, #_) .menu-category-heading h2 { font-size: 1.45rem; }
+:is(.mo-headingSize-large, #_) .menu-public-heading h1 { font-size: clamp(2.6rem, 7vw, 4.4rem); line-height: 1.05; }
+:is(.mo-headingSize-large, #_) .menu-category-heading h2 { font-size: 1.9rem; }
+
+/* Columns */
+:is(.mo-columns-1, #_) .public-menu-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+:is(.mo-columns-2, #_) .public-menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:is(.mo-columns-3, #_) .public-menu-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+:is(.mo-columns-1, .mo-columns-2, .mo-columns-3, #_) .public-menu-grid > .public-menu-item { flex: initial; }
+
+/* Card styles (rows in the classic list layout stay flat). */
+:is(.mo-cardStyle-elevated, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-menu-item { background: var(--menu-surface); border-color: transparent; box-shadow: 0 12px 30px -14px color-mix(in srgb, var(--menu-text) 40%, transparent); }
+:is(.mo-cardStyle-outlined, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-menu-item { background: var(--menu-surface); border: 1.5px solid var(--menu-border); box-shadow: none; }
+:is(.mo-cardStyle-flat, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-menu-item { background: transparent; border-color: transparent; box-shadow: none; color: var(--menu-text); }
+:is(.mo-cardStyle-flat, #_) :is(.layout-cards, .layout-horizontal, .layout-compact) .public-item-title h3 { color: var(--menu-text); }
+:is(.mo-cardStyle-flat, #_) :is(.layout-cards, .layout-horizontal, .layout-compact) .public-menu-item p { color: var(--menu-muted); }
+:is(.mo-cardStyle-flat, #_) .layout-compact .public-menu-item { padding-inline: 0; }
+:is(.mo-cardStyle-filled, #_) :is(.layout-cards, .layout-horizontal, .layout-compact, .shop-feature-section) .public-menu-item { background: color-mix(in srgb, var(--menu-accent) 14%, var(--menu-surface)); border-color: transparent; box-shadow: none; }
+
+/* Corners */
+.mo-radius-square { --menu-radius: 0px; }
+.mo-radius-soft { --menu-radius: 8px; }
+.mo-radius-rounded { --menu-radius: 16px; }
+.mo-radius-round { --menu-radius: 26px; }
+:is(.mo-radius-square, .mo-radius-soft, .mo-radius-rounded, .mo-radius-round, #_) .public-menu-item { border-radius: var(--menu-radius); }
+:is(.mo-radius-square, .mo-radius-soft, .mo-radius-rounded, .mo-radius-round, #_) :is(.menu-search, .food-menu-cover) { border-radius: min(var(--menu-radius), 14px); }
+:is(.mo-radius-square, .mo-radius-soft, .mo-radius-rounded, .mo-radius-round, #_) :is(.layout-list, .layout-compact) .public-menu-item > img { border-radius: calc(var(--menu-radius) * .6); }
+
+/* Image shapes */
+:is(.mo-imageShape-wide, #_) .layout-cards .public-menu-item > img { aspect-ratio: 16 / 10; height: auto; }
+:is(.mo-imageShape-square, #_) .layout-cards .public-menu-item > img { aspect-ratio: 1; height: auto; }
+:is(.mo-imageShape-circle, #_) .layout-cards .public-menu-item > img { width: 64%; aspect-ratio: 1; height: auto; margin: 22px auto 0; border-radius: 50%; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .45); }
+:is(.mo-imageShape-square, #_) :is(.layout-horizontal, .layout-list, .layout-compact) .public-menu-item > img { aspect-ratio: 1; height: auto; min-height: 0; align-self: center; }
+:is(.mo-imageShape-wide, #_) :is(.layout-list, .layout-compact) .public-menu-item > img { aspect-ratio: 4 / 3; width: 120px; height: auto; }
+:is(.mo-imageShape-circle, #_) :is(.layout-horizontal, .layout-list, .layout-compact) .public-menu-item > img { aspect-ratio: 1; height: auto; min-height: 0; align-self: center; border-radius: 50%; border: 0; }
+:is(.mo-imageShape-circle, #_) .layout-horizontal .public-menu-item > img { width: 104px; margin: 16px 0 16px 16px; }
+:is(.mo-imageShape-circle.mo-imagePosition-right, #_) .layout-horizontal .public-menu-item > img { margin: 16px 16px 16px 0; }
+:is(.mo-imageShape-square, #_) .layout-horizontal .public-menu-item > img { width: 128px; }
+
+/* Image position for side photos and rows */
+:is(.mo-imagePosition-left, .mo-imagePosition-right, #_) :is(.layout-horizontal, .layout-list, .layout-compact) .public-menu-item { flex-direction: row; }
+:is(.mo-imagePosition-left, #_) :is(.layout-horizontal, .layout-list, .layout-compact) .public-menu-item > img { order: -1; }
+:is(.mo-imagePosition-right, #_) :is(.layout-horizontal, .layout-list, .layout-compact) .public-menu-item > img { order: 2; }
+
+/* Prices */
+:is(.mo-pricePosition-inline, #_) .public-item-title { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 16px; }
+:is(.mo-pricePosition-below, #_) .public-item-title { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; }
+:is(.mo-pricePosition-below, #_) .public-item-title strong { padding: 0; }
+:is(.mo-pricePosition-leader, #_) .public-item-title { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; }
+:is(.mo-pricePosition-leader, #_) .public-item-title h3 { display: flex; flex: 1; align-items: baseline; gap: 12px; }
+:is(.mo-pricePosition-leader, #_) .public-item-title h3::after { content: ''; flex: 1; min-width: 24px; border-bottom: 2px dotted color-mix(in srgb, currentColor 35%, transparent); transform: translateY(-.3em); }
+:is(.mo-pricePosition-tag, #_) .public-item-title { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+:is(.mo-pricePosition-tag, #_) .public-item-title strong { display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 999px; background: var(--menu-accent); color: var(--menu-on-accent); font-size: .82rem; font-weight: 700; line-height: 1.2; }
+:is(.mo-pricePosition-tag, #_) :is(.layout-cards, .shop-feature-section) .public-menu-item:has(> img) { position: relative; }
+:is(.mo-pricePosition-tag, #_) :is(.layout-cards, .shop-feature-section) .public-menu-item:has(> img) .public-item-title strong { position: absolute; top: 14px; right: 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, .25); }
+
+/* Item text alignment (after prices so centring wins) */
+:is(.mo-itemAlign-center, #_) .public-menu-item-body { text-align: center; }
+:is(.mo-itemAlign-center, #_) .public-item-title { flex-direction: column; align-items: center; gap: 6px; }
+:is(.mo-itemAlign-center, #_) .public-item-title h3::after { display: none; }
+:is(.mo-itemAlign-center, #_) .public-menu-item p { margin-inline: auto; }
+:is(.mo-itemAlign-center, #_) .menu-item-labels { justify-content: center; }
+:is(.mo-itemAlign-left, #_) .public-menu-item-body { text-align: left; }
+:is(.mo-itemAlign-left, #_) .menu-item-labels { justify-content: flex-start; }
+
+/* Heading alignment */
+:is(.mo-align-center, #_) .menu-public-heading { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+:is(.mo-align-center, #_) .menu-public-heading > div > p { margin-inline: auto; }
+:is(.mo-align-center, #_) :is(.category-tabs, .food-menu-brand) { justify-content: center; }
+:is(.mo-align-left, #_) .menu-public-heading { flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
+:is(.mo-align-left, #_) :is(.category-tabs, .food-menu-brand) { justify-content: flex-start; }
+
+/* Dividers between rows */
+:is(.mo-divider-line, #_) .layout-list .public-menu-item { border-bottom: 1px solid var(--menu-border); }
+:is(.mo-divider-dotted, #_) .layout-list .public-menu-item { border-bottom: 2px dotted var(--menu-border); }
+:is(.mo-divider-dashed, #_) .layout-list .public-menu-item { border-bottom: 1.5px dashed var(--menu-border); }
+:is(.mo-divider-none, #_) .layout-list .public-menu-item { border-bottom: 0; }
+:is(.mo-divider-line.mo-cardStyle-flat, #_) :is(.layout-compact, .layout-horizontal) .public-menu-item { border-radius: 0; border-bottom: 1px solid var(--menu-border); }
+:is(.mo-divider-dotted.mo-cardStyle-flat, #_) :is(.layout-compact, .layout-horizontal) .public-menu-item { border-radius: 0; border-bottom: 2px dotted var(--menu-border); }
+:is(.mo-divider-dashed.mo-cardStyle-flat, #_) :is(.layout-compact, .layout-horizontal) .public-menu-item { border-radius: 0; border-bottom: 1.5px dashed var(--menu-border); }
+
+/* Category navigation */
+:is(.mo-navStyle-pills, #_) .category-tabs { gap: 8px; border: 0; }
+:is(.mo-navStyle-pills, #_) .category-tabs button { padding: 9px 18px; border: 1px solid var(--menu-border); border-radius: 999px; background: transparent; color: var(--menu-muted); }
+:is(.mo-navStyle-pills, #_) .category-tabs button.active { background: var(--menu-accent); border-color: var(--menu-accent); color: var(--menu-on-accent); }
+:is(.mo-navStyle-underline, #_) .category-tabs { gap: 24px; border-bottom: 1px solid var(--menu-border); }
+:is(.mo-navStyle-underline, #_) .category-tabs button { padding: 10px 0; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--menu-muted); }
+:is(.mo-navStyle-underline, #_) .category-tabs button.active { color: var(--menu-text); border-bottom-color: var(--menu-accent); background: transparent; font-weight: 700; }
+:is(.mo-navStyle-boxed, #_) .category-tabs { gap: 6px; border: 0; }
+:is(.mo-navStyle-boxed, #_) .category-tabs button { padding: 10px 16px; border: 1px solid var(--menu-border); border-radius: min(var(--menu-radius, 4px), 6px); background: var(--menu-surface); color: var(--menu-card-text, var(--menu-text)); font-size: .74rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+:is(.mo-navStyle-boxed, #_) .category-tabs button.active { background: var(--menu-accent); border-color: var(--menu-accent); color: var(--menu-on-accent); }
+
+/* Section headings */
+:is(.mo-sectionStyle-line, #_) .menu-category-heading { justify-content: flex-start; text-align: left; }
+:is(.mo-sectionStyle-line, #_) .menu-heading-line { display: block; }
+:is(.mo-sectionStyle-centered, #_) .menu-category-heading { justify-content: center; text-align: center; }
+:is(.mo-sectionStyle-centered, #_) .menu-category-heading::before { content: ''; flex: 1; height: 1px; background: var(--menu-border); }
+:is(.mo-sectionStyle-centered, #_) .menu-heading-line { display: block; }
+:is(.mo-sectionStyle-banner, #_) .menu-category-heading h2 { padding: 7px 16px; border-radius: min(var(--menu-radius, 6px), 10px); background: var(--menu-accent); color: var(--menu-on-accent); line-height: 1.2; }
+:is(.mo-sectionStyle-banner, #_) .menu-heading-line { display: block; }
+:is(.mo-sectionStyle-numbered, #_) .menu-section-number { color: var(--menu-accent); font-size: .8rem; font-weight: 700; letter-spacing: .12em; }
+
+/* Background textures */
+:is(.mo-texture-none, #_) { background-image: none; }
+:is(.mo-texture-paper, #_) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+:is(.mo-texture-dots, #_) { background-image: radial-gradient(color-mix(in srgb, var(--menu-text) 12%, transparent) 1.2px, transparent 1.7px); background-size: 18px 18px; }
+:is(.mo-texture-grid, #_) { background-image: linear-gradient(color-mix(in srgb, var(--menu-text) 6%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--menu-text) 6%, transparent) 1px, transparent 1px); background-size: 28px 28px; }
+:is(.mo-texture-stripes, #_) { background-image: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--menu-accent) 9%, transparent) 0 10px, transparent 10px 28px); }
+:is(.mo-texture-chalk, #_) { background-image: radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, .08), transparent 42%), radial-gradient(ellipse at 85% 55%, rgba(255, 255, 255, .06), transparent 45%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+/* Narrow screens: fewer columns, stacked side photos. Container queries cover the studio previews. */
+@media (max-width: 900px) {
+  :is(.mo-columns-3, #_) .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  :is(.mo-columns-2, .mo-columns-3, #_) .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
+  :is(.mo-columns-2, .mo-columns-3, #_) .layout-tiles .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout-horizontal .public-menu-item > img { width: 104px; min-height: 104px; }
+  .layout-tiles .public-menu-item { min-height: 220px; }
+}
+@container (max-width: 900px) {
+  :is(.mo-columns-3, #_) .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (max-width: 620px) {
+  :is(.mo-columns-2, .mo-columns-3, #_) .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
+  :is(.mo-columns-2, .mo-columns-3, #_) .layout-tiles .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .layout-horizontal .public-menu-item > img { width: 104px; min-height: 104px; }
+  .layout-tiles .public-menu-item { min-height: 220px; }
+}

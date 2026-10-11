@@ -1,0 +1,21 @@
+import { createServer } from 'node:http';
+import { createReadStream, existsSync } from 'node:fs';
+import { resolve, extname, sep } from 'node:path';
+import { createStore } from './store.mjs';
+import { createApi } from './api.mjs';
+
+const root = resolve('dist');
+const store = createStore(resolve(process.env.DATA_DIR || '.data'));
+const api = createApi(store);
+process.on('exit', () => store.close());
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(0));
+const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
+createServer((req, res) => api(req, res, () => {
+  if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
+  let path;
+  try { path = resolve(root, `.${decodeURIComponent(new URL(req.url, 'http://localhost').pathname)}`); } catch { res.writeHead(400); res.end(); return; }
+  if (path !== root && !path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
+  if (path === root || !existsSync(path)) path = resolve(root, 'index.html');
+  res.writeHead(200, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff' });
+  if (req.method === 'HEAD') res.end(); else createReadStream(path).on('error', () => res.destroy()).pipe(res);
+})).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`StarPulse running on port ${process.env.PORT || 3000}`));
