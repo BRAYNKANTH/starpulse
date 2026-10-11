@@ -192,8 +192,8 @@ function OwnerStudio() {
         </select>
         <span className={`badge badge-${state[1]}`}>{state[0]}</span>
         <div className="sp-topbar-actions">
-          {savedProfile?.published && <a className="btn btn-ghost" href={shopUrl(businessProfile.id)} target="_blank" rel="noopener noreferrer"><ExternalLink size={16} /><span className="hide-sm">View page</span></a>}
-          <button type="button" className="btn btn-primary" onClick={save} disabled={saving || uploads > 0}>{saving ? 'Saving…' : 'Save changes'}</button>
+          {savedProfile?.published && <a className="btn btn-ghost" href={shopUrl(businessProfile.id)} target="_blank" rel="noopener noreferrer" aria-label="View page (opens in a new tab)" title="View customer page"><ExternalLink size={16} aria-hidden="true" /><span className="hide-sm">View page</span></a>}
+          <button type="button" className="btn btn-primary" onClick={save} disabled={saving || uploads > 0}>{saving ? 'Saving…' : <>Save<span className="hide-sm"> changes</span></>}</button>
         </div>
       </header>
       <main className="sp-content">

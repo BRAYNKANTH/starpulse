@@ -13,7 +13,7 @@ export const TEMPLATE_GROUPS = [
 export const MENU_TEMPLATES = [
   { id: 'cafe', group: 'cafe', sample: 'cafe', name: 'Bakery & Bloom', description: 'Cream paper, a café cover and a simple bakery list.', layout: 'list', accent: '#794b40', background: '#f7efe3', surface: '#fffcf7', text: '#3d2e24', muted: '#8c7968', border: '#e4d5bf', font: 'sans', eyebrow: 'FRESH FROM THE OVEN', food: true },
   { id: 'restaurant', group: 'restaurant', sample: 'restaurant', name: 'The Golden Table', description: 'A dark textured menu with gold headings and plated dishes.', layout: 'list', accent: '#e7c44e', background: '#151716', surface: '#202420', text: '#f5f1e6', muted: '#aaa99e', border: '#383c33', font: 'serif', eyebrow: 'SEASONAL KITCHEN', food: true },
-  { id: 'burger', group: 'casual', sample: 'burger', name: 'Burger Club', description: 'Bold orange, food photography and swipeable category cards.', layout: 'cards', accent: '#ffc451', background: '#e6471f', surface: '#fff8ec', text: '#fff7ea', muted: '#ffdac8', border: '#ef815e', cardText: '#392d24', font: 'sans', eyebrow: 'BIG FLAVOUR. GOOD TIMES.', food: true },
+  { id: 'burger', group: 'casual', sample: 'burger', name: 'Burger Club', description: 'Bold orange, food photography and swipeable category cards.', layout: 'cards', accent: '#ffc451', background: '#c2410c', surface: '#fff8ec', text: '#fff7ea', muted: '#ffdac8', border: '#df6a3f', cardText: '#392d24', font: 'sans', eyebrow: 'BIG FLAVOUR. GOOD TIMES.', food: true },
   { id: 'trattoria', group: 'restaurant', sample: 'italian', name: 'Trattoria Rosso', description: 'Italian paper menu, dotted price leaders and round dish photos.', layout: 'list', accent: '#b3261e', background: '#fbf6ec', surface: '#fffdf8', text: '#2b1d16', muted: '#7d6a5c', border: '#e3d3bd', font: 'playfair', eyebrow: 'CUCINA DI CASA', food: true, defaults: { align: 'center', pricePosition: 'leader', divider: 'dotted', sectionStyle: 'centered', navStyle: 'underline', texture: 'paper', imageShape: 'circle', imagePosition: 'right' } },
   { id: 'pizzeria', group: 'casual', sample: 'pizza', name: 'Slice Pizzeria', description: 'Poster type, price tags on photos and a three-column grid.', layout: 'cards', accent: '#d7261e', background: '#fff4e2', surface: '#ffffff', text: '#2a1a12', muted: '#7a5f4c', border: '#f1d9b5', font: 'bebas', eyebrow: 'HAND-STRETCHED DAILY', food: true, defaults: { cardStyle: 'elevated', radius: 'rounded', imageShape: 'square', pricePosition: 'tag', navStyle: 'pills', headingCase: 'upper', headingSize: 'large', sectionStyle: 'banner', columns: '3', align: 'center' } },
   { id: 'sushi', group: 'restaurant', sample: 'sushi', name: 'Sakura Sushi', description: 'Quiet Japanese minimalism with numbered sections and side photos.', layout: 'horizontal', accent: '#c8102e', background: '#faf8f5', surface: '#ffffff', text: '#1b1b1b', muted: '#6f6a64', border: '#e7e2db', font: 'josefin', eyebrow: 'OMAKASE & ROLLS', food: true, defaults: { cardStyle: 'flat', radius: 'square', imageShape: 'square', imagePosition: 'left', pricePosition: 'below', navStyle: 'underline', sectionStyle: 'numbered', headingCase: 'upper', divider: 'line', columns: '2' } },
@@ -92,7 +92,16 @@ export const TEMPLATE_RESET = { layout: 'template', font: 'template', accent: ''
 
 const luminance = hex => hex.slice(1).match(/../g).map(v => parseInt(v, 16) / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
 const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + .05) / (y + .05); };
-const readableOn = (surface, preferred) => [preferred, '#1b1b1b', '#ffffff'].find(color => HEX.test(color) && contrast(color, surface) >= 4.5) || '#1b1b1b';
+const readableOn = (surface, preferred) => [preferred, '#1b1b1b', '#ffffff'].find(color => HEX.test(color) && contrast(color, surface) >= 4.5) || (contrast('#000000', surface) >= contrast('#ffffff', surface) ? '#000000' : '#ffffff');
+const mixHex = (a, b, amount) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.slice(1 + i, 3 + i), 16) * (1 - amount) + parseInt(b.slice(1 + i, 3 + i), 16) * amount).toString(16).padStart(2, '0')).join('');
+// Keeps a colour's character but moves it toward black or white just far enough to reach 4.5:1 on `surface`.
+export const ensureContrast = (color, surface, minimum = 4.5) => {
+  if (!HEX.test(color) || !HEX.test(surface)) return color;
+  if (contrast(color, surface) >= minimum) return color;
+  const target = contrast('#000000', surface) > contrast('#ffffff', surface) ? '#000000' : '#ffffff';
+  for (let step = 1; step <= 20; step++) { const next = mixHex(color, target, step / 20); if (contrast(next, surface) >= minimum) return next; }
+  return target;
+};
 
 export function resolveMenuDesign(value) {
   const design = normalizeMenuDesign(value);
@@ -101,14 +110,15 @@ export function resolveMenuDesign(value) {
   const background = design.background || template.background;
   const surface = design.surface || template.surface;
   // A new background keeps the template's text colour only while it stays readable.
-  const text = design.text || (design.background ? readableOn(background, template.text) : template.text);
+  const text = ensureContrast(design.text || (design.background ? readableOn(background, template.text) : template.text), background);
   const recolored = !!(design.background || design.text);
   const palette = {
     ...template,
     background, surface, text,
-    muted: recolored ? `color-mix(in srgb, ${text} 68%, ${background})` : template.muted,
+    // Secondary text stays at 4.5:1 or better on the page background.
+    muted: ensureContrast(recolored ? mixHex(text, background, .3) : template.muted, background),
     border: recolored ? `color-mix(in srgb, ${text} 16%, ${background})` : template.border,
-    cardText: design.surface || design.text || design.background ? readableOn(surface, design.text || template.cardText || template.text) : template.cardText || text,
+    cardText: ensureContrast(design.surface || design.text || design.background ? readableOn(surface, design.text || template.cardText || template.text) : template.cardText || text, surface),
   };
   const accent = design.accent || template.accent;
   const font = design.font === 'template' ? template.font : design.font;
@@ -122,6 +132,7 @@ export function resolveMenuDesign(value) {
     accent,
     sidebar: options.navStyle === 'sidebar',
     numbered: options.sectionStyle === 'numbered',
-    vars: { '--menu-on-accent': readableOn(accent, '#ffffff'), '--menu-card-text': palette.cardText, ...(pair ? { '--menu-heading-font': fontStack(pair.heading, pair.fallback), '--menu-body-font': fontStack(pair.body, 'system-ui, sans-serif'), '--menu-heading-weight': pair.weight || 700 } : {}) },
+    // Accent used as text (prices, highlights) is adjusted per background so it stays readable.
+    vars: { '--menu-on-accent': readableOn(accent, '#ffffff'), '--menu-card-text': palette.cardText, '--menu-accent-on-bg': ensureContrast(accent, background), '--menu-accent-on-surface': ensureContrast(accent, surface), ...(pair ? { '--menu-heading-font': fontStack(pair.heading, pair.fallback), '--menu-body-font': fontStack(pair.body, 'system-ui, sans-serif'), '--menu-heading-weight': pair.weight || 700 } : {}) },
   };
 }

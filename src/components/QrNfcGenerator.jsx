@@ -326,35 +326,32 @@ export default function QrNfcGenerator({ businessProfile, savedProfile, dirty })
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button
             type="button"
-            className="carrd-submit-btn"
-            style={{ width: 'auto', padding: '0.75rem 1.25rem' }}
+            className="btn btn-secondary"
             onClick={downloadQrCodeSVG}
             disabled={!!targetError || exporting}
           >
             <Download size={16} />
-            <span>Download Vector QR (SVG)</span>
+            <span>Download QR (SVG)</span>
           </button>
 
           <button
             type="button"
-            className="carrd-submit-btn"
-            style={{ width: 'auto', padding: '0.75rem 1.25rem', background: '#10B981', color: '#FFF' }}
+            className="btn btn-primary"
             onClick={downloadPosterPNG}
             disabled={!!targetError || exporting}
           >
             <Download size={16} />
-            <span>Download Full Poster (PNG Image)</span>
+            <span>Download poster (PNG)</span>
           </button>
 
           <button
             type="button"
-            className="carrd-submit-btn"
-            style={{ width: 'auto', padding: '0.75rem 1.25rem', background: '#3B82F6', color: '#FFF' }}
+            className="btn btn-secondary"
             onClick={handlePrint}
             disabled={!!targetError || exporting}
           >
             <Printer size={16} />
-            <span>Print Reception Poster</span>
+            <span>Print poster</span>
           </button>
         </div>
       </div>
@@ -362,8 +359,8 @@ export default function QrNfcGenerator({ businessProfile, savedProfile, dirty })
       {/* Live Poster Display Card Canvas */}
       <div className="poster-preview-stage" style={targetError ? { display: 'none' } : undefined}>
         <div className="poster-preview-stage-header no-print">
-          <Eye size={16} color="var(--primary-accent)" />
-          <span>Live Countertop Print Preview ({posterFormat.toUpperCase()})</span>
+          <Eye size={16} aria-hidden="true" />
+          <span>Print preview · {posterFormat.toUpperCase()}</span>
         </div>
 
         {/* Poster Main Render Container */}

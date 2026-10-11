@@ -96,7 +96,7 @@ export default function CustomerFunnel({ businessProfile, preview = false }) {
           </h2>
 
           {/* Interactive Star Buttons */}
-          <div className="stars-interactive-wrapper">
+          <div className="stars-interactive-wrapper" role="group" aria-label="Your rating">
             {[1, 2, 3, 4, 5].map((starNum) => (
               <button
                 type="button"
@@ -105,7 +105,7 @@ export default function CustomerFunnel({ businessProfile, preview = false }) {
                 onMouseEnter={() => setHoverRating(starNum)}
                 onMouseLeave={() => setHoverRating(0)}
                 onClick={() => handleStarClick(starNum)}
-                aria-label={`Rate ${starNum} stars`}
+                aria-label={`${starNum} ${starNum === 1 ? 'star' : 'stars'}`}
                 aria-pressed={rating === starNum}
               >
                 <Star

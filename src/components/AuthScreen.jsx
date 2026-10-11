@@ -12,14 +12,14 @@ const FEATURES = [
 const Brand = ({ className = '' }) => <div className={`sp-brand ${className}`}><span className="sp-brand-mark"><Star size={16} /></span>StarPulse</div>;
 
 function AuthLayout({ children }) {
-  return <div className="auth-layout">
+  return <main className="auth-layout">
     <section className="auth-pitch" aria-label="About StarPulse">
       <Brand />
-      <h2>Your shop’s menu, QR codes and reviews in one studio.</h2>
+      <p className="auth-pitch-title">Your shop’s menu, QR codes and reviews in one studio.</p>
       <ul>{FEATURES.map(({ icon: Icon, title, text }) => <li key={title}><span className="auth-feature-icon"><Icon size={18} /></span><span><strong>{title}</strong>{text}</span></li>)}</ul>
     </section>
     {children}
-  </div>;
+  </main>;
 }
 
 export default function AuthScreen({ onAuthenticated }) {

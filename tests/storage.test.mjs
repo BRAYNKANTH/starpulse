@@ -52,3 +52,15 @@ test('menu design options normalise, fall back to template defaults and keep tex
   assert.ok(MENU_TEMPLATES.length >= 20);
   assert.ok(MENU_TEMPLATES.every(t => !t.sample || ['cafe', 'restaurant', 'burger'].includes(t.sample) || t.defaults), 'new templates define structure defaults');
 });
+
+test('every menu template keeps text, prices and accent buttons at 4.5:1 or better, including custom colours', () => {
+  const luminance = hex => hex.slice(1).match(/../g).map(v => parseInt(v, 16) / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+  const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + .05) / (y + .05); };
+  for (const template of MENU_TEMPLATES) for (const custom of [{}, { background: '#ffffff' }, { background: '#111111' }, { accent: '#ffee00' }, { surface: '#222222' }]) {
+    const design = resolveMenuDesign({ template: template.id, ...custom });
+    const { palette: p, vars: v } = design;
+    for (const [part, fg, bg] of [['text', p.text, p.background], ['muted', p.muted, p.background], ['card text', p.cardText, p.surface], ['accent on page', v['--menu-accent-on-bg'], p.background], ['accent on card', v['--menu-accent-on-surface'], p.surface], ['text on accent', v['--menu-on-accent'], design.accent]]) {
+      assert.ok(contrast(fg, bg) >= 4.5, `${template.id} ${JSON.stringify(custom)}: ${part} ${fg} on ${bg} is ${contrast(fg, bg).toFixed(2)}:1`);
+    }
+  }
+});

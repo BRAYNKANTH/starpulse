@@ -1,6 +1,7 @@
 import { ExternalLink, Plus, Store, Trash2 } from 'lucide-react';
 import { shopUrl } from '../data/api';
 import { lastDays, sumDays } from '../utils/format';
+import ShopAvatar from './ShopAvatar';
 
 export default function SavedProfiles({ profiles, overview, activeProfile, onSelect, onNew, onDelete, plan }) {
   const days = lastDays(30);
@@ -13,7 +14,7 @@ export default function SavedProfiles({ profiles, overview, activeProfile, onSel
       : <section className="card card-flush"><div className="table-wrap"><table className="data-table">
         <thead><tr><th>Shop</th><th>Status</th><th className="num">Menu items</th><th className="num">Scans (30 days)</th><th className="num">Rating</th><th className="num">Unread</th><th><span className="sr-only">Actions</span></th></tr></thead>
         <tbody>{profiles.map(profile => { const stats = overview.find(s => s.id === profile.id); return <tr key={profile.id} className={activeProfile.id === profile.id ? 'selected' : ''}>
-          <td><span className="sp-shop-cell">{profile.logo ? <img className="sp-avatar" src={profile.logo} alt="" /> : <span className="sp-avatar" style={{ background: profile.accentColor }}>{profile.name.slice(0, 1)}</span>}<span><strong>{profile.name}</strong><small>{profile.category || profile.tagline}</small></span></span></td>
+          <td><span className="sp-shop-cell"><ShopAvatar profile={profile} /><span><strong>{profile.name}</strong><small>{profile.category || profile.tagline}</small></span></span></td>
           <td><span className={`badge badge-${profile.published ? 'success' : 'neutral'}`}>{profile.published ? 'Published' : 'Draft'}</span></td>
           <td className="num">{(profile.menu || []).length}</td>
           <td className="num">{sumDays(stats?.visits.daily, days).toLocaleString()}</td>

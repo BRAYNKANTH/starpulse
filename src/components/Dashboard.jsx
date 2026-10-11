@@ -3,6 +3,7 @@ import { ArrowDownRight, ArrowRight, ArrowUpRight, Check, Circle, MessageSquare,
 import ColumnChart from './ColumnChart';
 import Stars from './Stars';
 import { compact, lastDays, relativeTime, shortDate, sumDays } from '../utils/format';
+import ShopAvatar from './ShopAvatar';
 
 const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days']];
 
@@ -42,12 +43,12 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
 
     {completed < checklist.length && <section className="card sp-checklist">
       <div className="card-head"><div><h2>Finish setting up {profile.name || 'your shop'}</h2><p>{completed} of {checklist.length} steps complete</p></div><div className="sp-progress" aria-hidden="true"><span style={{ width: `${(completed / checklist.length) * 100}%` }} /></div></div>
-      <ul>{checklist.map(item => <li key={item.label} className={item.done ? 'done' : ''}>{item.done ? <Check size={16} /> : <Circle size={16} />}<span>{item.label}</span>{!item.done && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onNavigate(item.page)}>Start<ArrowRight size={14} /></button>}</li>)}</ul>
+      <ul>{checklist.map(item => <li key={item.label} className={item.done ? 'done' : ''}>{item.done ? <Check size={16} aria-hidden="true" /> : <Circle size={16} aria-hidden="true" />}<span>{item.done && <span className="sr-only">Done: </span>}{item.label}</span>{!item.done && <button type="button" className="btn btn-ghost btn-sm" aria-label={`Start: ${item.label}`} onClick={() => onNavigate(item.page)}>Start<ArrowRight size={14} aria-hidden="true" /></button>}</li>)}</ul>
     </section>}
 
     <section className="sp-kpis" aria-label="Key figures">
       <div className="card sp-kpi"><span className="sp-kpi-label"><QrCode size={16} />QR scans</span><strong>{compact(scans)}</strong>{previous ? <Delta current={scans} previous={sumDays(visits.daily, previous)} /> : <span className="sp-delta muted">{compact(visits.count || 0)} all time</span>}</div>
-      <div className="card sp-kpi"><span className="sp-kpi-label"><Star size={16} />Average rating</span><strong>{feedback.average ? feedback.average.toFixed(1) : '—'}</strong><span className="sp-delta muted">{feedback.total ? `From ${feedback.total.toLocaleString()} responses` : 'No ratings yet'}</span></div>
+      <div className="card sp-kpi"><span className="sp-kpi-label"><Star size={16} />Average rating</span><strong>{feedback.average ? feedback.average.toFixed(1) : '—'}</strong><span className="sp-delta muted">{feedback.total ? `From ${feedback.total.toLocaleString()} ${feedback.total === 1 ? 'response' : 'responses'}` : 'No ratings yet'}</span></div>
       <div className="card sp-kpi"><span className="sp-kpi-label"><MessageSquare size={16} />Feedback received</span><strong>{compact(received)}</strong>{previous ? <Delta current={received} previous={sumDays(feedback.daily, previous)} /> : <span className="sp-delta muted">{feedback.total.toLocaleString()} all time</span>}</div>
       <button type="button" className="card sp-kpi sp-kpi-link" onClick={() => onNavigate('inbox')}><span className="sp-kpi-label"><Circle size={16} />Unread feedback</span><strong>{feedback.unread}</strong><span className="sp-delta muted">Open inbox<ArrowRight size={14} /></span></button>
     </section>
@@ -89,7 +90,7 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
       <div className="card-head"><div><h2>All shops</h2><p>Last {range} days</p></div></div>
       <div className="table-wrap"><table className="data-table"><thead><tr><th>Shop</th><th>Status</th><th className="num">Scans</th><th className="num">Rating</th><th className="num">Unread</th><th><span className="sr-only">Open</span></th></tr></thead><tbody>
         {profiles.map(p => { const s = overview.find(o => o.id === p.id); return <tr key={p.id} className={p.id === profile.id ? 'selected' : ''}>
-          <td><span className="sp-shop-cell"><span className="sp-avatar" style={{ background: p.accentColor }}>{p.name.slice(0, 1)}</span>{p.name}</span></td>
+          <td><span className="sp-shop-cell"><ShopAvatar profile={p} showLogo={false} />{p.name}</span></td>
           <td><span className={`badge badge-${p.published ? 'success' : 'neutral'}`}>{p.published ? 'Published' : 'Draft'}</span></td>
           <td className="num">{sumDays(s?.visits.daily, days).toLocaleString()}</td>
           <td className="num">{s?.feedback.average ? s.feedback.average.toFixed(1) : '—'}</td>
