@@ -31,3 +31,6 @@ dist-ssr
 .claude/settings.local.json
 .vercel
 .env*
+
+# Local exports (template PDF, demo QR)
+demo/

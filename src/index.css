@@ -1839,7 +1839,7 @@ html, body {
 .layout-list .public-item-title strong { padding-top: 5px; }
 .layout-list .public-menu-item p { max-width: 670px; margin-top: 8px; }
 .layout-compact .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
-.layout-compact .public-menu-item { display: flex; padding: 16px; gap: 14px; border-radius: 8px; align-items: center; }
+.layout-compact .public-menu-item { display: flex; padding: 16px; gap: 14px; border-radius: 8px; align-items: flex-start; }
 .layout-compact .public-menu-item > img { width: 54px; height: 54px; flex-shrink: 0; object-fit: cover; border-radius: 6px; }
 .layout-compact .public-menu-item > .public-menu-item-body { min-width: 0; flex: 1; padding: 0; }
 .layout-compact .public-item-title { gap: 12px; }
