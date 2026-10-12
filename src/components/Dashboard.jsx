@@ -14,7 +14,7 @@ function Delta({ current, previous }) {
   return <span className={`sp-delta ${change > 0 ? 'up' : change < 0 ? 'down' : ''}`}><Icon size={14} />{Math.abs(change)}% vs previous period</span>;
 }
 
-export default function Dashboard({ profile, savedProfile, profiles, overview, stats, onNavigate, onSelect, onRefresh }) {
+export default function Dashboard({ profile, savedProfile, profiles, overview, stats, onNavigate, onSelect, onRefresh, onPublish }) {
   const [range, setRange] = useState(30);
   const [view, setView] = useState('chart');
   const days = lastDays(range), previous = range <= 60 ? lastDays(range, range) : null;
@@ -27,7 +27,7 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
     { done: !!(profile.logo || profile.coverImage), label: 'Upload a logo or cover photo', page: 'register' },
     { done: (profile.menu || []).length > 0, label: 'Add your first menu item', page: 'menu' },
     { done: !!profile.googleReviewUrl, label: 'Connect your Google review link', page: 'register' },
-    { done: !!savedProfile?.published, label: 'Publish your customer page', page: 'menu' },
+    { done: !!savedProfile?.published, label: 'Publish your customer page', action: onPublish },
   ];
   const completed = checklist.filter(item => item.done).length;
   const maxRating = Math.max(1, ...feedback.distribution);
@@ -43,7 +43,7 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
 
     {completed < checklist.length && <section className="card sp-checklist">
       <div className="card-head"><div><h2>Finish setting up {profile.name || 'your shop'}</h2><p>{completed} of {checklist.length} steps complete</p></div><div className="sp-progress" aria-hidden="true"><span style={{ width: `${(completed / checklist.length) * 100}%` }} /></div></div>
-      <ul>{checklist.map(item => <li key={item.label} className={item.done ? 'done' : ''}>{item.done ? <Check size={16} aria-hidden="true" /> : <Circle size={16} aria-hidden="true" />}<span>{item.done && <span className="sr-only">Done: </span>}{item.label}</span>{!item.done && <button type="button" className="btn btn-ghost btn-sm" aria-label={`Start: ${item.label}`} onClick={() => onNavigate(item.page)}>Start<ArrowRight size={14} aria-hidden="true" /></button>}</li>)}</ul>
+      <ul>{[...checklist].sort((a, b) => a.done - b.done).map(item => <li key={item.label} className={item.done ? 'done' : ''}>{item.done ? <Check size={16} aria-hidden="true" /> : <Circle size={16} aria-hidden="true" />}<span>{item.done && <span className="sr-only">Done: </span>}{item.label}</span>{!item.done && <button type="button" className="btn btn-ghost btn-sm" aria-label={`${item.action ? 'Do it now' : 'Start'}: ${item.label}`} onClick={() => item.action ? item.action() : onNavigate(item.page)}>{item.action ? 'Publish' : 'Start'}<ArrowRight size={14} aria-hidden="true" /></button>}</li>)}</ul>
     </section>}
 
     <section className="sp-kpis" aria-label="Key figures">
@@ -80,7 +80,7 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
         <div className="card-head"><div><h2>Quick actions</h2></div></div>
         <div className="sp-actions-list">
           <button type="button" onClick={() => onNavigate('menu')}><span>Edit menu</span><small>{(profile.menu || []).length} items</small><ArrowRight size={16} /></button>
-          <button type="button" onClick={() => onNavigate('qr')}><span>Design QR code</span><small>{compact(visits.count || 0)} scans all time</small><ArrowRight size={16} /></button>
+          <button type="button" onClick={() => onNavigate('qr')}><span>Design QR code</span><small>{compact(visits.count || 0)} {visits.count === 1 ? 'scan' : 'scans'} all time</small><ArrowRight size={16} /></button>
           <button type="button" onClick={() => onNavigate('print')}><span>Print a table stand</span><small>Posters, tents and stickers</small><ArrowRight size={16} /></button>
         </div>
       </section>

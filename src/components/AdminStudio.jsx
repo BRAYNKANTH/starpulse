@@ -4,8 +4,11 @@ import ImageUpload from './ImageUpload';
 import { checkImageBudget } from '../utils/images';
 import { INITIAL_PRESETS } from '../data/presets';
 import Field from './Field';
+import ShopLanding from './ShopLanding';
+import { resolveMenuDesign } from '../data/menuDesign';
 
-export default function AdminStudio({ businessProfile: p, setBusinessProfile, onSave, saving, onNavigateToPrint }) {
+export default function AdminStudio({ businessProfile: p, setBusinessProfile, onNavigateToPrint, onNavigate }) {
+  const accent = resolveMenuDesign(p.menuDesign).accent;
   const [error, setError] = useState('');
   const [tag, setTag] = useState('');
   const update = (field, value) => {
@@ -20,7 +23,7 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
   return <div className="sp-page">
     <header className="page-header">
       <div><h1>Business profile</h1><p>Branding, contact details and the review link shown on your customer page.</p></div>
-      <div className="page-actions"><button type="button" className="btn btn-secondary" onClick={onNavigateToPrint}>Create QR poster<ArrowRight size={16} /></button><button type="button" className="btn btn-primary" disabled={saving} onClick={onSave}>{saving ? 'Saving…' : 'Save profile'}</button></div>
+      <div className="page-actions"><button type="button" className="btn btn-secondary" onClick={onNavigateToPrint}>Create QR poster<ArrowRight size={16} /></button></div>
     </header>
     {error && <p className="notice error" role="alert">{error}</p>}
     <div className="sp-grid-form">
@@ -35,7 +38,7 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
         <section className="card">
           <div className="card-head"><div><h2>Branding</h2><p>Logo, cover photo and accent colour for your pages.</p></div></div>
           <div className="form-grid"><ImageUpload id="business-logo-upload" label="Logo" value={p.logo} maxWidth={512} onChange={value => update('logo', value)} /><ImageUpload id="business-cover-upload" label="Cover photo" value={p.coverImage} maxWidth={1400} onChange={value => update('coverImage', value)} /></div>
-          <div className="color-field">{field('accentColor', 'Accent colour', { type: 'color' })}<code>{(p.accentColor || '').toUpperCase()}</code></div>
+          <div className="form-group"><span className="form-label">Brand colour</span><div className="brand-colour-row"><span className="brand-colour-swatch" style={{ background: accent }} aria-hidden="true" /><code>{accent.toUpperCase()}</code><button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('menu')}>Change in Menu → Design</button></div><p className="field-help">Your brand colour is your menu design’s accent, so your pages, menu and QR posters always match.</p></div>
         </section>
         <section className="card">
           <div className="card-head"><div><h2>Reviews & feedback</h2><p>Every customer sees the Google link, whatever rating they choose.</p></div></div>
@@ -55,7 +58,7 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
           <div className="chip-row">{INITIAL_PRESETS.map(preset => <button type="button" className="chip chip-toggle" key={preset.id} onClick={() => { if (window.confirm(`Replace your branding with the “${preset.name}” sample?`)) setBusinessProfile({ ...p, ...preset, id: p.id, menu: p.menu, currency: p.currency, published: p.published, googleReviewUrl: p.googleReviewUrl, googlePlaceId: p.googlePlaceId }); }}>{preset.name.split('&')[0].trim()}</button>)}</div>
         </section>
       </div>
-      <aside className="brand-preview"><p className="eyebrow">CUSTOMER PAGE PREVIEW</p><div className="brand-preview-cover" style={{ backgroundImage: p.coverImage ? `url("${p.coverImage}")` : undefined }} />{p.logo && <img className="brand-preview-logo" src={p.logo} alt={`${p.name || 'Shop'} logo`} />}<h2>{p.name || 'Your shop name'}</h2><p>{p.tagline || 'Your story starts here.'}</p><div className="preview-menu-pill" style={{ background: p.accentColor }}>Explore our menu →</div><p className="muted">{p.address}</p><p className="muted">{p.hours}</p></aside>
+      <aside className="md-preview brand-preview"><div className="md-preview-bar"><span><span className="preview-live-dot" />Customer page preview</span></div><div className="md-preview-frame phone" aria-hidden="true" inert><div className="design-preview-scroll"><ShopLanding businessProfile={p} initialView="landing" preview /></div></div></aside>
     </div>
   </div>;
 }

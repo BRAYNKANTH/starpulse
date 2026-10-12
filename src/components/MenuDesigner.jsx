@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Monitor, RotateCcw, Smartphone } from 'lucide-react';
+import { Check, LayoutGrid, Monitor, RotateCcw, Smartphone } from 'lucide-react';
 import Field from './Field';
 import ShopLanding from './ShopLanding';
 import { menuExample } from '../data/menuExamples';
@@ -53,6 +53,8 @@ export default function MenuDesigner({ businessProfile, onChange }) {
   const design = normalizeMenuDesign(businessProfile.menuDesign);
   const template = MENU_TEMPLATES.find(t => t.id === design.template);
   const [group, setGroup] = useState('all');
+  // The gallery opens for a menu that has never chosen a template; afterwards it collapses to the current choice.
+  const [browsing, setBrowsing] = useState(!businessProfile.menuDesign?.template);
   const [section, setSection] = useState('layout');
   const [device, setDevice] = useState('phone');
   const frame = useRef(null);
@@ -68,13 +70,19 @@ export default function MenuDesigner({ businessProfile, onChange }) {
   const set = (field, value) => onChange({ ...design, [field]: value });
   const bound = { ...design, onSet: set };
   const selectTemplate = id => onChange({ ...design, ...TEMPLATE_RESET, template: id });
+  const groupName = TEMPLATE_GROUPS.find(g => g.id === template.group)?.name;
   const customised = Object.keys(TEMPLATE_RESET).filter(key => design[key] !== TEMPLATE_RESET[key]).length;
   const templates = MENU_TEMPLATES.filter(t => group === 'all' || t.group === group);
   const templateFont = fontPair(template.font);
 
   return <section className="md" aria-label="Menu design studio">
-    <div className="card card-flush">
-      <div className="card-head"><div><h2>Templates</h2><p>{MENU_TEMPLATES.length} designs. Choosing one keeps your items, prices and text and resets layout, fonts and colours to the template.</p></div></div>
+    {!browsing ? <div className="card md-current">
+      <span className="md-swatches md-current-swatches" aria-hidden="true">{[template.background, template.surface, template.accent].map(c => <i key={c} style={{ background: c }} />)}</span>
+      <div><p className="eyebrow">Template · {groupName}</p><h2>{template.name}</h2><p className="muted">{template.description}</p></div>
+      <button type="button" className="btn btn-secondary" onClick={() => setBrowsing(true)}><LayoutGrid size={16} aria-hidden="true" />Browse {MENU_TEMPLATES.length} templates</button>
+    </div> : <div className="card card-flush">
+      <div className="card-head"><div><h2>Templates</h2><p>{MENU_TEMPLATES.length} designs. Choosing one keeps your items, prices and text and resets layout, fonts and colours to the template.</p></div>
+        {businessProfile.menuDesign?.template && <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBrowsing(false)}>Done</button>}</div>
       <div className="md-groups" role="group" aria-label="Template collection">
         {[['all', 'All', MENU_TEMPLATES.length], ...TEMPLATE_GROUPS.map(g => [g.id, g.name, MENU_TEMPLATES.filter(t => t.group === g.id).length])].map(([id, name, count]) => <button key={id} type="button" aria-pressed={group === id} onClick={() => setGroup(id)}>{name}<span>{count}</span></button>)}
       </div>
@@ -83,10 +91,10 @@ export default function MenuDesigner({ businessProfile, onChange }) {
         <div className="md-template-meta">
           <div><strong>{t.name}</strong><span className="md-swatches" aria-hidden="true">{[t.background, t.surface, t.accent].map(c => <i key={c} style={{ background: c }} />)}</span></div>
           <p>{t.description}</p>
-          <button type="button" className={`btn btn-sm ${design.template === t.id ? 'btn-secondary' : 'btn-primary'}`} aria-pressed={design.template === t.id} onClick={() => selectTemplate(t.id)}>{design.template === t.id ? <><Check size={15} />Selected</> : 'Use template'}<span className="sr-only">: {t.name}</span></button>
+          <button type="button" className={`btn btn-sm ${design.template === t.id ? 'btn-ghost md-selected' : 'btn-secondary'}`} aria-pressed={design.template === t.id} onClick={() => selectTemplate(t.id)}>{design.template === t.id ? <><Check size={15} aria-hidden="true" />Selected</> : 'Use template'}<span className="sr-only">: {t.name}</span></button>
         </div>
       </article>)}</div>
-    </div>
+    </div>}
 
     <div className="md-workbench">
       <div className="card md-options">
@@ -141,14 +149,14 @@ export default function MenuDesigner({ businessProfile, onChange }) {
           <Field id="design-subtitle" label="Menu introduction" multiline rows={2} maxLength={300} value={design.subtitle} placeholder="Use your shop tagline, or write a welcome message…" onChange={value => set('subtitle', value)} />
           <div className="md-toggles">{[['showCover', 'Cover photo'], ['showBrand', 'Logo & name header'], ['showImages', 'Item photos'], ['showDescriptions', 'Descriptions'], ['showPrices', 'Prices'], ['showSearch', 'Search box'], ['showCategories', 'Category navigation']].map(([field, label]) => <label key={field} className="switch"><input type="checkbox" role="switch" checked={design[field]} onChange={event => set(field, event.target.checked)} /><span aria-hidden="true" />{label}</label>)}</div>
         </div>}
-        <p className="field-help">Save your menu to publish design changes. Printed QR codes keep working.</p>
+        <p className="field-help">Save in the top bar to publish design changes. Printed QR codes keep working.</p>
       </div>
 
       <aside className="md-preview">
         <div className="md-preview-bar"><span><span className="preview-live-dot" />Live preview</span>
           <div className="segmented" role="group" aria-label="Preview size"><button type="button" aria-pressed={device === 'phone'} aria-label="Phone" onClick={() => setDevice('phone')}><Smartphone size={15} /></button><button type="button" aria-pressed={device === 'desktop'} aria-label="Desktop" onClick={() => setDevice('desktop')}><Monitor size={15} /></button></div>
         </div>
-        <div ref={frame} className={`md-preview-frame ${device}`}><div className="design-preview-scroll" style={device === 'desktop' ? { width: 1024, zoom: Math.min(1, frameWidth / 1024) } : undefined}><ShopLanding businessProfile={businessProfile.menu?.length ? businessProfile : { ...menuExample(template), name: businessProfile.name || menuExample(template).name, menuDesign: businessProfile.menuDesign }} initialView="menu" preview /></div></div>
+        <div ref={frame} className={`md-preview-frame ${device}`} aria-hidden="true" inert><div className="design-preview-scroll" style={device === 'desktop' ? { width: 1024, zoom: Math.min(1, frameWidth / 1024) } : undefined}><ShopLanding businessProfile={businessProfile.menu?.length ? businessProfile : { ...menuExample(template), name: businessProfile.name || menuExample(template).name, menuDesign: businessProfile.menuDesign }} initialView="menu" preview /></div></div>
         {!businessProfile.menu?.length && <p className="field-help">Showing sample dishes until you add menu items.</p>}
       </aside>
     </div>

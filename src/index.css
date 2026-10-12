@@ -83,7 +83,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .shop-hero > div { max-width: 680px; }
 .shop-kicker { text-transform: uppercase; letter-spacing: .16em; font-size: .72rem; font-weight: 700; color: #7a8b63; margin-bottom: 14px; }
 .shop-hero .shop-kicker { color: #ebd498; }
-.shop-hero h1 { font-family: 'Outfit', sans-serif; font-size: clamp(2.6rem, 6vw, 4.8rem); line-height: 1.05; letter-spacing: -.04em; margin-bottom: 22px; overflow-wrap: anywhere; }
+.shop-hero h1 { font-family: 'Outfit', sans-serif; font-size: clamp(2.2rem, 6cqw, 4.8rem); line-height: 1.05; letter-spacing: -.04em; margin-bottom: 22px; overflow-wrap: break-word; }
 .shop-hero > div > p:not(.shop-kicker) { font-size: 1.1rem; color: #e0e9dc; max-width: 500px; }
 .shop-primary-button { display: inline-flex; align-items: center; gap: 28px; border: 0; background: var(--shop-accent); color: #13261c; border-radius: 8px; padding: 16px 22px; margin-top: 32px; font-weight: 700; cursor: pointer; }
 .shop-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px; max-width: 1160px; margin: 0 auto; padding: 36px 24px; border-bottom: 1px solid #dbe1d4; }
@@ -203,7 +203,8 @@ html, body {
   font-family: var(--font-body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* clip (not hidden): hidden would make body a scroll container and break sticky headers and sidebars. */
+  overflow-x: clip;
 }
 
 /* Background Atmosphere Glows */
@@ -1956,3 +1957,48 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Customer page loading outline (neutral, before the shop's own colours are known) */
+.public-loading { min-height: 100vh; background: #f6f5f2; color: #1f2328; }
+.public-loading.public-status { margin: 0; max-width: none; padding: 120px 24px; }
+.public-loading.public-status h1 { font-size: 1.5rem; margin-bottom: 8px; }
+.public-loading.public-status p { color: #4b5563; max-width: 420px; margin: 0 auto; }
+.public-skeleton { max-width: 720px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.public-skeleton i { display: block; border-radius: 10px; background: linear-gradient(90deg, #ebe9e4 25%, #f3f2ee 50%, #ebe9e4 75%); background-size: 200% 100%; animation: sk-shimmer 1.2s ease-in-out infinite; }
+.public-skeleton .sk-nav { height: 44px; margin-bottom: 18px; }
+.public-skeleton .sk-title { height: 34px; width: 60%; }
+.public-skeleton .sk-line { height: 16px; width: 40%; margin-bottom: 10px; }
+.public-skeleton .sk-card { height: 96px; }
+@keyframes sk-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* Customer feedback page: uses the shop's menu template palette (see resolveMenuDesign). */
+.shop-public .fb-page { padding: 32px 16px 48px; display: flex; justify-content: center; }
+.shop-public .fb-card { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 32px 24px; border-radius: 20px; background: var(--menu-surface); color: var(--menu-card-text, var(--menu-text)); border: 1px solid var(--menu-border); box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .35); --menu-accent-text: var(--menu-accent-on-surface); }
+.shop-public .fb-logo { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 14px; }
+.shop-public .fb-kicker { margin: 0 0 6px; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--menu-accent-text); }
+.shop-public .fb-title { margin: 0 0 8px; font-family: var(--menu-heading-font, inherit); font-size: clamp(1.4rem, 5vw, 1.75rem); line-height: 1.2; color: inherit; }
+.shop-public .fb-lead { margin: 0 0 20px; font-size: .95rem; line-height: 1.5; }
+.shop-public .fb-stars { display: flex; gap: 4px; }
+.shop-public .fb-star { display: grid; place-items: center; width: 52px; height: 52px; border: 0; border-radius: 12px; background: none; color: color-mix(in srgb, currentColor 60%, var(--menu-surface)); cursor: pointer; transition: transform .12s; }
+.shop-public .fb-star svg { fill: transparent; }
+.shop-public .fb-star.on { color: #f5a524; }
+.shop-public .fb-star.on svg { fill: #f5a524; }
+.shop-public .fb-star:hover { transform: scale(1.08); }
+.shop-public .fb-rating-word { min-height: 1.4em; margin: 6px 0 18px; font-weight: 600; font-size: .95rem; }
+.shop-public .fb-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 18px; }
+.shop-public .fb-tag { min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--menu-border); background: transparent; color: inherit; font: inherit; font-size: .88rem; cursor: pointer; }
+.shop-public .fb-tag.on { background: var(--menu-accent); border-color: var(--menu-accent); color: var(--menu-on-accent); }
+.shop-public .fb-label { align-self: stretch; text-align: left; font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
+.shop-public .fb-label span { font-weight: 400; }
+.shop-public .fb-note { align-self: stretch; width: 100%; min-height: 88px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--menu-border); background: color-mix(in srgb, var(--menu-surface) 92%, currentColor); color: inherit; font: inherit; font-size: .95rem; resize: vertical; }
+.shop-public .fb-note::placeholder { color: color-mix(in srgb, currentColor 55%, var(--menu-surface)); }
+.shop-public .fb-note:focus-visible { outline: 3px solid color-mix(in srgb, var(--menu-accent) 70%, transparent); outline-offset: 2px; }
+.shop-public .fb-actions { align-self: stretch; display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.shop-public .fb-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 12px 18px; border-radius: 12px; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; }
+.shop-public .fb-button:disabled { opacity: .6; cursor: not-allowed; }
+.shop-public .fb-primary { border: 0; background: var(--menu-accent); color: var(--menu-on-accent); }
+.shop-public .fb-secondary { border: 1px solid var(--menu-border); background: transparent; color: inherit; }
+.shop-public .fb-google-g { width: 20px; height: 20px; }
+.shop-public .fb-hint { margin: 10px 0 0; font-size: .85rem; }
+.shop-public .fb-sent { align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; padding: 14px; border-radius: 12px; background: color-mix(in srgb, #12b76a 14%, var(--menu-surface)); font-weight: 600; }
+.shop-public .fb-error { align-self: stretch; margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: #fef3f2; color: #b42318; font-size: .9rem; }

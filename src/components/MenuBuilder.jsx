@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, FolderPlus, GripVertical, ImageIcon, Pencil, Plus, Search, Trash2, TriangleAlert } from 'lucide-react';
+import ActionMenu from './ActionMenu';
 import ImageUpload from './ImageUpload';
 import Field from './Field';
 import ShopLanding from './ShopLanding';
 import MenuDesigner from './MenuDesigner';
 import { checkImageBudget } from '../utils/images';
-import { shopUrl } from '../data/api';
 import { MENU_TAGS, menuTagLabel } from '../data/menuTags';
 import { newId } from '../utils/ids';
 
@@ -14,7 +14,7 @@ const statusOf = item => item.available === false ? 'hidden' : item.soldOut ? 's
 const STATUS = { available: ['Available', 'success'], soldout: ['Sold out', 'warning'], hidden: ['Hidden', 'neutral'] };
 const incomplete = item => !item.name?.trim() || String(item.price ?? '').trim() === '' || !(Number(item.price) >= 0);
 
-export default function MenuBuilder({ businessProfile: p, setBusinessProfile, onSave, saving }) {
+export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) {
   const [tab, setTab] = useState('items');
   const [preview, setPreview] = useState(false);
   const [error, setError] = useState('');
@@ -102,17 +102,11 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile, on
       <div><h1>Menu</h1><p>{items.length} item{items.length === 1 ? '' : 's'} in {filled.length} categor{filled.length === 1 ? 'y' : 'ies'}{p.published ? ' · Published' : ' · Draft'}</p></div>
       <div className="page-actions">
         <button type="button" className="btn btn-secondary" onClick={() => setPreview(!preview)}>{preview ? <EyeOff size={16} /> : <Eye size={16} />}{preview ? 'Close preview' : 'Preview'}</button>
-        <button type="button" className="btn btn-primary" disabled={saving} onClick={onSave}>{saving ? 'Saving…' : 'Save menu'}</button>
       </div>
     </header>
 
-    <section className="card publish-row">
-      <div><h2>Customer page</h2><p className="muted">{p.published ? <>Live at <a href={shopUrl(p.id)} target="_blank" rel="noopener noreferrer">your shop page ↗</a> once saved.</> : 'Drafts are hidden from customers. Publish when your menu is ready.'}</p></div>
-      <label className="switch"><input type="checkbox" role="switch" checked={p.published} onChange={event => update('published', event.target.checked)} /><span aria-hidden="true" />Publish this shop</label>
-    </section>
-
     {error && <p className="notice error" role="alert">{error}</p>}
-    {needsAttention > 0 && <p className="notice warning"><TriangleAlert size={16} />{needsAttention} item{needsAttention > 1 ? 's need' : ' needs'} a name and price before you can save.</p>}
+    {needsAttention > 0 && <p className="notice warning"><TriangleAlert size={16} />{needsAttention} item{needsAttention > 1 ? 's need' : ' needs'} a name and price before you can save your changes.</p>}
 
     <div className="tabs" role="tablist" aria-label="Menu sections">{[['items', 'Items'], ['design', 'Design'], ['settings', 'Settings']].map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setPreview(false); }}>{label}</button>)}</div>
 
@@ -130,12 +124,12 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile, on
           <div className={`menu-category-head ${dropTarget === `end:${group.name}` ? 'drop-end' : ''}`}>
             {renaming === group.name ? <form className="inline-form" onSubmit={e => { e.preventDefault(); renameCategory(group.name, e.currentTarget.elements.name.value); }}><input name="name" className="form-input" aria-label="Category name" defaultValue={group.name} maxLength={80} autoFocus onKeyDown={e => { if (e.key === 'Escape') setRenaming(null); }} /><button className="btn btn-primary btn-sm">Rename</button><button type="button" className="btn btn-ghost btn-sm" onClick={() => setRenaming(null)}>Cancel</button></form>
               : <h2>{group.name}<span className="count">{group.items.length}</span></h2>}
-            <div className="sp-row-actions">
-              <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Rename ${group.name}`} title="Rename" onClick={() => setRenaming(group.name)}><Pencil size={15} /></button>
-              <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Move ${group.name} up`} title="Move up" disabled={order <= 0 || !!search} onClick={() => moveCategory(group.name, -1)}><ArrowUp size={15} /></button>
-              <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Move ${group.name} down`} title="Move down" disabled={order < 0 || order >= filled.length - 1 || !!search} onClick={() => moveCategory(group.name, 1)}><ArrowDown size={15} /></button>
-              <button type="button" className="btn btn-ghost btn-icon btn-sm danger" aria-label={`Delete ${group.name}`} title="Delete category" onClick={() => deleteCategory(group)}><Trash2 size={15} /></button>
-            </div>
+            <ActionMenu label={`${group.name} actions`} actions={[
+              { label: 'Rename', icon: Pencil, onSelect: () => setRenaming(group.name) },
+              { label: 'Move up', icon: ArrowUp, disabled: order <= 0 || !!search, onSelect: () => moveCategory(group.name, -1) },
+              { label: 'Move down', icon: ArrowDown, disabled: order < 0 || order >= filled.length - 1 || !!search, onSelect: () => moveCategory(group.name, 1) },
+              { label: 'Delete category', icon: Trash2, danger: true, onSelect: () => deleteCategory(group) },
+            ]} />
           </div>
           <ul className="menu-rows">{group.items.map((item, index) => { const status = statusOf(item), open = expanded === item.id; return <li key={item.id} className={`menu-row ${open ? 'open' : ''} ${dropTarget === item.id ? 'drop-before' : ''} ${dragging === item.id ? 'dragging' : ''} status-${status}`} {...dragProps(group.name, item.id)}>
             <div className="menu-row-main" draggable={!search && !open} onDragStart={event => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); setDragging(item.id); }} onDragEnd={() => { setDragging(null); setDropTarget(null); }}>
@@ -148,12 +142,13 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile, on
               <div className="chip-row hide-sm">{(item.tags || []).map(tag => <span key={tag} className="chip">{menuTagLabel(tag)}</span>)}</div>
               <span className="menu-row-price">{String(item.price ?? '').trim() === '' ? '—' : money(item.price)}</span>
               <span className={`badge badge-${STATUS[status][1]}`}>{STATUS[status][0]}</span>
-              <div className="sp-row-actions">
-                <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Move ${item.name || 'item'} up`} title="Move up" disabled={index === 0 || !!search} onClick={() => moveItem(item, -1)}><ArrowUp size={15} /></button>
-                <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Move ${item.name || 'item'} down`} title="Move down" disabled={index === group.items.length - 1 || !!search} onClick={() => moveItem(item, 1)}><ArrowDown size={15} /></button>
-                <button type="button" className="btn btn-ghost btn-icon btn-sm hide-sm" aria-label={`Duplicate ${item.name || 'item'}`} title="Duplicate" disabled={items.length >= 200} onClick={() => duplicateItem(item)}><Copy size={15} /></button>
-                <button type="button" className="btn btn-ghost btn-icon btn-sm danger" aria-label={`Delete ${item.name || 'item'}`} title="Delete" onClick={() => removeItem(item)}><Trash2 size={15} /></button>
-              </div>
+              <ActionMenu label={`${item.name || 'Untitled item'} actions`} actions={[
+                { label: 'Edit', icon: Pencil, onSelect: () => setExpanded(item.id) },
+                { label: 'Move up', icon: ArrowUp, disabled: index === 0 || !!search, onSelect: () => moveItem(item, -1) },
+                { label: 'Move down', icon: ArrowDown, disabled: index === group.items.length - 1 || !!search, onSelect: () => moveItem(item, 1) },
+                { label: 'Duplicate', icon: Copy, disabled: items.length >= 200, onSelect: () => duplicateItem(item) },
+                { label: 'Delete', icon: Trash2, danger: true, onSelect: () => removeItem(item) },
+              ]} />
             </div>
             {open && <div className="menu-row-editor">
               <div className="form-grid">

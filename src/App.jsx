@@ -21,6 +21,7 @@ import Toasts from './components/Toasts';
 import { useToasts } from './components/useToasts';
 import { createBusiness, getStoredBusinessProfile, saveStoredBusinessProfile } from './data/presets';
 import { api, shopUrl } from './data/api';
+import { resolveMenuDesign } from './data/menuDesign';
 
 export default function App() {
   const bizId = new URLSearchParams(window.location.search).get('biz');
@@ -34,7 +35,11 @@ function PublicShop({ id }) {
     api(`/businesses/${encodeURIComponent(id)}`).then(profile => { if (active) setResult({ profile }); }).catch(error => { if (active) setResult({ error: error.message }); });
     return () => { active = false; };
   }, [id]);
-  if (!result.profile) return <main className="public-status"><h1>{result.loading ? 'Opening shop…' : 'Shop unavailable'}</h1><p>{result.error}</p></main>;
+  // A neutral page outline while the shop loads, so customers see structure instead of a blank screen.
+  if (result.loading) return <main className="public-loading" aria-busy="true"><span className="sr-only" role="status">Opening the shop…</span>
+    <div className="public-skeleton" aria-hidden="true"><i className="sk-bar sk-nav" /><i className="sk-bar sk-title" /><i className="sk-bar sk-line" />{[0, 1, 2].map(n => <i key={n} className="sk-card" />)}</div>
+  </main>;
+  if (!result.profile) return <main className="public-loading public-status"><h1>This shop isn’t available</h1><p>{result.error} If you scanned a QR code, ask the staff for help.</p></main>;
   return <ShopLanding businessProfile={result.profile} initialView={new URLSearchParams(window.location.search).get('view') || 'landing'} />;
 }
 
@@ -137,11 +142,12 @@ function OwnerStudio() {
   const save = async () => {
     setSaving(true); setError('');
     try {
-      const saved = await api(`/admin/businesses/${businessProfile.id}`, { method: 'PUT', body: JSON.stringify(businessProfile) });
+      const accentColor = resolveMenuDesign(businessProfile.menuDesign).accent;
+      const saved = await api(`/admin/businesses/${businessProfile.id}`, { method: 'PUT', body: JSON.stringify({ ...businessProfile, accentColor: /^#[0-9a-f]{6}$/i.test(accentColor) ? accentColor : businessProfile.accentColor }) });
       setBusinessProfile(saved);
       setProfiles(current => current.some(p => p.id === saved.id) ? current.map(p => p.id === saved.id ? saved : p) : [...current, saved]);
       saveStoredBusinessProfile(saved); saveDraftOwner(account.user.id); setDirty(false); refreshOverview(); refreshAccount();
-      notify(saved.published ? 'Shop saved. Your public page is up to date.' : 'Draft saved. Publish it from the Menu page when ready.');
+      notify(saved.published ? 'Shop saved. Your public page is up to date.' : 'Draft saved. Turn on Published in the top bar and save when you’re ready to go live.');
     } catch (e) {
       if (e.status === 401) { notify('Your session has ended. Sign in again; unsaved changes were not kept.', 'error'); signedOut(); return; }
       setError(e.message); notify(e.message, 'error');
@@ -176,7 +182,8 @@ function OwnerStudio() {
   const savedProfile = profiles.find(p => p.id === businessProfile.id);
   const stats = overview.find(s => s.id === businessProfile.id);
   const unreadTotal = overview.reduce((sum, s) => sum + (s.feedback?.unread || 0), 0);
-  const state = uploads ? ['Preparing image…', 'neutral'] : dirty ? ['Unsaved changes', 'warning'] : businessProfile.published && savedProfile ? ['Published', 'success'] : ['Draft', 'neutral'];
+  const state = uploads ? ['Preparing image…', 'neutral'] : dirty ? ['Unsaved changes', 'warning'] : !savedProfile ? ['Not saved yet', 'neutral'] : ['All changes saved', 'success'];
+  const canSave = (dirty || !savedProfile) && !uploads;
   const navigate = page => { setActiveTab(page); setNavOpen(false); };
 
   return <div className="studio" data-theme={theme}>
@@ -190,20 +197,21 @@ function OwnerStudio() {
           {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           <option value="__new">+ Create new shop</option>
         </select>
-        <span className={`badge badge-${state[1]}`}>{state[0]}</span>
+        <label className="switch sp-publish" title={businessProfile.published ? 'Customers can see this shop' : 'Hidden from customers'}><input type="checkbox" role="switch" checked={businessProfile.published === true} onChange={event => update({ ...businessProfile, published: event.target.checked })} /><span aria-hidden="true" /><small className="sp-publish-label">{businessProfile.published ? 'Published' : 'Draft'}</small></label>
+        <span className={`badge badge-${state[1]}`} role="status">{state[0]}</span>
         <div className="sp-topbar-actions">
           {savedProfile?.published && <a className="btn btn-ghost" href={shopUrl(businessProfile.id)} target="_blank" rel="noopener noreferrer" aria-label="View page (opens in a new tab)" title="View customer page"><ExternalLink size={16} aria-hidden="true" /><span className="hide-sm">View page</span></a>}
-          <button type="button" className="btn btn-primary" onClick={save} disabled={saving || uploads > 0}>{saving ? 'Saving…' : <>Save<span className="hide-sm"> changes</span></>}</button>
+          <button type="button" className={`btn ${canSave ? 'btn-primary' : 'btn-secondary'}`} onClick={save} disabled={saving || !canSave}>{saving ? 'Saving…' : canSave ? <>Save<span className="hide-sm"> changes</span></> : 'Saved'}</button>
         </div>
       </header>
       <main className="sp-content">
         {error && <div className="notice error" role="alert"><span>{error}</span><button type="button" className="btn btn-ghost btn-sm" onClick={() => setError('')}>Dismiss</button></div>}
         <ImageUploadStatus.Provider value={trackUpload}><fieldset disabled={saving || uploads > 0} className="studio-fieldset">
-          {activeTab === 'dashboard' && <Dashboard profile={businessProfile} savedProfile={savedProfile} profiles={profiles} overview={overview} stats={stats} onNavigate={navigate} onSelect={select} onRefresh={refreshOverview} />}
-          {activeTab === 'qr' && <BrandedQrStudio key={businessProfile.id} businessProfile={businessProfile} setBusinessProfile={update} savedProfile={savedProfile} dirty={dirty} onSave={save} saving={saving} />}
-          {activeTab === 'register' && <AdminStudio businessProfile={businessProfile} setBusinessProfile={update} onSave={save} saving={saving} onNavigateToPrint={() => navigate('print')} />}
-          {activeTab === 'menu' && <MenuBuilder key={businessProfile.id} businessProfile={businessProfile} setBusinessProfile={update} onSave={save} saving={saving} />}
-          {activeTab === 'print' && <QrNfcGenerator businessProfile={businessProfile} savedProfile={savedProfile} dirty={dirty} />}
+          {activeTab === 'dashboard' && <Dashboard profile={businessProfile} savedProfile={savedProfile} profiles={profiles} overview={overview} stats={stats} onNavigate={navigate} onSelect={select} onRefresh={refreshOverview} onPublish={() => update({ ...businessProfile, published: true })} />}
+          {activeTab === 'qr' && <BrandedQrStudio key={businessProfile.id} businessProfile={businessProfile} setBusinessProfile={update} savedProfile={savedProfile} dirty={dirty} />}
+          {activeTab === 'register' && <AdminStudio businessProfile={businessProfile} setBusinessProfile={update} onNavigateToPrint={() => navigate('print')} onNavigate={navigate} />}
+          {activeTab === 'menu' && <MenuBuilder key={businessProfile.id} businessProfile={businessProfile} setBusinessProfile={update} />}
+          {activeTab === 'print' && <QrNfcGenerator businessProfile={businessProfile} savedProfile={savedProfile} dirty={dirty} onNavigate={navigate} />}
           {activeTab === 'profiles' && <SavedProfiles profiles={profiles} overview={overview} activeProfile={businessProfile} onSelect={profile => select(profile, 'dashboard')} onNew={newBusiness} onDelete={deleteShop} plan={account.plan} />}
           {activeTab === 'account' && <AccountSettings account={account} onAccountChange={setAccount} notify={notify} />}
           {activeTab === 'accounts' && account.user.role === 'admin' && <AdminAccounts currentUser={account.user} notify={notify} onShopsChanged={reloadShops} />}
