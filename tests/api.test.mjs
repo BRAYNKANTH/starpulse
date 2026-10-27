@@ -263,3 +263,83 @@ test('the old single-owner JSON store is imported once and can be claimed by an 
     assert.equal(overview.feedback.recent[0].timestamp, '2026-01-02T10:00:00.000Z');
   } finally { await close(); }
 });
+
+test('every response carries security headers, and public shop data may be cached briefly', async () => {
+  const { client, close } = await setup();
+  const owner = client(), guest = client();
+  try {
+    await owner.signup('headers@example.com');
+    await owner('/api/admin/businesses/cafe', 'PUT', profile('Cafe'));
+    const shop = await guest('/api/businesses/cafe');
+    assert.equal(shop.headers.get('x-frame-options'), 'DENY');
+    assert.match(shop.headers.get('content-security-policy'), /frame-ancestors 'none'/);
+    assert.ok(shop.headers.get('strict-transport-security'));
+    assert.equal(shop.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+    assert.match(shop.headers.get('cache-control'), /s-maxage=15/);
+    assert.equal((await guest('/api/auth/me')).headers.get('cache-control'), 'no-store', 'private data is never cached');
+    assert.equal((await guest('/api/businesses/missing')).headers.get('cache-control'), 'no-store');
+    assert.equal((await guest('/q/cafe')).headers.get('x-frame-options'), 'DENY');
+  } finally { await close(); }
+});
+
+test('QR links only redirect to safe https addresses, checked when saving and again on every scan', async () => {
+  const { store, client, close } = await setup();
+  const owner = client(), guest = client();
+  try {
+    await owner.signup('redirect@example.com');
+    const save = qrUrl => owner('/api/admin/businesses/cafe', 'PUT', { ...profile('Cafe'), qrDestination: 'url', qrUrl });
+    for (const unsafe of ['http://example.com', 'https://user:secret@example.com', 'https://localhost/menu', 'https://127.0.0.1/x', 'https://192.168.1.5/x', 'https://10.0.0.1', 'https://169.254.169.254/latest', 'javascript:alert(1)']) {
+      assert.equal((await save(unsafe)).status, 400, `${unsafe} is refused`);
+    }
+    assert.equal((await save('https://example.com/menu')).status, 200);
+    const scan = await guest('/q/cafe');
+    assert.equal(scan.status, 302);
+    assert.equal(scan.headers.get('location'), 'https://example.com/menu');
+    // Data saved before these rules existed must not become a redirect to a private address.
+    await store.save({ ...(await store.profile('cafe')), qrUrl: 'https://169.254.169.254/latest' }, (await store.userByEmail('redirect@example.com')).id);
+    assert.equal((await guest('/q/cafe')).status, 404);
+  } finally { await close(); }
+});
+
+test('crawlers do not count as scans and one address cannot inflate a shop count', async () => {
+  const { client, close } = await setup();
+  const owner = client(), guest = client();
+  try {
+    await owner.signup('scans@example.com');
+    await owner('/api/admin/businesses/cafe', 'PUT', profile('Cafe'));
+    const count = async () => (await owner('/api/admin/businesses/cafe/analytics')).body.count;
+    for (const agent of ['Googlebot/2.1', 'WhatsApp link preview', 'curl/8.0', 'facebookexternalhit/1.1']) {
+      assert.equal((await guest('/q/cafe', 'GET', undefined, { 'User-Agent': agent })).status, 302, 'automated visitors are still redirected');
+    }
+    assert.equal(await count(), 0);
+    const phone = { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1' };
+    assert.equal((await guest('/q/cafe', 'GET', undefined, phone)).status, 302);
+    assert.equal(await count(), 1);
+    for (let i = 0; i < 40; i++) assert.equal((await guest('/q/cafe', 'GET', undefined, phone)).status, 302, 'throttled scans still redirect');
+    assert.equal(await count(), 30, 'at most 30 scans a minute are counted from one address');
+  } finally { await close(); }
+});
+
+test('sign-in is limited per account as well as per address', async () => {
+  const { client, close } = await setup();
+  const owner = client(), other = client(), attacker = client();
+  try {
+    await owner.signup('target@example.com', 'Target', 'correct horse');
+    await other.signup('someone@example.com', 'Someone', 'another password');
+    for (let i = 0; i < 9; i++) assert.equal((await attacker('/api/auth/login', 'POST', { email: 'Target@example.com', password: `guess ${i}` })).status, 401);
+    assert.equal((await attacker('/api/auth/login', 'POST', { email: 'target@example.com', password: 'guess 11' })).status, 429, 'the account is locked for the window (10 tries, counting the sign-in above), whatever the casing');
+    assert.equal((await other('/api/auth/login', 'POST', { email: 'someone@example.com', password: 'another password' })).status, 200, 'other accounts are unaffected');
+  } finally { await close(); }
+});
+
+test('simultaneous shop creation cannot exceed the plan limit', async () => {
+  const { client, close } = await setup();
+  const owner = client();
+  try {
+    await owner.signup('limit@example.com');
+    const results = await Promise.all(['a', 'b', 'c', 'd', 'e'].map(id => owner(`/api/admin/businesses/shop-${id}`, 'PUT', profile(`Shop ${id}`))));
+    assert.equal(results.filter(r => r.status === 200).length, 1, 'the free plan allows one shop');
+    assert.ok(results.every(r => [200, 403].includes(r.status)));
+    assert.equal((await owner('/api/admin/profiles')).body.length, 1);
+  } finally { await close(); }
+});

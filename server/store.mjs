@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { normalizeQrDesign } from '../src/data/qrDesign.js';
 import { normalizeMenuDesign } from '../src/data/menuDesign.js';
 import { normalizeMenuTags } from '../src/data/menuTags.js';
+import { safeRedirect } from './security.mjs';
 
 export function validateProfile(input, id) {
   if (!input || typeof input !== 'object' || Array.isArray(input) || !/^[a-z0-9-]{1,80}$/.test(id)) throw new Error('Invalid business profile.');
@@ -15,13 +16,16 @@ export function validateProfile(input, id) {
   };
   const name = text(input.name, 150);
   if (!name) throw new Error('Business name is required.');
+  const qrDestination = ['landing', 'menu', 'review', 'url'].includes(input.qrDestination) ? input.qrDestination : 'landing';
+  const qrUrl = url(input.qrUrl);
+  if (qrDestination === 'url' && qrUrl && !safeRedirect(qrUrl)) throw new Error('The QR link must be a secure https web address.');
   const menu = Array.isArray(input.menu) ? input.menu.slice(0, 200).map(item => {
     if (!item || typeof item !== 'object') throw new Error('Invalid menu item.');
     const price = Number(item.price);
     if (!['number', 'string'].includes(typeof item.price) || String(item.price).trim() === '' || !text(item.name, 150) || !Number.isFinite(price) || price < 0 || price > 10000000) throw new Error('Each menu item needs a name and a valid non-negative price.');
     return { id: text(item.id, 80) || randomUUID(), name: text(item.name, 150), category: text(item.category, 80) || 'Menu', description: text(item.description), price, image: url(item.image, true), available: item.available !== false, soldOut: item.soldOut === true, tags: normalizeMenuTags(item.tags) };
   }) : [];
-  return { id, name, tagline: text(input.tagline), category: text(input.category, 80), address: text(input.address), phone: text(input.phone, 80), email: text(input.email, 150), hours: text(input.hours), logo: url(input.logo, true), coverImage: url(input.coverImage, true), googleReviewUrl: url(input.googleReviewUrl), googlePlaceId: text(input.googlePlaceId, 200), accentColor: /^#[0-9a-f]{6}$/i.test(input.accentColor) ? input.accentColor : '#F59E0B', customPrompt: text(input.customPrompt), notePlaceholder: text(input.notePlaceholder), quickTags: Array.isArray(input.quickTags) ? input.quickTags.filter(t => typeof t === 'string').slice(0, 20).map(t => text(t, 80)) : [], currency: /^[A-Z]{3}$/.test(input.currency) ? input.currency : 'LKR', menu, menuDesign: normalizeMenuDesign(input.menuDesign), qrDesign: normalizeQrDesign(input.qrDesign), qrDestination: ['landing', 'menu', 'review', 'url'].includes(input.qrDestination) ? input.qrDestination : 'landing', qrUrl: url(input.qrUrl), published: input.published === true, themeMode: 'dark' };
+  return { id, name, tagline: text(input.tagline), category: text(input.category, 80), address: text(input.address), phone: text(input.phone, 80), email: text(input.email, 150), hours: text(input.hours), logo: url(input.logo, true), coverImage: url(input.coverImage, true), googleReviewUrl: url(input.googleReviewUrl), googlePlaceId: text(input.googlePlaceId, 200), accentColor: /^#[0-9a-f]{6}$/i.test(input.accentColor) ? input.accentColor : '#F59E0B', customPrompt: text(input.customPrompt), notePlaceholder: text(input.notePlaceholder), quickTags: Array.isArray(input.quickTags) ? input.quickTags.filter(t => typeof t === 'string').slice(0, 20).map(t => text(t, 80)) : [], currency: /^[A-Z]{3}$/.test(input.currency) ? input.currency : 'LKR', menu, menuDesign: normalizeMenuDesign(input.menuDesign), qrDesign: normalizeQrDesign(input.qrDesign), qrDestination, qrUrl, published: input.published === true, themeMode: 'dark' };
 }
 
 // Statements run one at a time: the Neon HTTP driver accepts a single statement per query.
@@ -54,17 +58,12 @@ const SCHEMA = [
 
 const keepDays = 120;
 // Daily figures use APP_TIME_ZONE (for example Asia/Colombo); Vercel servers run in UTC.
-const dayKey = date => date.toLocaleDateString('en-CA', { timeZone: process.env.APP_TIME_ZONE || undefined });
+const timeZone = () => process.env.APP_TIME_ZONE || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+const dayKey = date => date.toLocaleDateString('en-CA', { timeZone: timeZone() });
 const iso = value => value == null ? null : new Date(value).toISOString();
 const toFeedback = row => ({ id: row.id, businessId: row.business_id, rating: row.rating, note: row.note, selectedTags: row.selected_tags, redirectedToGoogle: row.redirected_to_google, status: row.status, read: row.read, timestamp: iso(row.created_at) });
 const toUser = row => row && { id: row.id, email: row.email, name: row.name, plan: row.plan, role: row.role, mustChangePassword: row.must_change_password, createdAt: iso(row.created_at) };
 const emptyVisits = () => ({ count: 0, lastVisited: null, daily: {} });
-const summary = items => {
-  const distribution = [1, 2, 3, 4, 5].map(rating => items.filter(f => f.rating === rating).length);
-  const daily = {};
-  for (const item of items) { const key = dayKey(new Date(item.timestamp)); daily[key] = (daily[key] || 0) + 1; }
-  return { total: items.length, unread: items.filter(f => !f.read).length, average: items.length ? items.reduce((sum, f) => sum + f.rating, 0) / items.length : null, distribution, googleClicks: items.filter(f => f.redirectedToGoogle).length, daily, recent: items.slice(0, 5) };
-};
 
 // `db` comes from server/db.mjs: { query(text, params) → rows, close() }.
 export async function createStore(db) {
@@ -76,7 +75,8 @@ export async function createStore(db) {
     const [total, days] = await Promise.all([one('SELECT count, last_visited FROM visit_totals WHERE business_id = $1', id), q('SELECT day, count FROM visit_days WHERE business_id = $1', id)]);
     return { count: total?.count || 0, lastVisited: iso(total?.last_visited), daily: Object.fromEntries(days.map(r => [r.day, r.count])) };
   };
-  const feedback = async id => (await q('SELECT * FROM feedback WHERE business_id = $1 ORDER BY created_at DESC', id)).map(toFeedback);
+  // The inbox loads in one piece, so a runaway shop cannot exhaust memory: only the newest 5,000 are returned.
+  const feedback = async id => (await q('SELECT * FROM feedback WHERE business_id = $1 ORDER BY created_at DESC LIMIT 5000', id)).map(toFeedback);
 
   return {
     close: () => db.close(),
@@ -122,6 +122,8 @@ export async function createStore(db) {
     ownerOf: async id => { const row = await one('SELECT owner_id FROM businesses WHERE id = $1', id); return row ? row.owner_id : undefined; },
     profiles: async ownerId => (await q('SELECT data FROM businesses WHERE owner_id = $1 ORDER BY created_at, id', ownerId)).map(row => row.data),
     countProfiles: async ownerId => (await one('SELECT COUNT(*)::int AS n FROM businesses WHERE owner_id = $1', ownerId)).n,
+    // Inserts a new shop only while the owner is under their plan limit; the check and the insert are one statement.
+    createShop: async (profile, ownerId, limit) => (await q(`INSERT INTO businesses (id, owner_id, data) SELECT $1::text, $2::text, $3::jsonb WHERE (SELECT COUNT(*) FROM businesses WHERE owner_id = $2::text) < $4::int ON CONFLICT (id) DO NOTHING RETURNING id`, profile.id, ownerId, JSON.stringify(profile), limit)).length > 0,
     save: async (profile, ownerId) => {
       await q('INSERT INTO businesses (id, owner_id, data) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO UPDATE SET data = excluded.data, updated_at = now()', profile.id, ownerId ?? null, JSON.stringify(profile));
       return profile;
@@ -129,18 +131,36 @@ export async function createStore(db) {
     allShops: async () => (await q('SELECT id, owner_id, data FROM businesses ORDER BY created_at, id')).map(row => ({ id: row.id, name: row.data.name, published: row.data.published === true, ownerId: row.owner_id })),
     setOwner: async (id, ownerId) => (await q('UPDATE businesses SET owner_id = $1 WHERE id = $2 RETURNING id', ownerId, id)).length > 0,
     deleteProfile: async id => (await q('DELETE FROM businesses WHERE id = $1 RETURNING id', id)).length > 0,
+    // Dashboard figures are totalled by the database, so the amount of feedback does not change how much is transferred.
     overview: async ownerId => {
-      const [shops, items, totals, days] = await Promise.all([
+      const zone = timeZone();
+      const [shops, stats, daily, recent, totals, days] = await Promise.all([
         q('SELECT id FROM businesses WHERE owner_id = $1 ORDER BY created_at, id', ownerId),
-        q('SELECT f.* FROM feedback f JOIN businesses b ON b.id = f.business_id WHERE b.owner_id = $1 ORDER BY f.created_at DESC', ownerId),
+        q(`SELECT f.business_id, COUNT(*)::int AS total, COUNT(*) FILTER (WHERE NOT f.read)::int AS unread, AVG(f.rating)::float AS average,
+             COUNT(*) FILTER (WHERE f.rating = 1)::int AS r1, COUNT(*) FILTER (WHERE f.rating = 2)::int AS r2, COUNT(*) FILTER (WHERE f.rating = 3)::int AS r3,
+             COUNT(*) FILTER (WHERE f.rating = 4)::int AS r4, COUNT(*) FILTER (WHERE f.rating = 5)::int AS r5, COUNT(*) FILTER (WHERE f.redirected_to_google)::int AS google
+           FROM feedback f JOIN businesses b ON b.id = f.business_id WHERE b.owner_id = $1 GROUP BY f.business_id`, ownerId),
+        q(`SELECT f.business_id, to_char(f.created_at AT TIME ZONE $2, 'YYYY-MM-DD') AS day, COUNT(*)::int AS n
+           FROM feedback f JOIN businesses b ON b.id = f.business_id WHERE b.owner_id = $1 AND f.created_at > now() - make_interval(days => $3) GROUP BY 1, 2`, ownerId, zone, keepDays),
+        q(`SELECT * FROM (SELECT f.*, ROW_NUMBER() OVER (PARTITION BY f.business_id ORDER BY f.created_at DESC) AS rn
+             FROM feedback f JOIN businesses b ON b.id = f.business_id WHERE b.owner_id = $1) t WHERE rn <= 5 ORDER BY created_at DESC`, ownerId),
         q('SELECT t.* FROM visit_totals t JOIN businesses b ON b.id = t.business_id WHERE b.owner_id = $1', ownerId),
         q('SELECT d.* FROM visit_days d JOIN businesses b ON b.id = d.business_id WHERE b.owner_id = $1', ownerId),
       ]);
-      const feedbackItems = items.map(toFeedback);
       return shops.map(({ id }) => {
         const total = totals.find(t => t.business_id === id);
-        const daily = Object.fromEntries(days.filter(d => d.business_id === id).map(d => [d.day, d.count]));
-        return { id, visits: total ? { count: total.count, lastVisited: iso(total.last_visited), daily } : { ...emptyVisits(), daily }, feedback: summary(feedbackItems.filter(f => f.businessId === id)) };
+        const visitDaily = Object.fromEntries(days.filter(d => d.business_id === id).map(d => [d.day, d.count]));
+        const stat = stats.find(r => r.business_id === id);
+        return {
+          id,
+          visits: total ? { count: total.count, lastVisited: iso(total.last_visited), daily: visitDaily } : { ...emptyVisits(), daily: visitDaily },
+          feedback: {
+            total: stat?.total || 0, unread: stat?.unread || 0, average: stat ? stat.average : null,
+            distribution: stat ? [stat.r1, stat.r2, stat.r3, stat.r4, stat.r5] : [0, 0, 0, 0, 0], googleClicks: stat?.google || 0,
+            daily: Object.fromEntries(daily.filter(r => r.business_id === id).map(r => [r.day, r.n])),
+            recent: recent.filter(r => r.business_id === id).map(toFeedback),
+          },
+        };
       });
     },
 
@@ -149,8 +169,9 @@ export async function createStore(db) {
     recordVisit: async id => {
       const now = new Date();
       await q('INSERT INTO visit_totals (business_id, count, last_visited) VALUES ($1, 1, $2) ON CONFLICT (business_id) DO UPDATE SET count = visit_totals.count + 1, last_visited = excluded.last_visited', id, now.toISOString());
-      await q('INSERT INTO visit_days (business_id, day, count) VALUES ($1, $2, 1) ON CONFLICT (business_id, day) DO UPDATE SET count = visit_days.count + 1', id, dayKey(now));
-      await q('DELETE FROM visit_days WHERE business_id = $1 AND day <= $2', id, dayKey(new Date(now.getTime() - keepDays * 86400000)));
+      const today = await one('INSERT INTO visit_days (business_id, day, count) VALUES ($1, $2, 1) ON CONFLICT (business_id, day) DO UPDATE SET count = visit_days.count + 1 RETURNING count', id, dayKey(now));
+      // Only the first scan of a day (when its row is created) trims old days.
+      if (today.count === 1) await q('DELETE FROM visit_days WHERE business_id = $1 AND day <= $2', id, dayKey(new Date(now.getTime() - keepDays * 86400000)));
     },
 
     // Feedback

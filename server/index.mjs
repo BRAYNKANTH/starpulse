@@ -4,6 +4,7 @@ import { resolve, extname, sep } from 'node:path';
 import { createStore } from './store.mjs';
 import { createApi } from './api.mjs';
 import { openDatabase } from './db.mjs';
+import { SECURITY_HEADERS } from './security.mjs';
 
 const root = resolve('dist');
 const store = await createStore(await openDatabase());
@@ -16,6 +17,6 @@ createServer((req, res) => api(req, res, () => {
   try { path = resolve(root, `.${decodeURIComponent(new URL(req.url, 'http://localhost').pathname)}`); } catch { res.writeHead(400); res.end(); return; }
   if (path !== root && !path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
   if (path === root || !existsSync(path)) path = resolve(root, 'index.html');
-  res.writeHead(200, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff' });
+  res.writeHead(200, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', ...SECURITY_HEADERS });
   if (req.method === 'HEAD') res.end(); else createReadStream(path).on('error', () => res.destroy()).pipe(res);
 })).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`StarPulse running on port ${process.env.PORT || 3000}`));

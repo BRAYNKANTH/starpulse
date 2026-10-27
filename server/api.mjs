@@ -1,13 +1,14 @@
 import { validateProfile } from './store.mjs';
 import { SESSION_COOKIE, temporaryPassword, hashPassword, hashToken, newSessionToken, readCookie, sessionCookie, validEmail, validPassword, verifyPassword, SESSION_DAYS } from './auth.mjs';
 import { PLANS, planFor } from '../src/data/plans.js';
+import { SECURITY_HEADERS, safeRedirect, looksAutomated } from './security.mjs';
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
 // trustProxy: read the client address from X-Forwarded-For (set it on Vercel or behind your own proxy).
 export function createApi(store, { trustProxy = false } = {}) {
   const clientAddress = req => (trustProxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket?.remoteAddress || 'unknown';
-  const send = (res, status, data, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers }); res.end(JSON.stringify(data)); };
+  const send = (res, status, data, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...SECURITY_HEADERS, ...headers }); res.end(JSON.stringify(data)); };
   const maxBody = 4 * 1024 * 1024;
   const readBody = async req => {
     if (Number(req.headers['content-length']) > maxBody) throw fail(413, 'Upload is too large. Use smaller images.');
@@ -42,8 +43,13 @@ export function createApi(store, { trustProxy = false } = {}) {
       const destination = profile.qrDestination || 'landing';
       const target = destination === 'url' ? profile.qrUrl : `/?biz=${encodeURIComponent(id)}${destination === 'landing' ? '' : '&view=' + destination}`;
       if (!target) return send(res, 404, { error: 'The QR destination has not been configured.' });
-      try { if (req.method === 'GET') await store.recordVisit(id); } catch { return send(res, 503, { error: 'This QR link is temporarily unavailable.' }); }
-      res.writeHead(302, { Location: target, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(); return;
+      // Saved data may predate the redirect rules, so the target is checked again on every scan.
+      if (destination === 'url' && !safeRedirect(target)) return send(res, 404, { error: 'The QR destination is not a safe web address.' });
+      try {
+        // Crawlers and link previews are not customers, and one device cannot inflate a shop's count by refreshing.
+        if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && await store.allow(`scan:${clientAddress(req)}:${id}`, 30, 60)) await store.recordVisit(id);
+      } catch { return send(res, 503, { error: 'This QR link is temporarily unavailable.' }); }
+      res.writeHead(302, { Location: target, 'Cache-Control': 'no-store', ...SECURITY_HEADERS }); res.end(); return;
     }
     if (!pathname.startsWith('/api/')) return next();
     try {
@@ -59,8 +65,10 @@ export function createApi(store, { trustProxy = false } = {}) {
 
       // Accounts. There is no public sign-up: administrators create accounts under /api/accounts.
       if (pathname === '/api/auth/login' && req.method === 'POST') {
-        if (!await store.allow(`login:${clientKey}`, 10, 15 * 60)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
+        // Per address stops one machine guessing; per account stops many machines (or a shared office address) sharing the guesses.
+        if (!await store.allow(`login:${clientKey}`, 20, 15 * 60)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
         const body = await readObject(req);
+        if (validEmail(body.email) && !await store.allow(`login-account:${body.email.trim().toLowerCase()}`, 10, 15 * 60)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
         const found = validEmail(body.email) ? await store.userByEmail(body.email.trim()) : null;
         const ok = await verifyPassword(typeof body.password === 'string' ? body.password : '', found ? await store.passwordHash(found.id) : undefined);
         if (!found || !ok) return send(res, 401, { error: 'Email or password is incorrect.' });
@@ -152,11 +160,18 @@ export function createApi(store, { trustProxy = false } = {}) {
         const [, id, rest = ''] = shop;
         const owner = await store.ownerOf(id);
         if (!rest && req.method === 'PUT') {
+          if (owner !== undefined && owner !== user.id) return send(res, 404, { error: 'Shop not found.' });
+          const profile = validateProfile(await readBody(req), id);
           if (owner === undefined) {
             const plan = planFor(user.plan);
-            if (await store.countProfiles(user.id) >= plan.shops) throw fail(403, `Your ${plan.name} plan includes ${plan.shops} shop${plan.shops === 1 ? '' : 's'}. Upgrade your plan to add more.`);
-          } else if (owner !== user.id) return send(res, 404, { error: 'Shop not found.' });
-          return send(res, 200, await store.save(validateProfile(await readBody(req), id), user.id));
+            // The count and the insert are one statement, so two simultaneous requests cannot both slip under the limit.
+            if (!await store.createShop(profile, user.id, plan.shops)) {
+              if (await store.ownerOf(id) !== undefined) throw fail(409, 'That shop address is already taken.');
+              throw fail(403, `Your ${plan.name} plan includes ${plan.shops} shop${plan.shops === 1 ? '' : 's'}. Upgrade your plan to add more.`);
+            }
+            return send(res, 200, profile);
+          }
+          return send(res, 200, await store.save(profile, user.id));
         }
         if (owner !== user.id) return send(res, 404, { error: 'Shop not found.' });
         if (!rest && req.method === 'DELETE') { await store.deleteProfile(id); return send(res, 200, { ok: true }); }
@@ -185,7 +200,7 @@ export function createApi(store, { trustProxy = false } = {}) {
         const profile = await store.profile(id);
         if (!profile?.published) return send(res, 404, { error: 'This shop is unavailable or has not been published yet.' });
         // Hidden items stay out of the public response, not just out of the rendered menu.
-        if (!feedback && req.method === 'GET') return send(res, 200, { ...profile, menu: (profile.menu || []).filter(item => item.available !== false) });
+        if (!feedback && req.method === 'GET') return send(res, 200, { ...profile, menu: (profile.menu || []).filter(item => item.available !== false) }, { 'Cache-Control': 'public, max-age=0, s-maxage=15' });
         if (feedback && req.method === 'POST') {
           if (!await store.allow(`feedback:${clientKey}`, 20, 60)) return send(res, 429, { error: 'Please wait a minute before submitting again.' });
           const body = await readObject(req);
