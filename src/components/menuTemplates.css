@@ -78,3 +78,31 @@
 /* Retro Diner: checkerboard strip and offset title. */
 .menu-template-diner .shop-menu-main::before { content: ''; display: block; height: 16px; margin-bottom: 30px; background: repeating-conic-gradient(var(--menu-text) 0 25%, #fff 0 50%) 0 0 / 16px 16px; }
 .menu-template-diner .menu-public-heading h1 { color: var(--menu-accent-text, var(--menu-accent)); text-shadow: 3px 3px 0 color-mix(in srgb, var(--menu-text) 18%, transparent); }
+
+/* Garden Café: leafy border and a pill eyebrow. */
+.menu-template-garden .shop-menu-main::before { content: ''; display: block; height: 10px; margin-bottom: 26px; border-radius: 999px; background: repeating-linear-gradient(90deg, var(--menu-accent) 0 28px, color-mix(in srgb, var(--menu-accent) 45%, var(--menu-bg)) 28px 56px); opacity: .85; }
+.menu-template-garden .menu-public-heading h1 { color: var(--menu-accent-text, var(--menu-accent)); }
+.menu-template-garden .shop-kicker { display: inline-block; padding: 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--menu-accent) 12%, transparent); }
+
+/* Classic Bistro: italic wordmark and a burgundy title. */
+.menu-template-bistro .food-menu-brand { font-style: italic; }
+.menu-template-bistro .menu-public-heading h1 { color: var(--menu-accent-text, var(--menu-accent)); }
+
+/* Midnight Bar: soft gold glow. */
+.menu-template-midnight .menu-public-heading h1 { color: var(--menu-accent-text, var(--menu-accent)); text-shadow: 0 0 28px color-mix(in srgb, var(--menu-accent) 35%, transparent); }
+.menu-template-midnight .public-menu-item { box-shadow: 0 0 0 1px color-mix(in srgb, var(--menu-accent) 14%, transparent), 0 10px 24px rgba(0, 0, 0, .4); }
+
+/* Fresh Market and Studio Menu: accent brand mark and prices. */
+.menu-template-catalog .food-brand-mark, .menu-template-editorial .food-brand-mark { background: var(--menu-accent); color: #fff; border: 0; }
+.menu-template-catalog .public-item-title strong { color: var(--menu-accent-text, var(--menu-accent)); }
+.menu-template-editorial .menu-public-heading h1 { font-weight: 500; font-style: italic; }
+
+/* Shared polish: items ease in, and cards lift on hover where a pointer exists. */
+@media (prefers-reduced-motion: no-preference) {
+  .public-menu-item { animation: menu-item-in .4s ease both; }
+  @keyframes menu-item-in { from { opacity: 0; transform: translateY(8px); } }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .layout-cards .public-menu-item, .layout-tiles .public-menu-item { transition: transform .2s ease, box-shadow .2s ease; }
+  .layout-cards .public-menu-item:hover, .layout-tiles .public-menu-item:hover { transform: translateY(-3px); }
+}

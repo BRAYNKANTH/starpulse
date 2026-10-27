@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, FolderPlus, GripVertical, ImageIcon, Pencil, Plus, Search, Trash2, TriangleAlert } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, FolderPlus, GripVertical, ImageIcon, LayoutList, Palette, Pencil, Plus, Search, Settings2, Trash2, TriangleAlert } from 'lucide-react';
 import ActionMenu from './ActionMenu';
 import ImageUpload from './ImageUpload';
 import Field from './Field';
@@ -108,7 +108,7 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
     {error && <p className="notice error" role="alert">{error}</p>}
     {needsAttention > 0 && <p className="notice warning"><TriangleAlert size={16} />{needsAttention} item{needsAttention > 1 ? 's need' : ' needs'} a name and price before you can save your changes.</p>}
 
-    <div className="tabs" role="tablist" aria-label="Menu sections">{[['items', 'Items'], ['design', 'Design'], ['settings', 'Settings']].map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setPreview(false); }}>{label}</button>)}</div>
+    <div className="tabs" role="tablist" aria-label="Menu sections">{[['items', 'Items', LayoutList], ['design', 'Design', Palette], ['settings', 'Settings', Settings2]].map(([id, label, Icon]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => { setTab(id); setPreview(false); }}><Icon size={15} aria-hidden="true" />{label}</button>)}</div>
 
     {preview ? <div className="menu-preview-container"><ShopLanding businessProfile={p} initialView="menu" preview /></div> : <>
       {tab === 'items' && <>

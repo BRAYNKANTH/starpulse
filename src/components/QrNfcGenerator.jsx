@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Printer, Download, Radio, Star, ExternalLink, Smartphone, Sparkles, Check, ArrowRight } from 'lucide-react';
+import { Printer, Download, Radio, Star, ExternalLink, Smartphone, Sparkles, Check, ArrowRight, Copy } from 'lucide-react';
 
 import { standaloneClone, exportPoster } from '../utils/export';
 
@@ -32,6 +32,7 @@ export default function QrNfcGenerator({ businessProfile, savedProfile, dirty, o
   const [exportError, setExportError] = useState('');
   const [exporting, setExporting] = useState(false);
   const [artifact, setArtifact] = useState(null);
+  const [copied, setCopied] = useState(false);
   const posterRef = useRef(null);
   useEffect(() => () => { if (artifact) URL.revokeObjectURL(artifact.url); }, [artifact]);
   const deliver = (blob, filename) => {
@@ -43,6 +44,7 @@ export default function QrNfcGenerator({ businessProfile, savedProfile, dirty, o
 
   // Posters always carry the shop's dynamic link, so a printed code follows the destination saved on the QR codes page.
   const targetUrl = new URL(`/q/${businessProfile.id}`, window.location.origin).href;
+  const copyLink = async () => { try { await navigator.clipboard.writeText(targetUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setCopied(false); } };
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
   const targetError = !savedProfile?.published ? 'Publish this shop before printing its QR code. Use the switch in the top bar, then save.'
     : dirty ? 'Save your changes before printing, so the poster matches your live shop.' : '';
@@ -80,7 +82,11 @@ export default function QrNfcGenerator({ businessProfile, savedProfile, dirty, o
             <div className="card-head"><div><h2>Where scans go</h2><p>Every poster uses your shop’s dynamic QR code. Change the destination any time on the QR codes page; printed codes follow it.</p></div></div>
             <div className="print-destination">
               <div><span className="print-destination-label">Opens</span><strong>{DESTINATIONS[destination]}</strong><a className="print-destination-url" href={targetUrl} target="_blank" rel="noopener noreferrer">{targetUrl}</a></div>
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate?.('qr')}>Change destination<ArrowRight size={14} aria-hidden="true" /></button>
+              <div className="print-destination-actions">
+                <button type="button" className="btn btn-secondary btn-sm" onClick={copyLink}>{copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copied ? 'Link copied' : 'Copy link'}</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate?.('qr')}>Change destination<ArrowRight size={14} aria-hidden="true" /></button>
+              </div>
+              <span className="sr-only" role="status">{copied ? 'Link copied to the clipboard' : ''}</span>
             </div>
             {local && <p className="notice warning">You’re using a local address. Open the studio on your live website before printing, or customers’ phones can’t reach this link.</p>}
             {targetError && <p role="alert" className="notice error">{targetError}</p>}

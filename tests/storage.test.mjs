@@ -48,7 +48,8 @@ test('menu design options normalise, fall back to template defaults and keep tex
   assert.equal(resolved.palette.text, '#ffffff', 'dark background switches to light text');
   assert.equal(resolved.palette.cardText, '#2b1d16', 'cards keep dark text on a light surface');
   assert.equal(resolved.vars['--menu-heading-weight'], 400);
-  assert.equal(resolveMenuDesign({ template: 'garden' }).classes, '', 'older templates are unchanged unless customised');
+  assert.match(resolveMenuDesign({ template: 'garden' }).classes, /mo-cardStyle-elevated/, 'restyled templates apply their own defaults');
+  assert.match(resolveMenuDesign({ template: 'garden', cardStyle: 'flat' }).classes, /mo-cardStyle-flat/, 'an owner choice still overrides the template default');
   assert.ok(MENU_TEMPLATES.length >= 20);
   assert.ok(MENU_TEMPLATES.every(t => !t.sample || ['cafe', 'restaurant', 'burger'].includes(t.sample) || t.defaults), 'new templates define structure defaults');
 });
@@ -63,4 +64,14 @@ test('every menu template keeps text, prices and accent buttons at 4.5:1 or bett
       assert.ok(contrast(fg, bg) >= 4.5, `${template.id} ${JSON.stringify(custom)}: ${part} ${fg} on ${bg} is ${contrast(fg, bg).toFixed(2)}:1`);
     }
   }
+});
+
+test('prices use each currency’s home formatting and its own decimals', async () => {
+  const { formatMoney } = await import('../src/utils/money.js');
+  assert.equal(formatMoney(1450, 'LKR').replace(/ /g, ' '), 'LKR 1,450.00');
+  assert.equal(formatMoney(8.5, 'USD'), '$8.50');
+  assert.equal(formatMoney(8.5, 'USD', 'number'), '8.50');
+  assert.equal(formatMoney(1200, 'JPY', 'number'), '1,200', 'yen has no decimals');
+  assert.equal(formatMoney(5, 'XXX', 'number'), '5.00', 'unknown currencies still format');
+  assert.equal(formatMoney('abc', 'USD'), '$0.00');
 });
