@@ -19,4 +19,4 @@ createServer((req, res) => api(req, res, () => {
   if (path === root || !existsSync(path)) path = resolve(root, 'index.html');
   res.writeHead(200, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', ...SECURITY_HEADERS });
   if (req.method === 'HEAD') res.end(); else createReadStream(path).on('error', () => res.destroy()).pipe(res);
-})).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`StarPulse running on port ${process.env.PORT || 3000}`));
+})).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`DQ.lk running on port ${process.env.PORT || 3000}`));

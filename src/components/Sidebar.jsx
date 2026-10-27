@@ -1,4 +1,4 @@
-import { LogOut, Moon, Star, Sun, X } from 'lucide-react';
+import { LogOut, Moon, QrCode, Sun, X } from 'lucide-react';
 import { PAGES } from '../data/pages';
 
 export default function Sidebar({ active, onNavigate, unread, theme, onToggleTheme, onSignOut, user, open, onClose }) {
@@ -8,7 +8,7 @@ export default function Sidebar({ active, onNavigate, unread, theme, onToggleThe
     <div className={`sp-scrim ${open ? 'open' : ''}`} onClick={onClose} aria-hidden="true" />
     <aside className={`sp-sidebar no-print ${open ? 'open' : ''}`} aria-label="Studio navigation">
       <div className="sp-sidebar-head">
-        <button type="button" className="sp-brand" onClick={() => onNavigate('dashboard')}><span className="sp-brand-mark"><Star size={16} /></span>StarPulse</button>
+        <button type="button" className="sp-brand" onClick={() => onNavigate('dashboard')}><span className="sp-brand-mark"><QrCode size={16} /></span>DQ.lk</button>
         <button type="button" className="btn btn-ghost btn-icon sp-close" aria-label="Close navigation" onClick={onClose}><X size={18} /></button>
       </div>
       <nav className="sp-nav">

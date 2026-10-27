@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart3, MessageSquare, QrCode, Star, UtensilsCrossed } from 'lucide-react';
+import { BarChart3, MessageSquare, QrCode, UtensilsCrossed } from 'lucide-react';
 import { api } from '../data/api';
 
 const FEATURES = [
@@ -9,11 +9,11 @@ const FEATURES = [
   { icon: BarChart3, title: 'Scan analytics', text: 'See which shops and posters get scanned.' },
 ];
 
-const Brand = ({ className = '' }) => <div className={`sp-brand ${className}`}><span className="sp-brand-mark"><Star size={16} /></span>StarPulse</div>;
+const Brand = ({ className = '' }) => <div className={`sp-brand ${className}`}><span className="sp-brand-mark"><QrCode size={16} /></span>DQ.lk</div>;
 
 function AuthLayout({ children }) {
   return <main className="auth-layout">
-    <section className="auth-pitch" aria-label="About StarPulse">
+    <section className="auth-pitch" aria-label="About DQ.lk">
       <Brand />
       <p className="auth-pitch-title">Your shop’s menu, QR codes and reviews in one studio.</p>
       <ul>{FEATURES.map(({ icon: Icon, title, text }) => <li key={title}><span className="auth-feature-icon"><Icon size={18} /></span><span><strong>{title}</strong>{text}</span></li>)}</ul>
@@ -46,7 +46,7 @@ export default function AuthScreen({ onAuthenticated }) {
       <input id="auth-password" className="form-input" type="password" autoComplete="current-password" maxLength={200} required {...field('password')} />
       {error && <p className="notice error" role="alert">{error}</p>}
       <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
-      <p className="auth-footnote">Need an account or forgot your password? Contact your StarPulse administrator.</p>
+      <p className="auth-footnote">Need an account or forgot your password? Contact your DQ.lk administrator.</p>
     </form>
   </AuthLayout>;
 }

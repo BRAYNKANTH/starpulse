@@ -1,4 +1,4 @@
-# StarPulse — shop pages, menus and QR posters
+# DQ.lk (Digital QR) — shop pages, menus and QR posters
 
 React + Vite owner studio with a Node.js API and Postgres, built to host on Vercel with Neon. Each business owner has an account created by an administrator; each shop has its own saved profile, landing page, searchable menu, QR destinations and feedback inbox.
 

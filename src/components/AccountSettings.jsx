@@ -33,7 +33,7 @@ export default function AccountSettings({ account, onAccountChange, notify }) {
         <div className="card-head"><div><h2>Plan</h2><p>You are on the <strong>{plan.name}</strong> plan.</p></div><span className="badge badge-info">{plan.name}</span></div>
         <div className="usage-meter"><div className="usage-meter-label"><span>Shops</span><span>{usage.shops} of {plan.shops}</span></div><div className="usage-meter-track" role="progressbar" aria-valuemin={0} aria-valuemax={plan.shops} aria-valuenow={usage.shops} aria-label="Shops used"><span style={{ width: `${percent}%` }} /></div></div>
         <div className="plan-grid">{Object.values(PLANS).map(p => <div key={p.id} className={`plan-option ${p.id === plan.id ? 'current' : ''}`}><strong>{p.name}</strong><span>{p.shops} shop{p.shops === 1 ? '' : 's'}</span>{p.id === plan.id && <small>Current plan</small>}</div>)}</div>
-        <p className="field-help">To change your plan or close your account, contact your StarPulse administrator.</p>
+        <p className="field-help">To change your plan or close your account, contact your DQ.lk administrator.</p>
       </section>
       <form className="card" onSubmit={saveName}>
         <div className="card-head"><div><h2>Profile</h2><p>Signed in as {user.email}.</p></div></div>
