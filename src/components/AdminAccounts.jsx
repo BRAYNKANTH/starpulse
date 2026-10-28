@@ -7,12 +7,12 @@ import Field from './Field';
 // Shows a temporary password once, so the administrator can pass it to the client.
 function Credentials({ credentials, onClose }) {
   const [copied, setCopied] = useState(false);
-  const text = `DQ.lk sign-in\nAddress: ${window.location.origin}\nEmail: ${credentials.email}\nTemporary password: ${credentials.password}\nYou will choose your own password after signing in.`;
+  const text = `DQ.lk sign-in\nAddress: ${window.location.origin}/signin\nEmail: ${credentials.email}\nTemporary password: ${credentials.password}\nYou will choose your own password after signing in.`;
   const copy = async () => { try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); } };
   return <section className="card credentials-card" role="status">
     <div className="card-head"><div><h2>{credentials.title}</h2><p>Give these details to {credentials.name}. The password is shown only now.</p></div></div>
     <dl className="credentials-list">
-      <dt>Address</dt><dd>{window.location.origin}</dd>
+      <dt>Address</dt><dd>{window.location.origin}/signin</dd>
       <dt>Email</dt><dd>{credentials.email}</dd>
       <dt>Temporary password</dt><dd><code>{credentials.password}</code></dd>
     </dl>

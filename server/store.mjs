@@ -39,6 +39,12 @@ const SCHEMA = [
     token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
   'CREATE INDEX IF NOT EXISTS sessions_user ON sessions (user_id)',
+  // Password-reset tokens are stored hashed (SHA-256, like sessions), never
+  // as the raw token, and are single-use with a short expiry (see api.mjs).
+  `CREATE TABLE IF NOT EXISTS password_resets (
+    token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE INDEX IF NOT EXISTS password_resets_user ON password_resets (user_id)',
   `CREATE TABLE IF NOT EXISTS businesses (
     id TEXT PRIMARY KEY, owner_id TEXT REFERENCES users(id) ON DELETE CASCADE, data JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
@@ -104,6 +110,15 @@ export async function createStore(db) {
     deleteSession: async tokenHash => { await q('DELETE FROM sessions WHERE token_hash = $1', tokenHash); },
     deleteOtherSessions: async (userId, keepHash) => { await q('DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2', userId, keepHash); },
     deleteSessions: async userId => { await q('DELETE FROM sessions WHERE user_id = $1', userId); },
+    // Password resets: one active token per user (a new request replaces the
+    // old one); consuming is a single DELETE … RETURNING, so a token can
+    // only ever succeed once, even under concurrent requests.
+    createPasswordReset: async (tokenHash, userId, expiresAt) => {
+      await q('DELETE FROM password_resets WHERE user_id = $1', userId);
+      await q('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1, $2, $3)', tokenHash, userId, new Date(expiresAt).toISOString());
+    },
+    consumePasswordReset: async tokenHash => (await one('DELETE FROM password_resets WHERE token_hash = $1 AND expires_at > now() RETURNING user_id', tokenHash))?.user_id,
+    deletePasswordResets: async userId => { await q('DELETE FROM password_resets WHERE user_id = $1', userId); },
     claimUnowned: async userId => (await q('UPDATE businesses SET owner_id = $1 WHERE owner_id IS NULL RETURNING id', userId)).length,
 
     // Counts a request against a fixed window shared by every server instance. Returns false once over the limit.

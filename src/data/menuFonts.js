@@ -27,7 +27,10 @@ const axis = family => family in AXES ? AXES[family] : ':wght@400;500;600;700';
 
 export const fontPair = id => FONT_PAIRS.find(pair => pair.id === id) || null;
 
-export const fontStack = (family, fallback) => `'${family}', ${fallback}`;
+// Non-Latin text (Sinhala/Tamil dish names) falls back to Noto before the generic family:
+// the primary Latin font has no Sinhala/Tamil glyphs, so without this the browser would
+// jump straight to an unrelated system font while letter-spacing/uppercase still apply.
+export const fontStack = (family, fallback) => `'${family}', 'Noto Sans Sinhala', 'Noto Sans Tamil', ${fallback}`;
 
 export function loadFonts(pairs) {
   if (typeof document === 'undefined') return;

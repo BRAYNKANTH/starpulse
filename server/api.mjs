@@ -2,6 +2,7 @@ import { validateProfile } from './store.mjs';
 import { SESSION_COOKIE, temporaryPassword, hashPassword, hashToken, newSessionToken, readCookie, sessionCookie, validEmail, validPassword, verifyPassword, SESSION_DAYS } from './auth.mjs';
 import { PLANS, planFor } from '../src/data/plans.js';
 import { SECURITY_HEADERS, safeRedirect, looksAutomated, isLinkPreviewer, previewPage } from './security.mjs';
+import { resetBaseUrl, sendPasswordResetEmail } from './mail.mjs';
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
@@ -9,6 +10,13 @@ const fail = (status, message) => Object.assign(new Error(message), { status });
 export function createApi(store, { trustProxy = false } = {}) {
   const clientAddress = req => (trustProxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket?.remoteAddress || 'unknown';
   const send = (res, status, data, headers = {}) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...SECURITY_HEADERS, ...headers }); res.end(JSON.stringify(data)); };
+  // A customer scanning a printed QR code is a browser, not an API client:
+  // an unavailable link must show a branded page, never a raw JSON blob.
+  const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+  const sendUnavailable = (res, status, message, method) => {
+    res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...SECURITY_HEADERS });
+    res.end(method === 'HEAD' ? '' : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>This shop isn’t available | DQ.lk</title><style>body{font-family:system-ui,sans-serif;background:#f7f5ef;color:#183329;margin:0;padding:48px 20px;text-align:center}main{max-width:520px;margin:0 auto}h1{font-size:1.6rem}a{color:#1d56d8}</style></head><body><main><h1>This shop isn’t available</h1><p>${escapeHtml(message)}</p><p>If you scanned a QR code, ask the staff for help.</p><p><a href="/">DQ.lk home</a></p></main></body></html>`);
+  };
   const maxBody = 4 * 1024 * 1024;
   const readBody = async req => {
     if (Number(req.headers['content-length']) > maxBody) throw fail(413, 'Upload is too large. Use smaller images.');
@@ -38,17 +46,17 @@ export function createApi(store, { trustProxy = false } = {}) {
       const id = pathname.slice(3);
       if (!['GET', 'HEAD'].includes(req.method)) return send(res, 405, { error: 'Method not allowed.' });
       let profile;
-      try { profile = /^[a-z0-9-]{1,80}$/.test(id) ? await store.profile(id) : null; } catch { return send(res, 503, { error: 'This QR link is temporarily unavailable.' }); }
-      if (!profile?.published) return send(res, 404, { error: 'This QR destination is unavailable or unpublished.' });
+      try { profile = /^[a-z0-9-]{1,80}$/.test(id) ? await store.profile(id) : null; } catch { return sendUnavailable(res, 503, 'This QR link is temporarily unavailable.', req.method); }
+      if (!profile?.published) return sendUnavailable(res, 404, 'This QR destination is unavailable or unpublished.', req.method);
       const destination = profile.qrDestination || 'landing';
       const target = destination === 'url' ? profile.qrUrl : `/?biz=${encodeURIComponent(id)}${destination === 'landing' ? '' : '&view=' + destination}`;
-      if (!target) return send(res, 404, { error: 'The QR destination has not been configured.' });
+      if (!target) return sendUnavailable(res, 404, 'The QR destination has not been configured.', req.method);
       // Saved data may predate the redirect rules, so the target is checked again on every scan.
-      if (destination === 'url' && !safeRedirect(target)) return send(res, 404, { error: 'The QR destination is not a safe web address.' });
+      if (destination === 'url' && !safeRedirect(target)) return sendUnavailable(res, 404, 'The QR destination is not a safe web address.', req.method);
       try {
         // Crawlers and link previews are not customers, and one device cannot inflate a shop's count by refreshing.
         if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && !isLinkPreviewer(req.headers['user-agent']) && await store.allow(`scan:${clientAddress(req)}:${id}`, 30, 60)) await store.recordVisit(id);
-      } catch { return send(res, 503, { error: 'This QR link is temporarily unavailable.' }); }
+      } catch { return sendUnavailable(res, 503, 'This QR link is temporarily unavailable.', req.method); }
       if (isLinkPreviewer(req.headers['user-agent'])) {
         const origin = `${req.headers['x-forwarded-proto'] === 'https' || req.socket?.encrypted ? 'https' : 'http'}://${req.headers.host}`;
         const image = [profile.coverImage, profile.logo].find(src => /^https?:\/\//.test(src || ''));
@@ -84,6 +92,38 @@ export function createApi(store, { trustProxy = false } = {}) {
         if (tokenHash) await store.deleteSession(tokenHash);
         return send(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
       }
+      // Password recovery. These two routes are deliberately placed before
+      // the signed-in guard below: a locked-out owner has no session.
+      // Forgot never reveals whether an email exists: every request gets
+      // the same generic success, and the raw token is never returned or
+      // logged — it only travels inside the email itself.
+      if (pathname === '/api/auth/forgot' && req.method === 'POST') {
+        if (!await store.allow(`forgot:${clientKey}`, 10, 15 * 60)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
+        const body = await readObject(req);
+        const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+        const found = validEmail(email) ? await store.userByEmail(email) : null;
+        if (found) {
+          const token = newSessionToken();
+          await store.createPasswordReset(hashToken(token), found.id, Date.now() + 60 * 60 * 1000);
+          const base = resetBaseUrl();
+          if (base) await sendPasswordResetEmail(found.email, `${base}/signin?reset=${encodeURIComponent(token)}`);
+          else console.error('Password-reset email skipped: set APP_BASE_URL (and SMTP settings) so a safe reset link can be built.');
+        }
+        return send(res, 200, { ok: true });
+      }
+      if (pathname === '/api/auth/reset' && req.method === 'POST') {
+        if (!await store.allow(`reset:${clientKey}`, 20, 15 * 60)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
+        const body = await readObject(req);
+        // Validate the password first, so a weak password does not burn a valid token.
+        if (!validPassword(body.newPassword)) throw new Error('Use a new password of at least 8 characters.');
+        const token = typeof body.token === 'string' ? body.token : '';
+        const userId = token ? await store.consumePasswordReset(hashToken(token)) : null;
+        if (!userId) return send(res, 400, { error: 'This reset link is invalid or has expired. Ask for a new one.' });
+        await store.updateUser(userId, { passwordHash: await hashPassword(body.newPassword), mustChangePassword: false });
+        // A reset signs out every device, like any other password change.
+        await store.deleteSessions(userId);
+        return send(res, 200, { ok: true });
+      }
       if (pathname.startsWith('/api/auth/') || pathname.startsWith('/api/admin/') || pathname.startsWith('/api/accounts')) {
         if (!user) return send(res, 401, { error: 'Sign in to manage your shops.' });
         // A temporary password from an administrator must be replaced before anything else.
@@ -106,8 +146,9 @@ export function createApi(store, { trustProxy = false } = {}) {
           }
           if (changes.passwordHash) changes.mustChangePassword = false;
           const updated = await store.updateUser(user.id, changes);
-          // A password change signs out every other device.
-          if (changes.passwordHash) await store.deleteOtherSessions(user.id, tokenHash);
+          // A password change signs out every other device and invalidates
+          // any pending reset link for this account.
+          if (changes.passwordHash) { await store.deleteOtherSessions(user.id, tokenHash); await store.deletePasswordResets(user.id); }
           return send(res, 200, await account(updated));
         }
       }
@@ -141,7 +182,7 @@ export function createApi(store, { trustProxy = false } = {}) {
             Object.assign(changes, { passwordHash: await hashPassword(password), mustChangePassword: true });
           }
           const updated = await store.updateUser(targetUser.id, changes);
-          if (password) await store.deleteSessions(targetUser.id);
+          if (password) { await store.deleteSessions(targetUser.id); await store.deletePasswordResets(targetUser.id); }
           return send(res, 200, { account: { ...updated, shops: await store.countProfiles(updated.id) }, ...(password ? { password } : {}) });
         }
         if (targetUser && req.method === 'DELETE') {

@@ -38,8 +38,11 @@ export default function MenuDesigner({ businessProfile, onChange }) {
   const design = normalizeMenuDesign(businessProfile.menuDesign);
   const template = MENU_TEMPLATES.find(t => t.id === design.template);
   const [group, setGroup] = useState('recommended');
-  // The gallery opens for a menu that has never chosen a template; afterwards it collapses to the current choice.
-  const [browsing, setBrowsing] = useState(!businessProfile.menuDesign?.template);
+  // The gallery stays open for comparison (it used to collapse once a template existed,
+  // hiding the other options). "Done" still collapses it to the current template.
+  const [browsing, setBrowsing] = useState(true);
+  const [galleryMyMenu, setGalleryMyMenu] = useState(false);
+  const [galleryNoPhotos, setGalleryNoPhotos] = useState(false);
   const [section, setSection] = useState('layout');
   const [customising, setCustomising] = useState(false);
   const [device, setDevice] = useState('phone');
@@ -67,16 +70,20 @@ export default function MenuDesigner({ businessProfile, onChange }) {
       <div><p className="eyebrow">Template · {groupName}</p><h2>{template.name}</h2><p className="muted">{template.description}</p></div>
       <button type="button" className="btn btn-secondary" onClick={() => setBrowsing(true)}><LayoutGrid size={16} aria-hidden="true" />Browse {MENU_TEMPLATES.length} templates</button>
     </div> : <div className="card card-flush">
-      <div className="card-head"><div><h2>Templates</h2><p>{MENU_TEMPLATES.length} designs. Choosing one keeps your items, prices and text and resets layout, fonts and colours to the template.</p></div>
+      <div className="card-head"><div><h2>Templates</h2><p>{MENU_TEMPLATES.length} designs. Choosing one keeps your items, prices and text and resets layout, fonts and colours to the template.</p><p className="field-help">Gallery previews use sample dishes &amp; photos — your menu may look different. Use “My menu” to preview with your own items, and “No photos” to see how a template holds up without photos.</p></div>
         {businessProfile.menuDesign?.template && <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBrowsing(false)}>Done</button>}</div>
+      <div className="md-groups" role="group" aria-label="Gallery preview options">
+        <label><input type="checkbox" checked={galleryMyMenu} disabled={!businessProfile.menu?.length} onChange={event => setGalleryMyMenu(event.target.checked)} /> Preview with my menu{businessProfile.menu?.length ? '' : ' (add menu items first)'}</label>
+        <label><input type="checkbox" checked={galleryNoPhotos} onChange={event => setGalleryNoPhotos(event.target.checked)} /> No photos</label>
+      </div>
       <div className="md-groups" role="group" aria-label="Template collection">
         {[['recommended', 'Recommended', RECOMMENDED_TEMPLATES.length], ['all', 'All', MENU_TEMPLATES.length], ...TEMPLATE_GROUPS.map(g => [g.id, g.name, MENU_TEMPLATES.filter(t => t.group === g.id).length])].map(([id, name, count]) => <button key={id} type="button" aria-pressed={group === id} onClick={() => setGroup(id)}>{name}<span>{count}</span></button>)}
       </div>
       <div className="md-gallery">{templates.map(t => <article key={t.id} className={`md-template ${design.template === t.id ? 'selected' : ''}`}>
-        <TemplatePreview template={t} />
+        <TemplatePreview template={t} previewProfile={galleryMyMenu && businessProfile.menu?.length ? { ...businessProfile, menuDesign: { ...TEMPLATE_RESET, template: t.id }, menu: galleryNoPhotos ? businessProfile.menu.map(item => ({ ...item, image: '' })) : businessProfile.menu } : galleryNoPhotos ? { ...menuExample(t), menu: menuExample(t).menu.map(item => ({ ...item, image: '' })) } : null} />
         <div className="md-template-meta">
           <div><strong>{t.name}</strong><span className="md-swatches" aria-hidden="true">{[t.background, t.surface, t.accent].map(c => <i key={c} style={{ background: c }} />)}</span></div>
-          <p>{t.description}</p>
+          <p>{t.description}</p><p className="field-help">Sample dishes &amp; photos — your menu may look different.</p>
           <button type="button" className={`btn btn-sm ${design.template === t.id ? 'btn-ghost md-selected' : 'btn-secondary'}`} aria-pressed={design.template === t.id} onClick={() => selectTemplate(t.id)}>{design.template === t.id ? <><Check size={15} aria-hidden="true" />Selected</> : 'Use template'}<span className="sr-only">: {t.name}</span></button>
         </div>
       </article>)}</div>

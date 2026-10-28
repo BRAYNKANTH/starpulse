@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /about
+Allow: /contact
+Allow: /terms
+Allow: /privacy
+Allow: /signin
+Disallow: /api/
+Disallow: /q/
+Disallow: /login
+
+Sitemap: https://starpulse-beta.vercel.app/sitemap.xml

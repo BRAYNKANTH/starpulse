@@ -13,7 +13,7 @@ import MenuBuilder from './components/MenuBuilder';
 import FeedbackInbox from './components/FeedbackInbox';
 import ShopSetup from './components/ShopSetup';
 import ActionMenu from './components/ActionMenu';
-import AuthScreen, { ChoosePasswordScreen } from './components/AuthScreen';
+import AuthScreen, { ChoosePasswordScreen, ResetPasswordScreen } from './components/AuthScreen';
 import AdminAccounts from './components/AdminAccounts';
 import AccountSettings from './components/AccountSettings';
 import Toasts from './components/Toasts';
@@ -226,13 +226,18 @@ export default function OwnerStudio() {
             {activeTab === 'profiles' && <SavedProfiles profiles={profiles} overview={overview} activeProfile={businessProfile} onSelect={profile => select(profile, 'dashboard')} onNew={newBusiness} onDelete={deleteShop} plan={account.plan} />}
             {activeTab === 'account' && <AccountSettings account={account} onAccountChange={setAccount} notify={notify} />}
             {activeTab === 'accounts' && account.user.role === 'admin' && <AdminAccounts currentUser={account.user} notify={notify} onShopsChanged={reloadShops} />}
-            {activeTab === 'inbox' && <FeedbackInbox key={businessProfile.id} businessProfile={businessProfile} onChange={refreshOverview} notify={notify} />}
+            {activeTab === 'inbox' && <FeedbackInbox key={businessProfile.id} businessProfile={businessProfile} savedProfile={savedProfile} onChange={refreshOverview} notify={notify} />}
           </>}
         </fieldset></ImageUploadStatus.Provider>
       </main>
     </div>
     <Toasts toasts={toasts} onDismiss={dismiss} />
   </div>;
+}
+
+// The emailed reset link (/signin?reset=<token>), shown with the studio's styles.
+export function ResetPasswordPage({ token }) {
+  return <div className="studio studio-auth"><ResetPasswordScreen token={token} /></div>;
 }
 
 // The last-opened shop is cached in the browser; remember which account it belongs to.

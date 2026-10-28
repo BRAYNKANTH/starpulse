@@ -5,10 +5,10 @@ import { MENU_TEMPLATES, RECOMMENDED_TEMPLATES } from '../data/menuDesign';
 
 // Three short steps for a new shop: name it, pick a look, add a few dishes. Everything can be changed later.
 const TYPES = [
-  { id: 'cafe', name: 'Café or coffee shop', templates: ['cafe', 'chalkboard', 'brunch', 'garden'] },
-  { id: 'restaurant', name: 'Restaurant', templates: ['trattoria', 'spice', 'maison', 'restaurant', 'sushi', 'ember'] },
+  { id: 'cafe', name: 'Café or coffee shop', templates: ['cafe', 'chalkboard', 'shorteats', 'brunch', 'garden'] },
+  { id: 'restaurant', name: 'Restaurant', templates: ['ricecurry', 'spice', 'trattoria', 'maison', 'restaurant', 'sushi'] },
   { id: 'bakery', name: 'Bakery or desserts', templates: ['cafe', 'scoop', 'brunch', 'garden'] },
-  { id: 'fastfood', name: 'Fast food or street food', templates: ['burger', 'pizzeria', 'taqueria', 'wok', 'diner'] },
+  { id: 'fastfood', name: 'Fast food or street food', templates: ['shorteats', 'burger', 'pizzeria', 'taqueria', 'wok', 'diner'] },
   { id: 'bar', name: 'Bar or lounge', templates: ['copper', 'midnight', 'ember'] },
   { id: 'other', name: 'Something else', templates: RECOMMENDED_TEMPLATES },
 ];

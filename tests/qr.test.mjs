@@ -45,12 +45,22 @@ test('printed dynamic links follow updated destinations, persist visits, and res
     const login = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'owner@example.com', password: 'correct horse' }) });
     const cookie = login.headers.get('set-cookie').split(';')[0];
     response = await fetch(`${base}/api/admin/businesses/cafe/analytics`, { headers: { Cookie: cookie } }); assert.equal((await response.json()).count, 2);
-    assert.equal((await visit('missing')).status, 404);
+    // Unavailable QR links now return a branded HTML page (Option B), not raw JSON.
+    response = await visit('missing');
+    assert.equal(response.status, 404);
+    assert.match(response.headers.get('content-type'), /text\/html/);
+    assert.match(await response.text(), /This shop isn’t available/);
     assert.equal((await visit('cafe', 'POST')).status, 405);
     await store.save(validateProfile({ ...profile, published: false }, 'cafe'), owner.id);
-    assert.equal((await visit()).status, 404); assert.equal((await store.visits('cafe')).count, 2);
+    response = await visit();
+    assert.equal(response.status, 404);
+    assert.match(response.headers.get('content-type'), /text\/html/);
+    assert.match(await response.text(), /This shop isn’t available/);
+    assert.equal((await store.visits('cafe')).count, 2);
     await store.save(validateProfile({ ...profile, qrDestination: 'url', qrUrl: '' }, 'cafe'), owner.id);
-    assert.equal((await visit()).status, 404);
+    response = await visit();
+    assert.equal(response.status, 404);
+    assert.match(response.headers.get('content-type'), /text\/html/);
   } finally { await new Promise(resolve => server.close(resolve)); await store.close(); }
 });
 

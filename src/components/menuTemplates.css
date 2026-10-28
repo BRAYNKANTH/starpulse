@@ -24,11 +24,10 @@
 
 /* Chalkboard Café: wooden frame and chalk colours. */
 .menu-template-chalkboard .shop-menu-main { max-width: 1000px; margin: 28px auto; border: 12px solid #6b4f34; border-radius: 6px; box-shadow: inset 0 0 40px rgba(0, 0, 0, .45), 0 10px 30px rgba(0, 0, 0, .35); }
-.menu-template-chalkboard .menu-public-heading h1 { color: #fff; transform: rotate(-1.5deg); }
+.menu-template-chalkboard .menu-public-heading h1 { color: #fff; }
 .menu-template-chalkboard .menu-category-heading h2 { color: var(--menu-accent-text, var(--menu-accent)); font-size: 2rem; }
 .menu-template-chalkboard .public-item-title h3 { font-size: 1.45rem; font-weight: 600; }
 .menu-template-chalkboard .public-item-title strong { color: var(--menu-accent-text, var(--menu-accent)); font-size: 1rem; }
-.menu-template-chalkboard .layout-compact .public-menu-item > img { display: none; }
 
 /* Taquería Sol: papel picado banner. */
 .menu-template-taqueria .shop-menu-main::before { content: ''; display: block; height: 22px; margin-bottom: 28px; background: linear-gradient(90deg, #e4572e 0 20%, #ffc914 20% 40%, #17bebb 40% 60%, #76b041 60% 80%, #e84393 80%); -webkit-mask: radial-gradient(circle at 11px 22px, transparent 7px, #000 7.5px) 0 0 / 22px 22px; mask: radial-gradient(circle at 11px 22px, transparent 7px, #000 7.5px) 0 0 / 22px 22px; }

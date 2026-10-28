@@ -3,7 +3,8 @@ import ShopLanding from './ShopLanding';
 import { menuExample } from '../data/menuExamples';
 
 // A scaled sample menu in a template, rendered only once its card scrolls into view.
-export default function TemplatePreview({ template }) {
+// `previewProfile` replaces the sample, for example with the owner's own items or without photos.
+export default function TemplatePreview({ template, previewProfile }) {
   const box = useRef(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -14,6 +15,6 @@ export default function TemplatePreview({ template }) {
     return () => observer.disconnect();
   }, [visible]);
   return <div ref={box} className="template-preview-window" aria-hidden="true" inert>
-    {visible ? <div className="template-preview-content"><ShopLanding businessProfile={menuExample(template)} initialView="menu" preview /></div> : <div className="md-preview-placeholder" style={{ background: template.background }} />}
+    {visible ? <div className="template-preview-content"><ShopLanding businessProfile={previewProfile || menuExample(template)} initialView="menu" preview /></div> : <div className="md-preview-placeholder" style={{ background: template.background }} />}
   </div>;
 }

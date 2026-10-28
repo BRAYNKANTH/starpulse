@@ -65,11 +65,28 @@ A client signing in with a temporary password must choose their own password (at
 
 **My account** shows how many shops the owner can have and lets them change their name and password. Changing the password signs out their other devices. **All shops** can delete a single shop.
 
-**Plans** limit how many shops an owner can create: Free 1, Pro 5, Business 50 (see `src/data/plans.js`). Billing is not connected yet. Administrators set plans on the Accounts page, or with:
+**Plans** limit how many shops an owner can create: Free 1, Pro 5, Business 50 (see `src/data/plans.js`). There is no checkout, trial, invoice, or automatic upgrade — selling is assisted-only: the buyer contacts the administrator, the administrator confirms payment offline, then sets the plan on the Accounts page, or with:
 
 ```powershell
 npm run set-plan -- owner@example.com pro
 ```
+
+The full procedure, including verification, is in `docs/assisted-sales-checklist.md`, and the buyer-facing steps are on `/pricing` and `/contact`. No prices are published on the site until the owner confirms them.
+
+**Password reset by email.** The sign-in page has a real **Forgot password?** link. It sends a single-use reset link (valid 1 hour) to the account's email address. The link is `/signin?reset=<token>`; only a SHA-256 hash of the token is stored, it stops working once used or once the password is changed another way, and asking for a reset never reveals whether an email address belongs to an account (every request gets the same generic reply). Forgot requests are limited to 10 per address per 15 minutes, reset attempts to 20 per address per 15 minutes. A reset signs the owner out on every device. If email is not configured, the request still shows the generic reply and the owner is told to contact their administrator, who can reset the password directly from the Accounts page.
+
+Email is sent via SMTP, configured only through environment variables (never in the repo):
+
+```powershell
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=you@example.com
+SMTP_PASS=…
+SMTP_FROM=DQ.lk <you@example.com>
+APP_BASE_URL=https://starpulse-beta.vercel.app
+```
+
+`APP_BASE_URL` is the public address used to build reset links. It must be set for live emails to send (Vercel's own `VERCEL_URL` is used as a fallback); the link is deliberately never built from a request's Host header, which an unauthenticated forgot-password request could forge. Set all six variables in Vercel under **Settings → Environment Variables** and redeploy — until then, password recovery falls back to the administrator.
 
 ## Deploy to Vercel with Neon
 
@@ -128,11 +145,11 @@ npm test
 npm run build
 ```
 
-Tests run against an in-memory Postgres and cover administrator-created accounts, temporary passwords, password resets, shop hand-over, sign-in, sessions, password changes, account deletion, isolation between accounts, plan limits, import of the old JSON store, shop profiles, updates, draft visibility, persistence across restarts, cross-origin and non-JSON write rejection, per-shop feedback, visit pruning, malformed browser storage, URL validation and menu prices.
+Tests run against an in-memory Postgres and cover administrator-created accounts, temporary passwords, password resets, email password resets (enumeration resistance, expiry, single-use, rate limiting), shop hand-over, sign-in, sessions, password changes, account deletion, isolation between accounts, plan limits, import of the old JSON store, shop profiles, updates, draft visibility, persistence across restarts, cross-origin and non-JSON write rejection, per-shop feedback, visit pruning, malformed browser storage, URL validation and menu prices.
 
 ## Menu templates and design settings
 
-Menu → Design has 23 templates in six collections: cafés and bakeries, restaurants, fast food and street food, bars and lounges, healthy food and desserts, and shops and services. They include Italian, pizza, sushi, Indian and Sri Lankan curry, tacos, steakhouse, seafood, fine dining, noodles, brunch, cocktails, desserts and retro diner designs. Gallery previews use sample dishes and photos; applying a template keeps your items, prices and text, and resets layout, fonts and colours to that template.
+Menu → Design has 25 templates in six collections: cafés and bakeries, restaurants, fast food and street food, bars and lounges, healthy food and desserts, and shops and services. They include Italian, pizza, sushi, Indian and Sri Lankan curry, tacos, steakhouse, seafood, fine dining, noodles, brunch, cocktails, desserts, retro diner, Sri Lankan rice & curry and short eats designs. Gallery previews use sample dishes and photos; applying a template keeps your items, prices and text, and resets layout, fonts and colours to that template.
 
 Every template can then be customised. Each setting defaults to "Template", which follows the template's own look:
 
@@ -157,6 +174,6 @@ Downloads are available once the shop is live and saved. New shops get short IDs
 
 When WhatsApp, Facebook, Telegram and similar apps fetch a shop link to draw a preview, they get a small page with the shop's name, tagline and cover photo instead of the redirect. These previews and other automated visitors are not counted as scans. Visit totals count scans from phones and browsers, at most 30 a minute from one address.
 
-Subscriptions and billing, password reset email, team members per account, media-file hosting and an AI design assistant are not implemented yet.
+Subscriptions and billing (checkout, trials, invoices), team members per account, media-file hosting and an AI design assistant are not implemented yet. Selling is assisted-only (see Accounts and plans), and password reset by email works once SMTP is configured (see above).
 
 Images are uploaded from the device: the logo and cover photo in Business profile, and item photos in Menu. PNG/JPEG/WebP/GIF inputs up to 10 MB are resized and compressed in the browser; transparency is preserved with WebP, and GIF uploads use a still frame. Previews can be replaced or removed. Optimized images are stored with the shop on Save; total profile uploads are checked against the API request limit. Existing image URLs still render, while editing uses file uploads.

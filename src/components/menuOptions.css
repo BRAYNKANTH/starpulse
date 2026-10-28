@@ -16,7 +16,7 @@
 .layout-tiles .public-menu-item > .public-menu-item-body { padding: 20px; }
 .layout-tiles .public-item-title h3, .layout-tiles .public-item-title strong, .layout-tiles .public-menu-item p { color: #fff; }
 .layout-tiles .public-menu-item p { opacity: .86; }
-.layout-tiles .menu-item-image-placeholder { display: none; }
+.layout-tiles .menu-item-image-placeholder { display: grid; place-items: center; flex: 1; min-height: 120px; color: rgba(255, 255, 255, .75); }
 .layout-tiles .menu-label { border-color: rgba(255, 255, 255, .45); background: rgba(255, 255, 255, .12); }
 :is(.mo-font, #_) .layout-tiles .public-item-title h3 { color: #fff; }
 
@@ -35,8 +35,11 @@
 
 /* Typography */
 :is(.mo-font, #_) { font-family: var(--menu-body-font); }
-:is(.mo-font, #_) :is(h1, h2, h3, .food-menu-brand strong, .shop-wordmark span) { font-family: var(--menu-heading-font); font-weight: var(--menu-heading-weight); }
-:is(.mo-font, #_) .public-item-title h3 { font-weight: var(--menu-heading-weight); }
+:is(.mo-font, #_) :is(h1, h2, .food-menu-brand strong, .shop-wordmark span) { font-family: var(--menu-heading-font); font-weight: var(--menu-heading-weight); }
+/* Dish names use the pair's body font, not the display heading font: script/poster
+   headings (Pacifico, Bebas, Righteous, Archivo Black, Abril) stay on the shop name
+   and page/section headings only, so long dish names stay scannable. */
+:is(.mo-font, #_) .public-item-title h3 { font-family: var(--menu-body-font); font-weight: 600; }
 :is(.mo-headingCase-upper, #_) :is(.menu-public-heading h1, .menu-category-heading h2) { text-transform: uppercase; letter-spacing: .05em; }
 :is(.mo-headingCase-normal, #_) :is(.menu-public-heading h1, .menu-category-heading h2) { text-transform: none; }
 :is(.mo-headingSize-small, #_) .menu-public-heading h1 { font-size: clamp(1.8rem, 4vw, 2.3rem); }
@@ -159,7 +162,7 @@
 }
 @media (max-width: 600px) {
   :is(.mo-columns-2, .mo-columns-3, #_) .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
-  :is(.mo-columns-2, .mo-columns-3, #_) .layout-tiles .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.mo-columns-2, .mo-columns-3, #_) .layout-tiles .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
   .layout-horizontal .public-menu-item > img { width: 104px; min-height: 104px; }
   .layout-tiles .public-menu-item { min-height: 220px; }
 }
@@ -168,7 +171,16 @@
 }
 @container (max-width: 620px) {
   :is(.mo-columns-2, .mo-columns-3, #_) .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
-  :is(.mo-columns-2, .mo-columns-3, #_) .layout-tiles .public-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.mo-columns-2, .mo-columns-3, #_) .layout-tiles .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
   .layout-horizontal .public-menu-item > img { width: 104px; min-height: 104px; }
   .layout-tiles .public-menu-item { min-height: 220px; }
+}
+
+/* Non-Latin headings: wide letter-spacing designed for Latin display type hurts
+   Sinhala/Tamil readability, so collapse it on narrow screens (with the Noto
+   fallbacks in menuFonts.js, glyphs render in Noto instead of a spaced Latin face). */
+@media (max-width: 600px) {
+  .menu-template-sushi .menu-public-heading h1, .menu-template-maison .menu-public-heading h1, .menu-template-copper .menu-public-heading h1 { letter-spacing: .05em; }
+  .menu-template-sushi .menu-category-heading h2, .menu-template-maison .menu-category-heading h2, .menu-template-copper .menu-category-heading h2 { letter-spacing: .05em; }
+  .menu-template-sushi .food-menu-brand strong { letter-spacing: .05em; }
 }
