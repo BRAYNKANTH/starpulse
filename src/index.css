@@ -108,7 +108,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .public-menu-item > div { padding: 22px; }
 .public-item-title { display: flex; align-items: start; justify-content: space-between; gap: 18px; }
 .public-item-title h3 { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
-.public-item-title strong { color: #4e6b43; font-size: .85rem; white-space: nowrap; padding-top: 3px; }
+.public-item-title strong { color: #4e6b43; font-size: .95rem; white-space: nowrap; padding-top: 3px; }
 .public-menu-item p { color: #6a7b6c; font-size: .875rem; margin-top: 12px; line-height: 1.65; overflow-wrap: anywhere; }
 .public-empty { text-align: center; padding: 64px 20px; color: #657a67; }
 .public-empty h2 { margin: 20px 0 8px; }
