@@ -100,7 +100,14 @@ export function PublicPage({ path }) {
         <p className="public-note">No price is published yet and no payment is taken on this site. The administrator sets your plan after you contact them.</p>
       </article>)}
     </section>
-    <p>Menus in the studio price items in LKR by default (other currencies are available in the menu settings). Plan limits are enforced in the studio: you cannot add shops beyond your plan.</p>
+    <h2>How buying or upgrading works (assisted only)</h2>
+    <ol>
+      <li><strong>Contact the administrator</strong> with your account email, your current plan, the plan you want, and how many shops you need.</li>
+      <li><strong>The administrator confirms payment offline.</strong> No payment, checkout, trial or invoice is taken on this site, and no price is published here yet.</li>
+      <li><strong>The administrator sets your plan</strong> on the Accounts page or with the set-plan command.</li>
+      <li><strong>Your new shop limit applies immediately</strong> — refresh your Account page to see it. Plan limits are enforced in the studio: you cannot add shops beyond your plan.</li>
+    </ol>
+    <p>Menus in the studio price items in LKR by default (other currencies are available in the menu settings).</p>
     <p><a href="/contact">Contact the administrator</a> to set up a plan, or <a href="/signin">sign in</a> if you already have an account.</p>
   </Layout>;
 
@@ -136,7 +143,13 @@ export function PublicPage({ path }) {
       <p>Contact details are to be confirmed by the owner — no phone number, email address or postal address is published here yet, because none has been confirmed for this page. This page will be updated once the owner confirms them. Until then, use the administrator contact you were given when your account was set up.</p>
       <p>There is no contact form on this page yet, so that a message cannot be sent into the void: a form will be added together with a confirmed contact address.</p>
     </section>
-    <p>If you already have an account, <a href="/signin">sign in</a>. If you have forgotten your password, contact your DQ.lk administrator — self-service password recovery is not available yet.</p>
+    <h2>Buying or changing a plan</h2>
+    <ol>
+      <li>Contact the DQ.lk administrator with your account email, your current plan, the plan you want, and how many shops you need.</li>
+      <li>The administrator confirms payment offline and sets your plan. No payment is taken on this site.</li>
+      <li>Your new shop limit applies immediately — refresh your Account page to see it.</li>
+    </ol>
+    <p>If you already have an account, <a href="/signin">sign in</a>. If you have forgotten your password, use <a href="/signin">Forgot password?</a> on the sign-in page — a reset link is emailed to your account address, works once, and expires in 1 hour. If you do not receive it, contact your DQ.lk administrator, who can also reset your password directly.</p>
   </Layout>;
 
   if (path === '/terms') return <Layout path={path}>
@@ -169,6 +182,8 @@ export function PublicPage({ path }) {
     <p>Your data is not sold. It is used to run your shop pages, menus, feedback and scan counts, and to keep accounts secure (including rate limits on sign-in and feedback).</p>
     <h2>Cookies and sessions</h2>
     <p>Sign-in uses a session cookie so you stay signed in on your device. Changing your password signs you out on every other device.</p>
+    <h2>Password reset</h2>
+    <p>If you ask for a password reset, a single-use link is emailed to your account address and expires in 1 hour. The link itself is not stored — only a hash of it — and it stops working as soon as it is used, or as soon as your password is changed another way. Asking for a reset never reveals whether an email address belongs to an account.</p>
   </Layout>;
 
   return <Layout path={path}>
