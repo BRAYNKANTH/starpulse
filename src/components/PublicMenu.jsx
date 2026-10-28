@@ -32,7 +32,7 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
 }
 
 export function MenuItem({ item, money, design }) {
-  const placeholder = design.template === 'catalog' && design.layout === 'cards';
+  const placeholder = (design.template === 'catalog' && design.layout === 'cards') || design.layout === 'tiles';
   const tags = item.tags || [];
   return <article className={`public-menu-item ${item.soldOut ? 'sold-out' : ''}`}>
     {design.showImages && (item.image ? <img src={item.image} alt="" loading="lazy" /> : placeholder && <div className="menu-item-image-placeholder" aria-hidden="true"><UtensilsCrossed size={32} /></div>)}
