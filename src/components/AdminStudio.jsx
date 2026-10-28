@@ -7,8 +7,11 @@ import Field from './Field';
 import ShopLanding from './ShopLanding';
 import { resolveMenuDesign } from '../data/menuDesign';
 
-export default function AdminStudio({ businessProfile: p, setBusinessProfile, onNavigateToPrint, onNavigate }) {
-  const accent = resolveMenuDesign(p.menuDesign).accent;
+export default function AdminStudio({ businessProfile: p, setBusinessProfile, onNavigateToPrint }) {
+  const resolved = resolveMenuDesign(p.menuDesign);
+  const accent = resolved.accent;
+  // The brand colour is the menu design's accent, so the pages, menu and posters always match.
+  const setAccent = value => setBusinessProfile({ ...p, menuDesign: { ...p.menuDesign, accent: value } });
   const [error, setError] = useState('');
   const [tag, setTag] = useState('');
   const update = (field, value) => {
@@ -23,39 +26,42 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
   return <div className="sp-page">
     <header className="page-header">
       <div><h1>Business profile</h1><p>Branding, contact details and the review link shown on your customer page.</p></div>
-      <div className="page-actions"><button type="button" className="btn btn-secondary" onClick={onNavigateToPrint}>Create QR poster<ArrowRight size={16} /></button></div>
+      <div className="page-actions"><button type="button" className="btn btn-secondary" onClick={onNavigateToPrint}>QR code & stands<ArrowRight size={16} /></button></div>
     </header>
     {error && <p className="notice error" role="alert">{error}</p>}
     <div className="sp-grid-form">
       <div className="sp-stack">
         <section className="card">
           <div className="card-head"><div><h2>Business details</h2><p>How customers find and contact you.</p></div></div>
-          <div className="form-grid">{field('name', 'Shop name', { required: true, maxLength: 150, placeholder: 'e.g. The Corner Café' })}{field('category', 'Business category', { placeholder: 'Café, restaurant, salon…' })}</div>
+          <div className="form-grid">{field('name', 'Shop name', { required: true, maxLength: 150, placeholder: 'e.g. The Corner Café' })}{field('category', 'Type of business', { placeholder: 'Café, restaurant, bakery…' })}</div>
           {field('tagline', 'Tagline', { placeholder: 'Good coffee. Better company.' })}
           <div className="form-grid">{field('phone', 'Phone number', { type: 'tel' })}{field('email', 'Contact email', { type: 'email' })}</div>
           {field('address', 'Address')}{field('hours', 'Opening hours', { placeholder: 'Mon–Sat · 8:00 AM–9:00 PM' })}
         </section>
         <section className="card">
-          <div className="card-head"><div><h2>Branding</h2><p>Logo, cover photo and accent colour for your pages.</p></div></div>
+          <div className="card-head"><div><h2>Branding</h2><p>Your logo, cover photo and brand colour, used on your pages, menu and printed stands.</p></div></div>
           <div className="form-grid"><ImageUpload id="business-logo-upload" label="Logo" value={p.logo} maxWidth={512} onChange={value => update('logo', value)} /><ImageUpload id="business-cover-upload" label="Cover photo" value={p.coverImage} maxWidth={1400} onChange={value => update('coverImage', value)} /></div>
-          <div className="form-group"><span className="form-label">Brand colour</span><div className="brand-colour-row"><span className="brand-colour-swatch" style={{ background: accent }} aria-hidden="true" /><code>{accent.toUpperCase()}</code><button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('menu')}>Change in Menu → Design</button></div><p className="field-help">Your brand colour is your menu design’s accent, so your pages, menu and QR posters always match.</p></div>
+          <div className="form-group"><label className="form-label" htmlFor="brand-colour">Brand colour</label><div className="brand-colour-row"><input id="brand-colour" type="color" className="form-input" value={accent} onChange={e => setAccent(e.target.value)} /><code>{accent.toUpperCase()}</code>{p.menuDesign?.accent && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAccent('')}>Use the menu template’s colour</button>}</div><p className="field-help">Used for buttons, prices and highlights. {p.menuDesign?.accent ? 'Your own colour.' : `Currently the ${resolved.palette.name} template’s colour.`}</p></div>
         </section>
         <section className="card">
           <div className="card-head"><div><h2>Reviews & feedback</h2><p>Every customer sees the Google link, whatever rating they choose.</p></div></div>
-          {field('googleReviewUrl', 'Google review URL', { type: 'url', placeholder: 'https://search.google.com/local/writereview?placeid=…' })}
-          <div className="form-grid form-grid-end">{field('googlePlaceId', 'Google Place ID (optional)')}<div className="form-group"><button type="button" className="btn btn-secondary" disabled={!p.googlePlaceId?.trim()} onClick={() => update('googleReviewUrl', `https://search.google.com/local/writereview?placeid=${encodeURIComponent(p.googlePlaceId.trim())}`)}>Build review URL</button></div></div>
+          {field('googleReviewUrl', 'Google review link', { type: 'url', placeholder: 'https://search.google.com/local/writereview?placeid=…' })}
+          <details className="help-details"><summary>Don’t have the link?</summary>
+            <p className="field-help">On your Google Business Profile, choose <strong>Ask for reviews</strong> and copy the link. If you only have your Google Place ID, paste it here and we’ll build the link.</p>
+            <div className="form-grid form-grid-end">{field('googlePlaceId', 'Google Place ID')}<div className="form-group"><button type="button" className="btn btn-secondary" disabled={!p.googlePlaceId?.trim()} onClick={() => update('googleReviewUrl', `https://search.google.com/local/writereview?placeid=${encodeURIComponent(p.googlePlaceId.trim())}`)}>Build the link</button></div></div>
+          </details>
           {p.googleReviewUrl && /^https?:\/\//.test(p.googleReviewUrl) && <p className="field-help"><a href={p.googleReviewUrl} target="_blank" rel="noopener noreferrer">Test review link <ExternalLink size={12} /></a></p>}
-          {field('customPrompt', 'Feedback question', { placeholder: 'How was your experience today?' })}
-          {field('notePlaceholder', 'Note placeholder', { placeholder: 'Type your experience here…' })}
-          <div className="form-group"><label className="form-label" htmlFor="quick-tag">Quick tags</label>
+          {field('customPrompt', 'Question customers see', { placeholder: 'How was your experience today?' })}
+          {field('notePlaceholder', 'Hint inside the comment box', { placeholder: 'Type your experience here…' })}
+          <div className="form-group"><label className="form-label" htmlFor="quick-tag">Quick replies customers can tap</label>
             <div className="chip-row">{tags.map(t => <span key={t} className="chip">{t}<button type="button" aria-label={`Remove ${t}`} onClick={() => update('quickTags', tags.filter(x => x !== t))}><X size={12} /></button></span>)}</div>
             <div className="inline-form"><input id="quick-tag" className="form-input" placeholder="e.g. Friendly staff" maxLength={80} value={tag} onChange={e => setTag(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addTag(e); }} /><button type="button" className="btn btn-secondary" disabled={!tag.trim() || tags.length >= 20} onClick={addTag}><Plus size={16} />Add</button></div>
-            <p className="field-help">Customers can tap these when leaving feedback. Up to 20.</p>
+            <p className="field-help">For example “Friendly staff” or “Great coffee”. Up to 20.</p>
           </div>
         </section>
         <section className="card">
-          <div className="card-head"><div><h2>Start from a sample</h2><p>Fills in sample branding, prompts and tags. Your menu and settings are kept.</p></div></div>
-          <div className="chip-row">{INITIAL_PRESETS.map(preset => <button type="button" className="chip chip-toggle" key={preset.id} onClick={() => { if (window.confirm(`Replace your branding with the “${preset.name}” sample?`)) setBusinessProfile({ ...p, ...preset, id: p.id, menu: p.menu, currency: p.currency, published: p.published, googleReviewUrl: p.googleReviewUrl, googlePlaceId: p.googlePlaceId }); }}>{preset.name.split('&')[0].trim()}</button>)}</div>
+          <div className="card-head"><div><h2>Fill in example text</h2><p>Replaces your tagline, feedback question and quick replies with an example. Your name, menu, photos and links are kept.</p></div></div>
+          <div className="chip-row">{INITIAL_PRESETS.map(preset => <button type="button" className="chip chip-toggle" key={preset.id} onClick={() => { if (window.confirm(`Replace your tagline, feedback question and quick replies with the “${preset.name}” example?`)) setBusinessProfile({ ...p, tagline: preset.tagline, customPrompt: preset.customPrompt, notePlaceholder: preset.notePlaceholder, quickTags: preset.quickTags, category: p.category || preset.category }); }}>{preset.name.split('&')[0].trim()}</button>)}</div>
         </section>
       </div>
       <aside className="md-preview brand-preview"><div className="md-preview-bar"><span><span className="preview-live-dot" />Customer page preview</span></div><div className="md-preview-frame phone" aria-hidden="true" inert><div className="design-preview-scroll"><ShopLanding businessProfile={p} initialView="landing" preview /></div></div></aside>

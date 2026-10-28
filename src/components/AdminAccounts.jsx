@@ -59,7 +59,7 @@ export default function AdminAccounts({ currentUser, notify, onShopsChanged }) {
 
   const accounts = data?.accounts || [];
   return <div className="sp-page">
-    <header className="page-header"><div><h1>Accounts</h1><p>Create sign-ins for your clients, set their plan and decide which shops they manage.</p></div></header>
+    <header className="page-header"><div><h1>Clients</h1><p>Create sign-ins for the shop owners you work with, set how many shops they can have, and hand shops over to them.</p></div></header>
     {error && <p className="notice error" role="alert">{error}</p>}
     {credentials && <Credentials credentials={credentials} onClose={() => setCredentials(null)} />}
     <form className="card" onSubmit={create}>
@@ -72,7 +72,7 @@ export default function AdminAccounts({ currentUser, notify, onShopsChanged }) {
       <div className="page-actions"><button className="btn btn-primary" disabled={busy}><UserPlus size={16} />{busy ? 'Creating…' : 'Create account'}</button></div>
     </form>
     <section className="card card-flush">
-      <div className="card-head"><div><h2>All accounts</h2><p>{accounts.length} account{accounts.length === 1 ? '' : 's'}</p></div></div>
+      <div className="card-head"><div><h2>Everyone with a sign-in</h2><p>{accounts.length} {accounts.length === 1 ? 'person' : 'people'}, including you</p></div></div>
       <div className="table-wrap"><table className="data-table">
         <thead><tr><th>Name</th><th>Plan</th><th className="num">Shops</th><th>Status</th><th><span className="sr-only">Actions</span></th></tr></thead>
         <tbody>{accounts.map(account => <tr key={account.id}>
@@ -93,7 +93,7 @@ export default function AdminAccounts({ currentUser, notify, onShopsChanged }) {
         <thead><tr><th>Shop</th><th>Status</th><th>Managed by</th></tr></thead>
         <tbody>{data.shops.map(shop => <tr key={shop.id}>
           <td><strong>{shop.name}</strong></td>
-          <td><span className={`badge badge-${shop.published ? 'success' : 'neutral'}`}>{shop.published ? 'Published' : 'Draft'}</span></td>
+          <td><span className={`badge badge-${shop.published ? 'success' : 'neutral'}`}>{shop.published ? 'Live' : 'Draft'}</span></td>
           <td><label className="sr-only" htmlFor={`owner-${shop.id}`}>Account managing {shop.name}</label><select id={`owner-${shop.id}`} className="form-input form-input-sm" value={shop.ownerId || ''} onChange={event => assign(shop, event.target.value)}>
             {!shop.ownerId && <option value="">Unassigned</option>}
             {accounts.map(a => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}

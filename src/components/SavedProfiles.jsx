@@ -15,7 +15,7 @@ export default function SavedProfiles({ profiles, overview, activeProfile, onSel
         <thead><tr><th>Shop</th><th>Status</th><th className="num">Menu items</th><th className="num">Scans (30 days)</th><th className="num">Rating</th><th className="num">Unread</th><th><span className="sr-only">Actions</span></th></tr></thead>
         <tbody>{profiles.map(profile => { const stats = overview.find(s => s.id === profile.id); return <tr key={profile.id} className={activeProfile.id === profile.id ? 'selected' : ''}>
           <td><span className="sp-shop-cell"><ShopAvatar profile={profile} /><span><strong>{profile.name}</strong><small>{profile.category || profile.tagline}</small></span></span></td>
-          <td><span className={`badge badge-${profile.published ? 'success' : 'neutral'}`}>{profile.published ? 'Published' : 'Draft'}</span></td>
+          <td><span className={`badge badge-${profile.published ? 'success' : 'neutral'}`}>{profile.published ? 'Live' : 'Draft'}</span></td>
           <td className="num">{(profile.menu || []).length}</td>
           <td className="num">{sumDays(stats?.visits.daily, days).toLocaleString()}</td>
           <td className="num">{stats?.feedback.average ? stats.feedback.average.toFixed(1) : '—'}</td>

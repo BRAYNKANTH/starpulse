@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:live": "vite --mode live",
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.mjs",
@@ -13,6 +14,7 @@
     "create-admin": "node server/admin.mjs create-admin",
     "claim-shops": "node server/admin.mjs claim-shops",
     "set-plan": "node server/admin.mjs set-plan",
+    "reset-password": "node server/admin.mjs reset-password",
     "import-json": "node server/admin.mjs import-json"
   },
   "dependencies": {

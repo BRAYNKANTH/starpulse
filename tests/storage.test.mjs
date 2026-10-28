@@ -8,7 +8,7 @@ test('invalid or blocked browser cache recovers to a usable new shop', () => {
   for (const value of ['null', '[]', '"text"', '{broken', '{"id":"../bad","name":"Invalid"}']) {
     globalThis.localStorage = { getItem: () => value };
     const profile = getStoredBusinessProfile();
-    assert.match(profile.id, /^shop-/); assert.deepEqual(profile.menu, []);
+    assert.match(profile.id, /^[a-z2-9]{10}$/, 'new shops get a short ID for printed QR links'); assert.deepEqual(profile.menu, []);
   }
   globalThis.localStorage = { getItem: () => { throw new Error('Blocked'); }, setItem: () => { throw new Error('Quota exceeded'); } };
   assert.doesNotThrow(() => getStoredBusinessProfile());
@@ -74,4 +74,14 @@ test('prices use each currency’s home formatting and its own decimals', async 
   assert.equal(formatMoney(1200, 'JPY', 'number'), '1,200', 'yen has no decimals');
   assert.equal(formatMoney(5, 'XXX', 'number'), '5.00', 'unknown currencies still format');
   assert.equal(formatMoney('abc', 'USD'), '$0.00');
+});
+
+test('poster designs are saved with safe defaults, and the old Google theme becomes Bright', async () => {
+  const { normalizePosterDesign } = await import('../src/data/qrDesign.js');
+  assert.deepEqual(normalizePosterDesign(), { theme: 'bright', format: 'tabletop', headline: '', subtitle: '', logoShape: 'squircle', logoSize: 'large', showNfc: false });
+  const saved = normalizePosterDesign({ theme: 'warm_bistro', format: 'tent', headline: 'x'.repeat(80), showNfc: true, logoSize: 'huge' });
+  assert.equal(saved.theme, 'warm_bistro'); assert.equal(saved.format, 'tent'); assert.equal(saved.headline.length, 60); assert.equal(saved.showNfc, true); assert.equal(saved.logoSize, 'large');
+  assert.equal(normalizePosterDesign({ theme: 'google_deluxe' }).theme, 'bright');
+  const profile = validateProfile({ name: 'Cafe', posterDesign: { theme: 'dark_luxe', headline: 'Scan me' } }, 'cafe');
+  assert.equal(profile.posterDesign.theme, 'dark_luxe'); assert.equal(profile.posterDesign.headline, 'Scan me');
 });

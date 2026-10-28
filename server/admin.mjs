@@ -4,6 +4,7 @@
 //   npm run import-json -- .data                          Import shops, feedback and visits from the old store.json/visits.json.
 //   npm run claim-shops -- owner@example.com              Give every unassigned shop to an account.
 //   npm run set-plan -- owner@example.com pro             Change an account's plan (free, pro, business).
+//   npm run reset-password -- owner@example.com           Print a new temporary password and sign the account out everywhere.
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createStore } from './store.mjs';
@@ -45,6 +46,13 @@ try {
       if (!PLANS[plan]) throw new Error(`Choose a plan: ${Object.keys(PLANS).join(', ')}.`);
       await store.updateUser(user.id, { plan });
       console.log(`${user.email} is now on the ${PLANS[plan].name} plan.`);
-    } else throw new Error('Unknown command. Use create-admin, import-json, claim-shops or set-plan.');
+    } else if (command === 'reset-password') {
+      const password = temporaryPassword();
+      await store.updateUser(user.id, { passwordHash: await hashPassword(password), mustChangePassword: true });
+      await store.deleteSessions(user.id);
+      console.log(`Password reset for ${user.email}.
+Temporary password: ${password}
+They are signed out everywhere and must choose a new password after signing in.`);
+    } else throw new Error('Unknown command. Use create-admin, import-json, claim-shops, set-plan or reset-password.');
   }
 } catch (error) { console.error(error.message); process.exitCode = 1; } finally { await store.close(); }

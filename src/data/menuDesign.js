@@ -36,6 +36,9 @@ export const MENU_TEMPLATES = [
   { id: 'editorial', group: 'retail', sample: 'studio', name: 'Studio Menu', description: 'Category sidebar, numbered sections and a clean editorial list.', layout: 'list', accent: '#685141', background: '#f4f1ed', surface: '#ffffff', text: '#292723', muted: '#79716b', border: '#ddd5cd', font: 'fraunces', eyebrow: 'THOUGHTFULLY CURATED', food: true, defaults: { navStyle: 'sidebar', sectionStyle: 'numbered' } },
 ];
 
+// Shown first in the template gallery and in new-shop setup; the rest are one click away.
+export const RECOMMENDED_TEMPLATES = ['cafe', 'trattoria', 'burger', 'spice', 'sushi', 'maison'];
+
 export const MENU_LAYOUTS = [['cards', 'Image cards'], ['horizontal', 'Side-photo cards'], ['list', 'Classic rows'], ['compact', 'Compact board'], ['tiles', 'Photo tiles']];
 
 // Structure options. 'template' (the stored default) means "use the template's own look".
@@ -88,7 +91,8 @@ export function normalizeMenuDesign(value) {
 }
 
 // Design fields a template change resets, so the new template shows its own look.
-export const TEMPLATE_RESET = { layout: 'template', font: 'template', accent: '', background: '', surface: '', text: '', ...Object.fromEntries(Object.keys(MENU_OPTIONS).map(key => [key, 'template'])) };
+// The brand colour (accent) is a business setting, so it survives a template change.
+export const TEMPLATE_RESET = { layout: 'template', font: 'template', background: '', surface: '', text: '', ...Object.fromEntries(Object.keys(MENU_OPTIONS).map(key => [key, 'template'])) };
 
 const luminance = hex => hex.slice(1).match(/../g).map(v => parseInt(v, 16) / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
 const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m); return (x + .05) / (y + .05); };

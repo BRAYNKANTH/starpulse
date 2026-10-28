@@ -1,28 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, LayoutGrid, Monitor, RotateCcw, Smartphone } from 'lucide-react';
+import { Check, LayoutGrid, Monitor, RotateCcw, Smartphone, SlidersHorizontal } from 'lucide-react';
 import Field from './Field';
 import ShopLanding from './ShopLanding';
+import TemplatePreview from './TemplatePreview';
 import { menuExample } from '../data/menuExamples';
-import { MENU_LAYOUTS, MENU_OPTIONS, MENU_TEMPLATES, TEMPLATE_GROUPS, TEMPLATE_RESET, normalizeMenuDesign } from '../data/menuDesign';
+import { MENU_LAYOUTS, MENU_OPTIONS, MENU_TEMPLATES, TEMPLATE_GROUPS, TEMPLATE_RESET, RECOMMENDED_TEMPLATES, normalizeMenuDesign } from '../data/menuDesign';
 import { FONT_PAIRS, fontPair, loadFonts } from '../data/menuFonts';
 
 const SECTIONS = [['layout', 'Layout'], ['type', 'Typography'], ['details', 'Prices & sections'], ['colours', 'Colours'], ['content', 'Content']];
-
-// Renders the scaled template preview only once its card scrolls into view.
-function LazyPreview({ template }) {
-  const box = useRef(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const node = box.current;
-    if (!node || visible) return undefined;
-    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setVisible(true); }, { rootMargin: '200px' });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [visible]);
-  return <div ref={box} className="template-preview-window" aria-hidden="true" inert>
-    {visible ? <div className="template-preview-content"><ShopLanding businessProfile={menuExample(template)} initialView="menu" preview /></div> : <div className="md-preview-placeholder" style={{ background: template.background }} />}
-  </div>;
-}
 
 function Choice({ label, field, design, template, options, help }) {
   const inherited = field === 'layout' ? template.layout : template.defaults?.[field];
@@ -52,10 +37,11 @@ function ColourField({ label, field, design, fallback, onSet }) {
 export default function MenuDesigner({ businessProfile, onChange }) {
   const design = normalizeMenuDesign(businessProfile.menuDesign);
   const template = MENU_TEMPLATES.find(t => t.id === design.template);
-  const [group, setGroup] = useState('all');
+  const [group, setGroup] = useState('recommended');
   // The gallery opens for a menu that has never chosen a template; afterwards it collapses to the current choice.
   const [browsing, setBrowsing] = useState(!businessProfile.menuDesign?.template);
   const [section, setSection] = useState('layout');
+  const [customising, setCustomising] = useState(false);
   const [device, setDevice] = useState('phone');
   const frame = useRef(null);
   const [frameWidth, setFrameWidth] = useState(520);
@@ -72,7 +58,7 @@ export default function MenuDesigner({ businessProfile, onChange }) {
   const selectTemplate = id => onChange({ ...design, ...TEMPLATE_RESET, template: id });
   const groupName = TEMPLATE_GROUPS.find(g => g.id === template.group)?.name;
   const customised = Object.keys(TEMPLATE_RESET).filter(key => design[key] !== TEMPLATE_RESET[key]).length;
-  const templates = MENU_TEMPLATES.filter(t => group === 'all' || t.group === group);
+  const templates = group === 'recommended' ? RECOMMENDED_TEMPLATES.map(id => MENU_TEMPLATES.find(t => t.id === id)) : MENU_TEMPLATES.filter(t => group === 'all' || t.group === group);
   const templateFont = fontPair(template.font);
 
   return <section className="md" aria-label="Menu design studio">
@@ -84,10 +70,10 @@ export default function MenuDesigner({ businessProfile, onChange }) {
       <div className="card-head"><div><h2>Templates</h2><p>{MENU_TEMPLATES.length} designs. Choosing one keeps your items, prices and text and resets layout, fonts and colours to the template.</p></div>
         {businessProfile.menuDesign?.template && <button type="button" className="btn btn-secondary btn-sm" onClick={() => setBrowsing(false)}>Done</button>}</div>
       <div className="md-groups" role="group" aria-label="Template collection">
-        {[['all', 'All', MENU_TEMPLATES.length], ...TEMPLATE_GROUPS.map(g => [g.id, g.name, MENU_TEMPLATES.filter(t => t.group === g.id).length])].map(([id, name, count]) => <button key={id} type="button" aria-pressed={group === id} onClick={() => setGroup(id)}>{name}<span>{count}</span></button>)}
+        {[['recommended', 'Recommended', RECOMMENDED_TEMPLATES.length], ['all', 'All', MENU_TEMPLATES.length], ...TEMPLATE_GROUPS.map(g => [g.id, g.name, MENU_TEMPLATES.filter(t => t.group === g.id).length])].map(([id, name, count]) => <button key={id} type="button" aria-pressed={group === id} onClick={() => setGroup(id)}>{name}<span>{count}</span></button>)}
       </div>
       <div className="md-gallery">{templates.map(t => <article key={t.id} className={`md-template ${design.template === t.id ? 'selected' : ''}`}>
-        <LazyPreview template={t} />
+        <TemplatePreview template={t} />
         <div className="md-template-meta">
           <div><strong>{t.name}</strong><span className="md-swatches" aria-hidden="true">{[t.background, t.surface, t.accent].map(c => <i key={c} style={{ background: c }} />)}</span></div>
           <p>{t.description}</p>
@@ -97,7 +83,13 @@ export default function MenuDesigner({ businessProfile, onChange }) {
     </div>}
 
     <div className="md-workbench">
-      <div className="card md-options">
+      {!customising && !customised ? <div className="card md-options md-customise-closed">
+        <div><h2>Happy with {template.name}?</h2><p className="muted">The template already sets the layout, fonts and colours. You can fine-tune them if you want.</p></div>
+        <button type="button" className="btn btn-secondary" onClick={() => setCustomising(true)}><SlidersHorizontal size={16} aria-hidden="true" />Customise this design</button>
+        <div className="md-content-quick">
+          <Field id="design-title" label="Menu heading" value={design.title} maxLength={100} placeholder="Our menu" onChange={value => set('title', value)} />
+        </div>
+      </div> : <div className="card md-options">
         <div className="card-head"><div><h2>Customise {template.name}</h2><p>{customised ? `${customised} setting${customised > 1 ? 's' : ''} changed from the template.` : 'Using the template’s own design.'}</p></div>
           <button type="button" className="btn btn-secondary btn-sm" disabled={!customised} onClick={() => selectTemplate(design.template)}><RotateCcw size={14} />Reset</button></div>
         <div className="tabs" role="tablist" aria-label="Design settings">{SECTIONS.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={section === id} onClick={() => setSection(id)}>{label}</button>)}</div>
@@ -135,12 +127,11 @@ export default function MenuDesigner({ businessProfile, onChange }) {
 
         {section === 'colours' && <div className="md-section">
           <div className="md-colours">
-            <ColourField label="Accent" field="accent" design={design} fallback={template.accent} onSet={set} />
             <ColourField label="Page background" field="background" design={design} fallback={template.background} onSet={set} />
             <ColourField label="Cards" field="surface" design={design} fallback={template.surface} onSet={set} />
             <ColourField label="Text" field="text" design={design} fallback={template.text} onSet={set} />
           </div>
-          <p className="field-help">Card text switches between dark and light automatically to stay readable.</p>
+          <p className="field-help">Card text switches between dark and light automatically to stay readable. Your brand colour is set on Business profile.</p>
           <Choice label="Background texture" field="texture" design={bound} template={template} options={MENU_OPTIONS.texture} />
         </div>}
 
@@ -150,7 +141,7 @@ export default function MenuDesigner({ businessProfile, onChange }) {
           <div className="md-toggles">{[['showCover', 'Cover photo'], ['showBrand', 'Logo & name header'], ['showImages', 'Item photos'], ['showDescriptions', 'Descriptions'], ['showPrices', 'Prices'], ['showSearch', 'Search box'], ['showCategories', 'Category navigation']].map(([field, label]) => <label key={field} className="switch"><input type="checkbox" role="switch" checked={design[field]} onChange={event => set(field, event.target.checked)} /><span aria-hidden="true" />{label}</label>)}</div>
         </div>}
         <p className="field-help">Save in the top bar to publish design changes. Printed QR codes keep working.</p>
-      </div>
+      </div>}
 
       <aside className="md-preview">
         <div className="md-preview-bar"><span><span className="preview-live-dot" />Live preview</span>

@@ -11,20 +11,23 @@ npm install
 npm run dev
 ```
 
-Open the address printed by Vite (normally http://127.0.0.1:5173). The development API is built into Vite and is the same code that runs on Vercel. To develop against your Neon database instead, run `vercel env pull .env.local` first; the dev server and the admin commands read `DATABASE_URL` from it.
+Open the address printed by Vite (normally http://127.0.0.1:5173). The development API is built into Vite and is the same code that runs on Vercel.
 
-1. Create an administrator with `npm run create-admin` (see Accounts and plans), sign in, then register a shop and enter its branding, contact information and optional Google review URL.
-2. Open Menu Builder; add items, categories, prices, descriptions and optional image URLs. Set unavailable items off to hide them.
-3. Select Publish this shop, then Save menu & page. Unpublished drafts are unavailable to customers.
-4. Open Print Stand & NFC Studio. Select the landing page, menu, or direct Google review destination.
-5. For customer scans, set Public website address to the deployed site address. Download the QR SVG, export the poster PNG, or print it.
-6. Read customer submissions in Feedback. Only successful server submissions display a delivery confirmation.
+`npm run dev` always uses the local database, even when `.env.local` contains your Neon `DATABASE_URL`, so trying things out never changes live shops. To work against the live Neon database on purpose, run `vercel env pull .env.local` and then `npm run dev:live`. The admin commands (`create-admin`, `reset-password` and so on) do read `DATABASE_URL` from `.env.local`, because they are meant for the live site; their first line of output says which database they used.
+
+1. Create an administrator with `npm run create-admin` (see Accounts and plans) and sign in.
+2. The studio opens with three setup steps: the shop's name and type, a menu design, and a few dishes. The shop starts as a draft that only you can see.
+3. Add details, logo and cover photo in Business profile, and the rest of the menu in Menu.
+4. Press **Publish** in the top bar. A live shop shows **Live** there; **Unpublish** is under the "⋯" menu.
+5. Open **QR & print**: choose where the code goes (menu, shop page, feedback page or another website), style it, and download or print a table stand, tent card, sticker or poster.
+6. Read customer submissions in Feedback.
 
 ## Studio
 
 The owner studio uses a sidebar layout with a shop switcher, light and dark themes, and shareable page links (`#/menu`, `#/inbox` and so on).
 
-- **Overview** shows QR scans per day (7, 30 or 90 days, as a chart or table), average rating, feedback received, unread feedback, the rating breakdown, recent feedback and a setup checklist. With more than one shop it also lists every shop's figures.
+- A shop's top bar shows **Draft** or **Live**. A draft has **Save draft** and **Publish**; a live shop has **Save changes**, **View page** and, under "⋯", **Unpublish**. The shop switcher and these buttons only appear on pages about a shop.
+- **Overview** for a draft shop shows what to do next instead of empty figures. Once the shop is live it shows QR scans per day (7, 30 or 90 days, as a chart or table), average rating, feedback received, unread feedback, the rating breakdown, recent feedback and a setup checklist. With more than one shop it also lists every shop's figures.
 - **Feedback** has read and unread states, search, rating and type filters, CSV export of the filtered list, single deletes and mark-all-as-read. The sidebar shows the unread count.
 - **Menu** groups items by category. Categories can be added, renamed, reordered and deleted. Items can be dragged between positions and categories, duplicated, labelled (Popular, New, Vegetarian, Vegan, Spicy, Gluten-free) and set to Available, Sold out (shown with a label) or Hidden (left out of the public API).
 
@@ -42,7 +45,13 @@ npm run create-admin -- you@example.com "Your Name"
 
 Run the same command with an existing account's email to make that account an administrator.
 
-**Client accounts.** Administrators get an **Accounts** page in the studio. It can:
+**Forgotten password.** Print a new temporary password for any account (including your own administrator account). It signs that account out on every device and asks for a new password at the next sign-in. As above, run `vercel env pull .env.local` first to reset an account on the live site:
+
+```powershell
+npm run reset-password -- you@example.com
+```
+
+**Client accounts.** Administrators get a **Clients** page in the studio. It can:
 
 - create a client account with a name, email and plan. A 12-character temporary password is generated and shown once, with a button to copy the sign-in details.
 - change any account's plan.
@@ -54,7 +63,7 @@ A client signing in with a temporary password must choose their own password (at
 
 **Security.** Passwords are hashed with scrypt. Signing in sets an HttpOnly, SameSite=Lax session cookie that lasts 30 days, and it is marked Secure when the site is served over HTTPS. Sign-in is limited to 10 attempts per address every 15 minutes. Owners only ever see and manage their own shops. Requests for another account's shop return 404, so shop IDs are not confirmed. Writes from another origin, and any write that is not a JSON request, are refused.
 
-**Account & plan** shows an owner's plan usage and lets them change their name and password. Changing the password signs out their other devices. **All shops** can delete a single shop.
+**My account** shows how many shops the owner can have and lets them change their name and password. Changing the password signs out their other devices. **All shops** can delete a single shop.
 
 **Plans** limit how many shops an owner can create: Free 1, Pro 5, Business 50 (see `src/data/plans.js`). Billing is not connected yet. Administrators set plans on the Accounts page, or with:
 
@@ -135,14 +144,19 @@ Every template can then be customised. Each setting defaults to "Template", whic
 
 The live preview shows the customer page at phone or desktop size. Save the menu to publish design changes to the existing QR destination.
 
-## Branded QR workspace
+## QR & print
 
-The Overview dashboard connects the Branded QR editor, Menu Builder and Business Studio. The QR editor supports custom colours, four design presets, frames, captions, optional business logos and PNG/SVG downloads. Designs are saved per shop. High error correction and a four-module quiet zone are preserved; low-contrast or inverted designs are blocked from export.
+One page for the shop's QR code, saved with the shop:
 
-Dynamic codes use `/q/<business-id>`. Save and publish the shop before exporting. Select a shop landing page, menu, feedback page or custom HTTP(S) website as the destination, and save to update where the same printed code leads. Publishing controls also apply to dynamic redirects. Use the deployed domain when printing: localhost is only accessible on the computer running the server. The domain and business ID must remain stable. Serve `/q/` through the included Node server (or Vite in development), not a static-only host.
+- **Where the QR code goes:** the menu (the default for new shops), the shop page, the feedback page or another https website. The printed code is the shop's link (`/q/<shop-id>`); change the destination and save, and existing prints follow.
+- **QR code style:** colours, frame, caption, rounded corners and an optional logo in the middle. Low-contrast colours are flagged before download.
+- **Printed stand or poster:** five looks (Bright, Obsidian & gold, Minimal, Neon, Warm bistro), four sizes (table stand, tent card, sticker, A4 poster), headline and subtitle. A "tap your phone here" line is only added when you switch it on for stands with an NFC tag; to use a tag, write the shop's link to it with any NFC app.
+- **Other QR codes:** website, WhatsApp and Wi-Fi codes. These print their content directly, cannot be changed later and are never saved.
 
-Visit totals and the last visit are persisted per business; these count GET requests to dynamic links, including tests and bots, rather than unique visitors. Analytics require owner access. Website, WhatsApp and Wi-Fi codes are static and need regeneration when their content changes. Wi-Fi passwords and static input fields are never saved to the server.
+Downloads are available once the shop is live and saved. New shops get short IDs (10 characters, for example `/q/k7m2qx9a4b`), which make printed codes less dense; existing shops keep their IDs, so codes already printed keep working.
+
+When WhatsApp, Facebook, Telegram and similar apps fetch a shop link to draw a preview, they get a small page with the shop's name, tagline and cover photo instead of the redirect. These previews and other automated visitors are not counted as scans. Visit totals count scans from phones and browsers, at most 30 a minute from one address.
 
 Subscriptions and billing, password reset email, team members per account, media-file hosting and an AI design assistant are not implemented yet.
 
-Images can be uploaded from the device in Business Studio and Menu Builder: logo, cover photo, and each menu item photo. PNG/JPEG/WebP/GIF inputs up to 10 MB are resized and compressed in the browser; transparency is preserved with WebP, and GIF uploads use a still frame. Previews can be replaced or removed. Optimized images are stored with the shop on Save; total profile uploads are checked against the API request limit. Existing image URLs still render, while editing uses file uploads.
+Images are uploaded from the device: the logo and cover photo in Business profile, and item photos in Menu. PNG/JPEG/WebP/GIF inputs up to 10 MB are resized and compressed in the browser; transparency is preserved with WebP, and GIF uploads use a still frame. Previews can be replaced or removed. Optimized images are stored with the shop on Save; total profile uploads are checked against the API request limit. Existing image URLs still render, while editing uses file uploads.

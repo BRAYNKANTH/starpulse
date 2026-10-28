@@ -1,7 +1,7 @@
 import { validateProfile } from './store.mjs';
 import { SESSION_COOKIE, temporaryPassword, hashPassword, hashToken, newSessionToken, readCookie, sessionCookie, validEmail, validPassword, verifyPassword, SESSION_DAYS } from './auth.mjs';
 import { PLANS, planFor } from '../src/data/plans.js';
-import { SECURITY_HEADERS, safeRedirect, looksAutomated } from './security.mjs';
+import { SECURITY_HEADERS, safeRedirect, looksAutomated, isLinkPreviewer, previewPage } from './security.mjs';
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
@@ -47,8 +47,14 @@ export function createApi(store, { trustProxy = false } = {}) {
       if (destination === 'url' && !safeRedirect(target)) return send(res, 404, { error: 'The QR destination is not a safe web address.' });
       try {
         // Crawlers and link previews are not customers, and one device cannot inflate a shop's count by refreshing.
-        if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && await store.allow(`scan:${clientAddress(req)}:${id}`, 30, 60)) await store.recordVisit(id);
+        if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && !isLinkPreviewer(req.headers['user-agent']) && await store.allow(`scan:${clientAddress(req)}:${id}`, 30, 60)) await store.recordVisit(id);
       } catch { return send(res, 503, { error: 'This QR link is temporarily unavailable.' }); }
+      if (isLinkPreviewer(req.headers['user-agent'])) {
+        const origin = `${req.headers['x-forwarded-proto'] === 'https' || req.socket?.encrypted ? 'https' : 'http'}://${req.headers.host}`;
+        const image = [profile.coverImage, profile.logo].find(src => /^https?:\/\//.test(src || ''));
+        const html = previewPage({ title: profile.name, description: profile.tagline || `Menu, opening hours and feedback for ${profile.name}.`, image, url: `${origin}${pathname}`, target: new URL(target, origin).href });
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300', ...SECURITY_HEADERS }); res.end(req.method === 'HEAD' ? undefined : html); return;
+      }
       res.writeHead(302, { Location: target, 'Cache-Control': 'no-store', ...SECURITY_HEADERS }); res.end(); return;
     }
     if (!pathname.startsWith('/api/')) return next();

@@ -15,6 +15,11 @@ export default function ShopLanding({ businessProfile: p, initialView = 'landing
   const Main = preview ? 'div' : 'main';
   const items = (p.menu || []).filter(item => item.available !== false);
   useEffect(() => { loadFonts([design.fontPair]); }, [design.fontPair]);
+  // Customers see the shop's own name in the browser tab, not the studio's.
+  useEffect(() => {
+    if (preview) return;
+    document.title = `${p.name}${view === 'menu' ? ' · Menu' : view === 'review' ? ' · Feedback' : ''}`;
+  }, [preview, p.name, view]);
   const changeView = next => {
     setView(next);
     if (!preview) { const url = new URL(window.location.href); url.searchParams.set('view', next); window.history.replaceState(null, '', url); }

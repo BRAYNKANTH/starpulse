@@ -308,9 +308,13 @@ test('crawlers do not count as scans and one address cannot inflate a shop count
     await owner.signup('scans@example.com');
     await owner('/api/admin/businesses/cafe', 'PUT', profile('Cafe'));
     const count = async () => (await owner('/api/admin/businesses/cafe/analytics')).body.count;
-    for (const agent of ['Googlebot/2.1', 'WhatsApp link preview', 'curl/8.0', 'facebookexternalhit/1.1']) {
-      assert.equal((await guest('/q/cafe', 'GET', undefined, { 'User-Agent': agent })).status, 302, 'automated visitors are still redirected');
+    // Apps drawing a link preview get a small page with the shop's name and photo; other automated visitors are redirected.
+    for (const agent of ['Googlebot/2.1', 'WhatsApp/2.23', 'facebookexternalhit/1.1']) {
+      const response = await guest('/q/cafe', 'GET', undefined, { 'User-Agent': agent });
+      assert.equal(response.status, 200, `${agent} gets a preview page`);
+      assert.match(response.headers.get('content-type'), /text\/html/);
     }
+    assert.equal((await guest('/q/cafe', 'GET', undefined, { 'User-Agent': 'curl/8.0' })).status, 302, 'other automated visitors are still redirected');
     assert.equal(await count(), 0);
     const phone = { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1' };
     assert.equal((await guest('/q/cafe', 'GET', undefined, phone)).status, 302);
@@ -342,4 +346,15 @@ test('simultaneous shop creation cannot exceed the plan limit', async () => {
     assert.ok(results.every(r => [200, 403].includes(r.status)));
     assert.equal((await owner('/api/admin/profiles')).body.length, 1);
   } finally { await close(); }
+});
+
+test('link previews show the shop name and escape it safely', async () => {
+  const { previewPage, isLinkPreviewer } = await import('../server/security.mjs');
+  const html = previewPage({ title: "Tom & Jerry's <Café>", description: 'Best "kottu"', image: 'https://example.com/a.jpg', url: 'https://dq.lk/q/abc', target: 'https://dq.lk/?biz=abc&view=menu' });
+  assert.match(html, /<title>Tom &amp; Jerry&#39;s &lt;Café&gt;<\/title>/);
+  assert.match(html, /property="og:image" content="https:\/\/example.com\/a.jpg"/);
+  assert.match(html, /url=https:\/\/dq.lk\/\?biz=abc&amp;view=menu/);
+  assert.doesNotMatch(html, /<Café>/);
+  assert.equal(isLinkPreviewer('WhatsApp/2.23.20.0'), true);
+  assert.equal(isLinkPreviewer('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)'), false);
 });

@@ -20,6 +20,9 @@
 .layout-tiles .menu-label { border-color: rgba(255, 255, 255, .45); background: rgba(255, 255, 255, .12); }
 :is(.mo-font, #_) .layout-tiles .public-item-title h3 { color: #fff; }
 
+/* Hero button: the brand colour with text picked for contrast (--menu-on-accent), on every template. */
+.shop-public .shop-hero .shop-primary-button { background: var(--menu-accent); color: var(--menu-on-accent); }
+
 /* The active shop tab sits on the card surface, so it uses the card text colour. */
 .shop-public-nav nav button.active { color: var(--menu-card-text, var(--menu-text)); }
 .shop-public .menu-search, .shop-public .menu-search input { color: var(--menu-card-text, var(--menu-text)); }

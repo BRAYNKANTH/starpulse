@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { normalizeQrDesign } from '../src/data/qrDesign.js';
+import { normalizePosterDesign, normalizeQrDesign } from '../src/data/qrDesign.js';
 import { normalizeMenuDesign } from '../src/data/menuDesign.js';
 import { normalizeMenuTags } from '../src/data/menuTags.js';
 import { safeRedirect } from './security.mjs';
@@ -25,7 +25,7 @@ export function validateProfile(input, id) {
     if (!['number', 'string'].includes(typeof item.price) || String(item.price).trim() === '' || !text(item.name, 150) || !Number.isFinite(price) || price < 0 || price > 10000000) throw new Error('Each menu item needs a name and a valid non-negative price.');
     return { id: text(item.id, 80) || randomUUID(), name: text(item.name, 150), category: text(item.category, 80) || 'Menu', description: text(item.description), price, image: url(item.image, true), available: item.available !== false, soldOut: item.soldOut === true, tags: normalizeMenuTags(item.tags) };
   }) : [];
-  return { id, name, tagline: text(input.tagline), category: text(input.category, 80), address: text(input.address), phone: text(input.phone, 80), email: text(input.email, 150), hours: text(input.hours), logo: url(input.logo, true), coverImage: url(input.coverImage, true), googleReviewUrl: url(input.googleReviewUrl), googlePlaceId: text(input.googlePlaceId, 200), accentColor: /^#[0-9a-f]{6}$/i.test(input.accentColor) ? input.accentColor : '#F59E0B', customPrompt: text(input.customPrompt), notePlaceholder: text(input.notePlaceholder), quickTags: Array.isArray(input.quickTags) ? input.quickTags.filter(t => typeof t === 'string').slice(0, 20).map(t => text(t, 80)) : [], currency: /^[A-Z]{3}$/.test(input.currency) ? input.currency : 'LKR', menu, menuDesign: normalizeMenuDesign(input.menuDesign), qrDesign: normalizeQrDesign(input.qrDesign), qrDestination, qrUrl, published: input.published === true, themeMode: 'dark' };
+  return { id, name, tagline: text(input.tagline), category: text(input.category, 80), address: text(input.address), phone: text(input.phone, 80), email: text(input.email, 150), hours: text(input.hours), logo: url(input.logo, true), coverImage: url(input.coverImage, true), googleReviewUrl: url(input.googleReviewUrl), googlePlaceId: text(input.googlePlaceId, 200), accentColor: /^#[0-9a-f]{6}$/i.test(input.accentColor) ? input.accentColor : '#F59E0B', customPrompt: text(input.customPrompt), notePlaceholder: text(input.notePlaceholder), quickTags: Array.isArray(input.quickTags) ? input.quickTags.filter(t => typeof t === 'string').slice(0, 20).map(t => text(t, 80)) : [], currency: /^[A-Z]{3}$/.test(input.currency) ? input.currency : 'LKR', menu, menuDesign: normalizeMenuDesign(input.menuDesign), qrDesign: normalizeQrDesign(input.qrDesign), posterDesign: normalizePosterDesign(input.posterDesign), qrDestination, qrUrl, published: input.published === true, themeMode: 'dark' };
 }
 
 // Statements run one at a time: the Neon HTTP driver accepts a single statement per query.

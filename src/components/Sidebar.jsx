@@ -2,7 +2,7 @@ import { LogOut, Moon, QrCode, Sun, X } from 'lucide-react';
 import { PAGES } from '../data/pages';
 
 export default function Sidebar({ active, onNavigate, unread, theme, onToggleTheme, onSignOut, user, open, onClose }) {
-  const pages = PAGES.filter(page => !page.adminOnly || user.role === 'admin');
+  const pages = PAGES.filter(page => !page.hidden && (!page.adminOnly || user.role === 'admin'));
   const groups = [...new Set(pages.map(page => page.group || ''))];
   return <>
     <div className={`sp-scrim ${open ? 'open' : ''}`} onClick={onClose} aria-hidden="true" />

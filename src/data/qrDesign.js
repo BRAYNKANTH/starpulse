@@ -11,6 +11,25 @@ export function normalizeQrDesign(value = {}) {
   return { foreground: color('foreground', '#172033'), background: color('background', '#ffffff'), frameColor: color('frameColor', '#172033'), frame: ['none', 'border', 'label'].includes(source.frame) ? source.frame : 'label', label: typeof source.label === 'string' ? source.label.slice(0, 60) : 'SCAN TO EXPLORE', rounded: source.rounded !== false, showLogo: source.showLogo === true };
 }
 
+export const POSTER_THEMES = ['bright', 'dark_luxe', 'minimal_stand', 'vibrant_neon', 'warm_bistro'];
+export const POSTER_FORMATS = ['tabletop', 'tent', 'sticker', 'poster'];
+
+// Printed stand/poster settings, saved with the shop so a design is still there next time.
+export function normalizePosterDesign(value = {}) {
+  const source = value && typeof value === 'object' ? value : {};
+  const choice = (key, allowed, fallback) => allowed.includes(source[key]) ? source[key] : fallback;
+  const text = (key, fallback, max) => typeof source[key] === 'string' ? source[key].slice(0, max) : fallback;
+  return {
+    theme: choice('theme', POSTER_THEMES, 'bright'),
+    format: choice('format', POSTER_FORMATS, 'tabletop'),
+    headline: text('headline', '', 60),
+    subtitle: text('subtitle', '', 90),
+    logoShape: choice('logoShape', ['squircle', 'circle', 'banner'], 'squircle'),
+    logoSize: choice('logoSize', ['normal', 'large', 'extra_large'], 'large'),
+    showNfc: source.showNfc === true,
+  };
+}
+
 export function contrastRatio(foreground, background) {
   const luminance = hex => {
     const values = hex.slice(1).match(/../g).map(v => parseInt(v, 16) / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { api } from '../data/api';
-import { PLANS } from '../data/plans';
 import Field from './Field';
 
 export default function AccountSettings({ account, onAccountChange, notify }) {
@@ -26,14 +25,13 @@ export default function AccountSettings({ account, onAccountChange, notify }) {
   const percent = Math.min(100, Math.round((usage.shops / plan.shops) * 100));
 
   return <div className="sp-page">
-    <header className="page-header"><div><h1>Account</h1><p>Your sign-in details, plan and usage.</p></div></header>
+    <header className="page-header"><div><h1>My account</h1><p>Your name, password and how many shops you can have.</p></div></header>
     {error && <p className="notice error" role="alert">{error}</p>}
     <div className="sp-stack account-page">
       <section className="card">
-        <div className="card-head"><div><h2>Plan</h2><p>You are on the <strong>{plan.name}</strong> plan.</p></div><span className="badge badge-info">{plan.name}</span></div>
-        <div className="usage-meter"><div className="usage-meter-label"><span>Shops</span><span>{usage.shops} of {plan.shops}</span></div><div className="usage-meter-track" role="progressbar" aria-valuemin={0} aria-valuemax={plan.shops} aria-valuenow={usage.shops} aria-label="Shops used"><span style={{ width: `${percent}%` }} /></div></div>
-        <div className="plan-grid">{Object.values(PLANS).map(p => <div key={p.id} className={`plan-option ${p.id === plan.id ? 'current' : ''}`}><strong>{p.name}</strong><span>{p.shops} shop{p.shops === 1 ? '' : 's'}</span>{p.id === plan.id && <small>Current plan</small>}</div>)}</div>
-        <p className="field-help">To change your plan or close your account, contact your DQ.lk administrator.</p>
+        <div className="card-head"><div><h2>Shops</h2><p>Your {plan.name} plan includes up to {plan.shops} shop{plan.shops === 1 ? '' : 's'}.</p></div></div>
+        <div className="usage-meter"><div className="usage-meter-label"><span>Shops in use</span><span>{usage.shops} of {plan.shops}</span></div><div className="usage-meter-track" role="progressbar" aria-valuemin={0} aria-valuemax={plan.shops} aria-valuenow={usage.shops} aria-label="Shops used"><span style={{ width: `${percent}%` }} /></div></div>
+        <p className="field-help">Need more shops, or want to close your account? Contact your DQ.lk administrator.</p>
       </section>
       <form className="card" onSubmit={saveName}>
         <div className="card-head"><div><h2>Profile</h2><p>Signed in as {user.email}.</p></div></div>

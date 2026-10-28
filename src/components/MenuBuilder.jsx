@@ -99,7 +99,7 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
 
   return <div className="sp-page">
     <header className="page-header">
-      <div><h1>Menu</h1><p>{items.length} item{items.length === 1 ? '' : 's'} in {filled.length} categor{filled.length === 1 ? 'y' : 'ies'}{p.published ? ' · Published' : ' · Draft'}</p></div>
+      <div><h1>Menu</h1><p>{items.length} item{items.length === 1 ? '' : 's'} in {filled.length} categor{filled.length === 1 ? 'y' : 'ies'}{p.published ? ' · Live' : ' · Draft'}</p></div>
       <div className="page-actions">
         <button type="button" className="btn btn-secondary" onClick={() => setPreview(!preview)}>{preview ? <EyeOff size={16} /> : <Eye size={16} />}{preview ? 'Close preview' : 'Preview'}</button>
       </div>
@@ -175,7 +175,7 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
 
       {tab === 'settings' && <div className="sp-stack">
         <section className="card"><div className="card-head"><div><h2>Currency</h2><p>Used for every price on your menu.</p></div></div><select id="menu-currency" aria-label="Menu currency" className="form-input select-inline" value={p.currency || 'LKR'} onChange={event => update('currency', event.target.value)}>{['LKR', 'USD', 'EUR', 'GBP', 'INR', 'AED', 'AUD', 'CAD', 'SGD', 'MYR', 'THB', 'JPY'].map(currency => <option key={currency}>{currency}</option>)}</select></section>
-        <section className="card"><div className="card-head"><div><h2>Menu branding</h2><p>Shown at the top of menu templates that use a cover or logo.</p></div></div><div className="form-grid"><ImageUpload id="menu-cover-upload" label="Cover photo" value={p.coverImage} maxWidth={1400} onChange={value => update('coverImage', value, true)} /><ImageUpload id="menu-logo-upload" label="Logo" value={p.logo} maxWidth={512} onChange={value => update('logo', value, true)} /></div></section>
+        <section className="card"><div className="card-head"><div><h2>Logo and cover photo</h2><p>Your menu uses the logo and cover photo from Business profile, so they only need uploading once.</p></div></div></section>
       </div>}
     </>}
   </div>;

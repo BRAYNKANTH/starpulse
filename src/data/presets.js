@@ -1,7 +1,8 @@
 import { normalizeQrDesign } from './qrDesign.js';
 import { normalizeMenuDesign } from './menuDesign.js';
 import { normalizeMenuTags } from './menuTags.js';
-import { newId } from '../utils/ids.js';
+import { newShopId } from '../utils/ids.js';
+import { normalizePosterDesign } from './qrDesign.js';
 // Default Business Presets and Demo Data (Clean & Authentic - No fake ratings)
 
 export const INITIAL_PRESETS = [
@@ -27,25 +28,13 @@ export const INITIAL_PRESETS = [
     email: 'hello@apexcoffeeroasters.com'
   },
   {
-    id: 'luxe-spa',
-    name: 'Luxe Glow Skin Studio & Spa',
-    tagline: 'Premium Facials, Massage Therapy & Skincare',
-    category: 'Wellness & Beauty Salon',
-    address: '750 Elegance Blvd, Suite 200',
-    googleReviewUrl: '',
-    googlePlaceId: '',
-    googleRating: '',
-    totalGoogleReviews: '',
-    showRatingBadge: false,
-    logo: 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=200&auto=format&fit=crop&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1000&auto=format&fit=crop&q=80',
-    accentColor: '#EC4899', // Pink
-    themeMode: 'dark',
-    customPrompt: 'How did you feel after your treatment today?',
-    notePlaceholder: 'Share a note about your aesthetician or relaxing session...',
-    quickTags: ['✨ Glowing Skin', '🧘 Super Relaxing', '👩‍⚕️ Skilled Esthetician', '🧼 Pristine Clean', '🌸 Lovely Atmosphere'],
-    phone: '+1 (555) 749-3320',
-    email: 'care@luxeglowspa.com'
+    id: 'golden-crust',
+    name: 'Golden Crust Bakery',
+    tagline: 'Baked fresh every morning',
+    category: 'Bakery & Café',
+    customPrompt: 'How were your treats today?',
+    notePlaceholder: 'Tell us about your favourite bake…',
+    quickTags: ['🥐 Fresh pastries', '🎂 Lovely cakes', '☕ Good coffee', '😊 Friendly staff', '⚡ Quick service']
   },
   {
     id: 'urban-bistro',
@@ -69,30 +58,18 @@ export const INITIAL_PRESETS = [
     email: 'manager@urbanbitesbistro.com'
   },
   {
-    id: 'aura-dental',
-    name: 'Aura Dental & Cosmetic Studio',
-    tagline: 'Gentle, Modern Dental Care & Teeth Whitening',
-    category: 'Healthcare & Dentistry',
-    address: '320 Health Plaza, Medical Center',
-    googleReviewUrl: '',
-    googlePlaceId: '',
-    googleRating: '',
-    totalGoogleReviews: '',
-    showRatingBadge: false,
-    logo: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=200&auto=format&fit=crop&q=80',
-    coverImage: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1000&auto=format&fit=crop&q=80',
-    accentColor: '#10B981', // Emerald Green
-    themeMode: 'dark',
-    customPrompt: 'How was your dental appointment today?',
-    notePlaceholder: 'Tell us about your comfort and experience during treatment...',
-    quickTags: ['🦷 Pain-Free Experience', '👩‍⚕️ Caring Doctor', '✨ Clean & Modern', '⏰ Zero Wait Time', '⭐ Friendly Staff'],
-    phone: '+1 (555) 438-2020',
-    email: 'info@auradentalstudio.com'
+    id: 'spice-garden',
+    name: 'Spice Garden Kitchen',
+    tagline: 'Rice & curry, kottu and hoppers, made the way we like it at home',
+    category: 'Sri Lankan Restaurant',
+    customPrompt: 'How was your meal today?',
+    notePlaceholder: 'What did you enjoy most?',
+    quickTags: ['🍛 Tasty curries', '🌶️ Just the right spice', '🍽️ Generous portions', '😊 Friendly staff', '⚡ Quick service']
   }
 ];
 
 export function createBusiness() {
-  return { id: 'shop-' + newId(), name: '', tagline: '', category: '', address: '', phone: '', email: '', hours: '', logo: '', coverImage: '', googleReviewUrl: '', accentColor: '#F59E0B', currency: 'LKR', menu: [], menuDesign: normalizeMenuDesign(), qrDesign: normalizeQrDesign(), qrDestination: 'landing', qrUrl: '', quickTags: [], published: false };
+  return { id: newShopId(), name: '', tagline: '', category: '', address: '', phone: '', email: '', hours: '', logo: '', coverImage: '', googleReviewUrl: '', accentColor: '#F59E0B', currency: 'LKR', menu: [], menuDesign: normalizeMenuDesign(), qrDesign: normalizeQrDesign(), qrDestination: 'menu', qrUrl: '', posterDesign: normalizePosterDesign(), quickTags: [], published: false };
 }
 export function getStoredBusinessProfile() {
   try {
