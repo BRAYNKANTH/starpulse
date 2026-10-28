@@ -3,7 +3,7 @@ import { BarChart3, MessageSquare, QrCode, UtensilsCrossed } from 'lucide-react'
 import { api } from '../data/api';
 
 const FEATURES = [
-  { icon: UtensilsCrossed, title: 'Menus customers love', text: '23 designer templates, live on every table in minutes.' },
+  { icon: UtensilsCrossed, title: 'Menus customers love', text: '25 designer templates, live on every table in minutes.' },
   { icon: QrCode, title: 'Branded QR & NFC', text: 'Print once, change the destination any time.' },
   { icon: MessageSquare, title: 'Private feedback inbox', text: 'Hear from guests before they post a review.' },
   { icon: BarChart3, title: 'Scan analytics', text: 'See which shops and posters get scanned.' },

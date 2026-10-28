@@ -123,7 +123,7 @@ Tests run against an in-memory Postgres and cover administrator-created accounts
 
 ## Menu templates and design settings
 
-Menu → Design has 23 templates in six collections: cafés and bakeries, restaurants, fast food and street food, bars and lounges, healthy food and desserts, and shops and services. They include Italian, pizza, sushi, Indian and Sri Lankan curry, tacos, steakhouse, seafood, fine dining, noodles, brunch, cocktails, desserts and retro diner designs. Gallery previews use sample dishes and photos; applying a template keeps your items, prices and text, and resets layout, fonts and colours to that template.
+Menu → Design has 25 templates in six collections: cafés and bakeries, restaurants, fast food and street food, bars and lounges, healthy food and desserts, and shops and services. They include Italian, pizza, sushi, Indian and Sri Lankan curry, tacos, steakhouse, seafood, fine dining, noodles, brunch, cocktails, desserts, retro diner, Sri Lankan rice & curry and short eats designs. Gallery previews use sample dishes and photos; applying a template keeps your items, prices and text, and resets layout, fonts and colours to that template.
 
 Every template can then be customised. Each setting defaults to "Template", which follows the template's own look:
 
