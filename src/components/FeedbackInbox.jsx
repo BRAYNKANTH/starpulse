@@ -7,15 +7,18 @@ import Stars from './Stars';
 
 const PAGE_SIZE = 25;
 
-export default function FeedbackInbox({ businessProfile, onChange, notify }) {
+export default function FeedbackInbox({ businessProfile, savedProfile, onChange, notify }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(savedProfile));
   const [filters, setFilters] = useState({ status: 'all', rating: 'all', source: 'all', query: '' });
   const [shown, setShown] = useState(PAGE_SIZE);
   const path = `/admin/businesses/${businessProfile.id}/feedback`;
-  useEffect(() => { let active = true; api(path).then(data => { if (active) setItems(data); }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [path]);
-  const refresh = async () => { setError(''); setLoading(true); try { setItems(await api(path)); onChange?.(); } catch (e) { setError(e.message); } finally { setLoading(false); } };
+  // An unsaved shop has no server record: do not call the API for it, or
+  // the server's "Shop not found" 404 surfaces as a red error banner.
+  const isSaved = Boolean(savedProfile);
+  useEffect(() => { if (!isSaved) return; let active = true; api(path).then(data => { if (active) setItems(data); }).catch(e => { if (active) setError(e.message); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [path, isSaved]);
+  const refresh = async () => { if (!isSaved) return; setError(''); setLoading(true); try { setItems(await api(path)); onChange?.(); } catch (e) { setError(e.message); } finally { setLoading(false); } };
   const filter = (key, value) => { setFilters(current => ({ ...current, [key]: value })); setShown(PAGE_SIZE); };
 
   const visible = useMemo(() => {
@@ -48,6 +51,13 @@ export default function FeedbackInbox({ businessProfile, onChange, notify }) {
     const rows = [['Rating', 'Tags', 'Note', 'Status', 'Read', 'Timestamp'], ...visible.map(item => [item.rating, item.selectedTags.join(', '), item.note, item.status, item.read ? 'Yes' : 'No', item.timestamp])];
     downloadBlob(new Blob(['﻿' + rows.map(row => row.map(escape).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), `${businessProfile.id}-feedback.csv`);
   };
+
+  if (!isSaved) return <div className="sp-page">
+    <header className="page-header">
+      <div><h1>Feedback</h1><p>Customer responses for {businessProfile.name || 'this shop'}.</p></div>
+    </header>
+    <div className="empty-state"><Inbox size={30} /><p>Save your shop first — feedback appears here once the shop is saved and its customer page is published.</p></div>
+  </div>;
 
   return <div className="sp-page">
     <header className="page-header">

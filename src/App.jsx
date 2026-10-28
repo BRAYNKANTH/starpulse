@@ -17,6 +17,9 @@ import FeedbackInbox from './components/FeedbackInbox';
 import AuthScreen, { ChoosePasswordScreen } from './components/AuthScreen';
 import AdminAccounts from './components/AdminAccounts';
 import AccountSettings from './components/AccountSettings';
+import { PublicPage, PublicNotFound } from './components/PublicPages';
+
+const PUBLIC_PATHS = ['/', '/pricing', '/about', '/contact', '/terms', '/privacy'];
 import Toasts from './components/Toasts';
 import { useToasts } from './components/useToasts';
 import { createBusiness, getStoredBusinessProfile, saveStoredBusinessProfile } from './data/presets';
@@ -24,8 +27,16 @@ import { api, shopUrl } from './data/api';
 import { resolveMenuDesign } from './data/menuDesign';
 
 export default function App() {
-  const bizId = new URLSearchParams(window.location.search).get('biz');
-  return bizId ? <PublicShop id={bizId} /> : <OwnerStudio />;
+  const params = new URLSearchParams(window.location.search);
+  const bizId = params.get('biz');
+  if (bizId) return <PublicShop id={bizId} />;
+  // Public pages are real paths, checked before the studio: the studio
+  // itself now lives at /signin (and /login). Unknown paths get a real
+  // 404 page instead of silently rendering the login screen.
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (PUBLIC_PATHS.includes(path)) return <PublicPage path={path} />;
+  if (path === '/signin' || path === '/login') return <OwnerStudio />;
+  return <PublicNotFound />;
 }
 
 function PublicShop({ id }) {
@@ -215,7 +226,7 @@ function OwnerStudio() {
           {activeTab === 'profiles' && <SavedProfiles profiles={profiles} overview={overview} activeProfile={businessProfile} onSelect={profile => select(profile, 'dashboard')} onNew={newBusiness} onDelete={deleteShop} plan={account.plan} />}
           {activeTab === 'account' && <AccountSettings account={account} onAccountChange={setAccount} notify={notify} />}
           {activeTab === 'accounts' && account.user.role === 'admin' && <AdminAccounts currentUser={account.user} notify={notify} onShopsChanged={reloadShops} />}
-          {activeTab === 'inbox' && <FeedbackInbox key={businessProfile.id} businessProfile={businessProfile} onChange={refreshOverview} notify={notify} />}
+          {activeTab === 'inbox' && <FeedbackInbox key={businessProfile.id} businessProfile={businessProfile} savedProfile={savedProfile} onChange={refreshOverview} notify={notify} />}
         </fieldset></ImageUploadStatus.Provider>
       </main>
     </div>
