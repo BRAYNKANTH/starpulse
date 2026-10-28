@@ -14,7 +14,7 @@ import SavedProfiles from './components/SavedProfiles';
 import MenuBuilder from './components/MenuBuilder';
 import ShopLanding from './components/ShopLanding';
 import FeedbackInbox from './components/FeedbackInbox';
-import AuthScreen, { ChoosePasswordScreen } from './components/AuthScreen';
+import AuthScreen, { ChoosePasswordScreen, ResetPasswordScreen } from './components/AuthScreen';
 import AdminAccounts from './components/AdminAccounts';
 import AccountSettings from './components/AccountSettings';
 import { PublicPage, PublicNotFound } from './components/PublicPages';
@@ -35,7 +35,13 @@ export default function App() {
   // 404 page instead of silently rendering the login screen.
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   if (PUBLIC_PATHS.includes(path)) return <PublicPage path={path} />;
-  if (path === '/signin' || path === '/login') return <OwnerStudio />;
+  if (path === '/signin' || path === '/login') {
+    // A reset link (/signin?reset=<token>) is handled before the studio
+    // branch, so it works whether or not the visitor is already signed in.
+    const resetToken = params.get('reset');
+    if (resetToken) return <div className="studio studio-auth"><ResetPasswordScreen token={resetToken} /></div>;
+    return <OwnerStudio />;
+  }
   return <PublicNotFound />;
 }
 
