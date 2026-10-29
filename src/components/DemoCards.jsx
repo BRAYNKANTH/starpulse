@@ -26,7 +26,7 @@ export default function DemoCards() {
       <div><h1>{DEMO_SHOP.name}: two printable cards</h1><p>Each card is 4 × 6 in, portrait. Print at 100% scale with margins set to None, one card per page.</p></div>
       <div className="demo-cards-actions"><button type="button" className="btn btn-primary" onClick={() => window.print()}><Printer size={16} aria-hidden="true" />Print both cards</button><a className="btn btn-secondary" href="/demo?view=menu" target="_blank" rel="noopener noreferrer">View demo menu <ExternalLink size={14} aria-hidden="true" /></a></div>
     </header>
-    <p className="demo-cards-note no-print">Sample data: dishes and prices are examples. The review card’s QR still holds a placeholder Google place ID, so replace it with {DEMO_SHOP.name}’s own before printing for real.</p>
+    <p className="demo-cards-note no-print">Sample data: dishes and prices are examples. The review card’s QR opens {DEMO_SHOP.name}’s Google review form using the place ID the owner supplied.</p>
     <div className="demo-cards-row">
       <section className="demo-card-sheet" aria-label="Table menu card">
         <div className="poster-preview-card poster-format-tabletop premium-card pc-menu">
