@@ -48,8 +48,10 @@
 
 /* Sweet Scoop */
 .menu-template-scoop .menu-public-heading h1 { color: var(--menu-accent-text, var(--menu-accent)); }
-.menu-template-scoop .public-menu-item { transition: transform .2s ease; }
-.menu-template-scoop .public-menu-item:hover { transform: translateY(-3px); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .menu-template-scoop .public-menu-item { transition: transform .2s ease; }
+  .menu-template-scoop .public-menu-item:hover { transform: translateY(-3px); }
+}
 
 /* Maison: tasting menu spacing. */
 .menu-template-maison .shop-menu-main { max-width: 760px; }
@@ -104,4 +106,35 @@
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .layout-cards .public-menu-item, .layout-tiles .public-menu-item { transition: transform .2s ease, box-shadow .2s ease; }
   .layout-cards .public-menu-item:hover, .layout-tiles .public-menu-item:hover { transform: translateY(-3px); }
+}
+
+/* Accessibility: focus ring uses the template accent (readable on every background), and tap targets reach 44px. */
+.shop-public :is(button, a, input, textarea, select):focus-visible { outline: 3px solid var(--menu-accent-on-bg, #2563eb); outline-offset: 3px; }
+.shop-public .category-tabs button, .shop-public .menu-category-sidebar button, .shop-public .shop-wordmark { min-height: 44px; }
+.shop-public .category-tabs button { min-width: 44px; }
+:is(.mo-navStyle-boxed, #_) .category-tabs button { font-size: .78rem; }
+
+/* Phones: one column of cards when columns is Auto, a lighter chalkboard frame, no duplicate brand or link arrows. */
+@media (max-width: 600px) {
+  .shop-public .layout-cards .public-menu-grid { grid-template-columns: minmax(0, 1fr); }
+  .menu-template-chalkboard .shop-menu-main { border-width: 6px; }
+  .shop-menu-main .food-menu-brand { display: none; }
+  .menu-category-sidebar button svg { display: none; }
+  .menu-template-editorial .menu-public-heading h1 { line-height: 1.15; }
+}
+
+/* Phone polish for Maison, Retro Diner, Sakura Sushi, Studio Menu and Classic Bistro. */
+.menu-template-sushi .menu-public-heading { border-top: 2px solid var(--menu-accent); padding-top: 28px; }
+.menu-template-sushi .menu-public-heading h1 { font-size: clamp(2.6rem, 12vw, 4.2rem); }
+.menu-template-sushi .menu-category-heading h2 { color: var(--menu-accent-text, var(--menu-accent)); }
+.menu-template-bistro .menu-public-heading { border-bottom: 3px double var(--menu-border); padding-bottom: 28px; margin-bottom: 8px; }
+.menu-template-bistro .shop-kicker::before, .menu-template-bistro .shop-kicker::after { content: '\2726'; margin: 0 .6em; color: var(--menu-accent-text, var(--menu-accent)); }
+@media (max-width: 600px) {
+  .menu-template-maison .menu-public-heading h1 { font-size: clamp(1.7rem, 8.5vw, 3rem); letter-spacing: .08em; }
+  .menu-template-diner .public-item-title { flex-wrap: wrap; row-gap: 6px; }
+  .menu-template-diner .public-item-title h3 { flex: 1 1 9ch; overflow-wrap: break-word; }
+  .menu-template-editorial .menu-public-heading { padding-bottom: 20px; }
+  .menu-template-editorial .layout-list .public-menu-item { padding: 18px 0; gap: 14px; }
+  .menu-template-editorial .layout-list .public-menu-item > img { width: 92px; height: 92px; border-radius: 4px; }
+  .menu-template-bistro .layout-list .public-menu-item > img { width: 84px; height: 84px; }
 }
