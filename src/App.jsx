@@ -7,6 +7,8 @@ import { api } from './data/api';
 const OwnerStudio = lazy(() => import('./OwnerStudio'));
 const ResetPasswordPage = lazy(() => import('./OwnerStudio').then(module => ({ default: module.ResetPasswordPage })));
 const PublicPage = lazy(() => import('./components/PublicPages').then(module => ({ default: module.PublicPage })));
+const DemoShop = lazy(() => import('./components/DemoCards').then(module => ({ default: module.DemoShop })));
+const DemoCards = lazy(() => import('./components/DemoCards'));
 const PublicNotFound = lazy(() => import('./components/PublicPages').then(module => ({ default: module.PublicNotFound })));
 
 const PUBLIC_PATHS = ['/', '/pricing', '/about', '/contact', '/terms', '/privacy'];
@@ -21,7 +23,9 @@ export default function App() {
   // 404 page instead of silently rendering the login screen.
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   let page;
-  if (PUBLIC_PATHS.includes(path)) page = <PublicPage path={path} />;
+  if (path === '/demo') page = <DemoShop />;
+  else if (path === '/demo/cards') page = <DemoCards />;
+  else if (PUBLIC_PATHS.includes(path)) page = <PublicPage path={path} />;
   else if (path === '/signin' || path === '/login') {
     // A reset link (/signin?reset=<token>) is handled before the studio
     // branch, so it works whether or not the visitor is already signed in.

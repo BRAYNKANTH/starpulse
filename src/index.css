@@ -2022,3 +2022,28 @@ html, body {
 .shop-public .fb-hint { margin: 10px 0 0; font-size: .85rem; }
 .shop-public .fb-sent { align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; padding: 14px; border-radius: 12px; background: color-mix(in srgb, #12b76a 14%, var(--menu-surface)); font-weight: 600; }
 .shop-public .fb-error { align-self: stretch; margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: #fef3f2; color: #b42318; font-size: .9rem; }
+
+/* Demo shop cards (/demo/cards): two 4x6 cards, one per printed page. */
+.demo-cards-page { max-width: 960px; margin: 0 auto; padding: 32px 20px 56px; color: #e8edf5; background: #0b1220; min-height: 100vh; }
+.demo-cards-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.demo-cards-head h1 { font-size: 1.6rem; margin: 0 0 6px; }
+.demo-cards-head p, .demo-cards-note { color: #b3bfd1; font-size: .9rem; margin: 0; }
+.demo-cards-note { margin: 0 0 22px; }
+.demo-cards-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.demo-cards-row { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
+.demo-card-sheet { width: 384px; max-width: 100%; }
+.demo-card-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 .5rem; opacity: .85; }
+.poster-theme-warm_bistro .demo-card-eyebrow { color: #9A3412; }
+.demo-review-card { background: #4a1414; color: #fff7ea; border: 2px solid #f2a93b; }
+.demo-review-card .poster-business-name, .demo-review-card .poster-main-title { color: #fff7ea; }
+.demo-review-card .poster-subtitle { color: #f3d9b6; }
+.demo-review-card .demo-card-eyebrow { color: #f2a93b; }
+.demo-review-card .poster-qr-frame { background: #fff; border: 2px solid #f2a93b; }
+.demo-review-card .poster-direct-link-badge { color: #7C2D12; }
+.demo-review-stars { display: flex; gap: 6px; color: #f2a93b; margin: 0 0 .75rem; }
+@media print {
+  .demo-cards-page { background: #fff !important; color: #000 !important; padding: 0 !important; max-width: none !important; min-height: 0 !important; }
+  .demo-cards-row { display: block; margin: 0; }
+  .demo-card-sheet { width: auto; break-after: page; page-break-after: always; }
+  .demo-card-sheet:last-child { break-after: auto; page-break-after: auto; }
+}
