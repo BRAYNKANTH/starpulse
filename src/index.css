@@ -1014,11 +1014,28 @@ html, body {
 }
 
 /* Layout Formats */
+/* Table stand: exactly 4in x 6in portrait (384 x 576 CSS px at 96dpi), so the preview is the true shape. */
 .poster-format-tabletop {
-  max-width: 440px;
-  border-radius: 24px;
-  padding: 2.25rem 1.75rem;
+  box-sizing: border-box;
+  max-width: 384px;
+  aspect-ratio: 2 / 3;
+  border-radius: 20px;
+  padding: 1.5rem 1.5rem;
+  justify-content: center;
 }
+.poster-format-tabletop .poster-header-block { margin-bottom: 0.5rem; }
+.poster-format-tabletop .poster-logo-wrapper { margin-bottom: 0.5rem; }
+.poster-format-tabletop .poster-logo-wrapper:not(.shape-banner) { width: 64px; height: 64px; }
+.poster-format-tabletop .poster-logo-wrapper.shape-banner { width: 180px; height: 56px; }
+.poster-format-tabletop .poster-business-name { font-size: 1.3rem; }
+.poster-format-tabletop .poster-business-tagline { display: none; }
+.poster-format-tabletop .poster-cta-text-block { margin-bottom: 0.75rem; max-width: 100%; }
+.poster-format-tabletop .poster-main-title { font-size: 1.2rem; margin-bottom: 0.25rem; }
+.poster-format-tabletop .poster-subtitle { font-size: 0.75rem; }
+.poster-format-tabletop .poster-qr-frame { padding: 0.75rem; margin-bottom: 0; flex-shrink: 0; }
+.poster-format-tabletop .poster-direct-link-badge { margin-top: 0.4rem; }
+.poster-format-tabletop .nfc-tap-icon-row { margin-top: 0.75rem; padding: 0.4rem 0.9rem; gap: 0.5rem; }
+.poster-format-tabletop:has(.nfc-tap-icon-row) .poster-subtitle { display: none; }
 
 .poster-format-tent {
   max-width: 500px;
@@ -1717,19 +1734,22 @@ html, body {
 
   /* Physical page sizing per format — without this the printed poster just
      scales to whatever paper the printer defaults to, so a "3x3 Sticker"
-     or "5x7 Stand" never actually comes out at that size. Named @page +
+     or "4x6 Stand" never actually comes out at that size. Named @page +
      the matching `page:` property is honored by Chromium-based browsers'
      print dialog / print-to-PDF, which covers the vast majority of desktop
      printing paths. */
-  @page tabletop { size: 5in 7in; margin: 0; }
+  @page tabletop { size: 4in 6in; margin: 0; }
   @page sticker { size: 3in 3in; margin: 0; }
   @page reception_poster { size: 8.5in 11in; margin: 0; }
   @page tent { size: 8.27in 5.83in; margin: 0; }
 
   .poster-format-tabletop {
     page: tabletop;
-    width: 5in !important;
-    height: 7in !important;
+    width: 4in !important;
+    height: 6in !important;
+    aspect-ratio: auto !important;
+    border-radius: 0 !important;
+    break-after: avoid;
     max-width: none !important;
   }
   .poster-format-sticker {

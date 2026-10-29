@@ -22,7 +22,7 @@ const THEMES = [
   { id: 'vibrant_neon', css: 'vibrant_neon', name: 'Neon', description: 'Purple-to-pink gradient', swatch: 'neon-swatch', mark: <Sparkles size={12} color="#ffffff" /> },
   { id: 'warm_bistro', css: 'warm_bistro', name: 'Warm bistro', description: 'Cream and burgundy', swatch: 'bistro-swatch', mark: <span aria-hidden="true">☕</span> },
 ];
-const FORMATS = [['tabletop', 'Table stand · 5×7 in'], ['tent', 'Tent card · A5, folds in half'], ['sticker', 'Sticker · 3×3 in'], ['poster', 'Wall poster · A4']];
+const FORMATS = [['tabletop', 'Table stand · 4×6 in'], ['tent', 'Tent card · A5, folds in half'], ['sticker', 'Sticker · 3×3 in'], ['poster', 'Wall poster · A4']];
 const OTHER_TYPES = [{ id: 'url', name: 'Website', icon: Globe }, { id: 'whatsapp', name: 'WhatsApp', icon: Smartphone }, { id: 'wifi', name: 'Wi-Fi', icon: Wifi }];
 
 function useDownload() {
@@ -143,7 +143,7 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
     </div>
     <div className="poster-cta-text-block"><h3 className="poster-main-title">{headline}</h3>{!compact && <p className="poster-subtitle">{subtitle}</p>}</div>
     <div className="poster-qr-frame">
-      <QRCodeSVG value={link} size={poster.format === 'sticker' ? 150 : poster.format === 'poster' ? 220 : compact ? 108 : 190} level="H" marginSize={4} fgColor={contrastRatio(design.foreground, posterBackground) >= 4.5 ? design.foreground : posterBackground === '#FFFFFF' ? '#172033' : '#F59E0B'} bgColor={posterBackground}
+      <QRCodeSVG value={link} size={poster.format === 'sticker' ? 150 : poster.format === 'poster' ? 220 : poster.format === 'tabletop' ? 216 : compact ? 108 : 190} level="H" marginSize={4} fgColor={contrastRatio(design.foreground, posterBackground) >= 4.5 ? design.foreground : posterBackground === '#FFFFFF' ? '#172033' : '#F59E0B'} bgColor={posterBackground}
         imageSettings={design.showLogo && profile.logo ? { src: profile.logo, height: poster.format === 'sticker' ? 30 : 38, width: poster.format === 'sticker' ? 30 : 38, excavate: true } : undefined} />
       <div className="poster-direct-link-badge"><ExternalLink size={12} color="#4285F4" aria-hidden="true" /><span>{DESTINATIONS.find(d => d.id === destination)?.name}</span></div>
     </div>
