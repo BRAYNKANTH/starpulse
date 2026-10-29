@@ -84,8 +84,8 @@ const ROWS = [
 ];
 
 export const DEMO_SHOP_ID = 'demo-al-maas';
-// Replace the place ID with the real shop's. This one only marks where it goes.
-export const DEMO_GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=REPLACE_WITH_PLACE_ID';
+// Al Maas's Google place ID, as supplied by the owner.
+export const DEMO_GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJ4X70MNn34joRjj4MMh0RQ0s';
 
 export const DEMO_SHOP = {
   id: DEMO_SHOP_ID,
