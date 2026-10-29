@@ -2032,15 +2032,37 @@ html, body {
 .demo-cards-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .demo-cards-row { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
 .demo-card-sheet { width: 384px; max-width: 100%; }
-.demo-card-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 .5rem; opacity: .85; }
-.poster-theme-warm_bistro .demo-card-eyebrow { color: #9A3412; }
-.demo-review-card { background: #4a1414; color: #fff7ea; border: 2px solid #f2a93b; }
-.demo-review-card .poster-business-name, .demo-review-card .poster-main-title { color: #fff7ea; }
-.demo-review-card .poster-subtitle { color: #f3d9b6; }
-.demo-review-card .demo-card-eyebrow { color: #f2a93b; }
-.demo-review-card .poster-qr-frame { background: #fff; border: 2px solid #f2a93b; }
-.demo-review-card .poster-direct-link-badge { color: #7C2D12; }
-.demo-review-stars { display: flex; gap: 6px; color: #f2a93b; margin: 0 0 .75rem; }
+
+/* Premium cards: ivory and maroon with a gold double frame. Serif type, 4x6 in. */
+.poster-preview-card.premium-card, .poster-preview-card.premium-card * { font-family: Georgia, 'Times New Roman', serif; }
+.poster-preview-card.premium-card { position: relative; padding: 30px 28px 26px; border: 0; border-radius: 4px; justify-content: space-between; text-align: center; --gold: #c9973b; --gold-light: #ecd08b; }
+.premium-card::before, .premium-card::after { content: ''; position: absolute; pointer-events: none; }
+.premium-card::before { inset: 10px; border: 1.5px solid var(--gold); }
+.premium-card::after { inset: 15px; border: .75px solid color-mix(in srgb, var(--gold) 55%, transparent); }
+.premium-card > * { position: relative; z-index: 1; }
+.pc-eyebrow, .pc-foot { font-family: Arial, sans-serif !important; font-size: .66rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin: 0; }
+.pc-name { font-size: 2.35rem; font-weight: 400; letter-spacing: .06em; line-height: 1.1; margin: 0; }
+.pc-name-sm { font-size: 1.9rem; }
+.pc-ornament { width: 96px; height: 8px; margin: 8px auto 0; display: block; }
+.pc-title { font-size: 1.5rem; font-weight: 400; font-style: italic; margin: 0; line-height: 1.2; }
+.pc-sub { font-size: .85rem; margin: 0; font-style: italic; }
+.pc-qr { background: #fff; padding: 12px; border-radius: 10px; line-height: 0; box-shadow: 0 0 0 4px var(--pc-ring), 0 0 0 5.5px var(--gold); }
+.pc-qr svg { width: 200px; height: 200px; }
+.pc-stars { display: flex; gap: 8px; color: var(--gold-light); justify-content: center; }
+
+.pc-menu { background: radial-gradient(ellipse at 50% 0, #fffaf0, #f6ecd9 80%); color: #3b0d0d; --pc-ring: #f8efdd; }
+.pc-menu .pc-arch { margin: -6px -2px 0; padding: 46px 18px 16px; border-radius: 180px 180px 4px 4px; background: radial-gradient(circle at 1px 1px, rgba(236, 208, 139, .16) 1px, transparent 0) 0 0 / 14px 14px, linear-gradient(180deg, #6a1b1b, #3b0d0d); color: var(--gold-light); box-shadow: inset 0 0 0 1.5px var(--gold); }
+.pc-menu .pc-arch .pc-eyebrow { color: #f5e3b8; font-size: .58rem; letter-spacing: .16em; margin-top: 12px; }
+.pc-menu .pc-title { color: #5a1717; }
+.pc-menu .pc-foot { color: #8a5a2a; }
+
+.pc-review { background: radial-gradient(circle at 1px 1px, rgba(236, 208, 139, .13) 1px, transparent 0) 0 0 / 16px 16px, radial-gradient(ellipse at 50% 30%, #5e1616, #330a0a 85%); color: #fff3dc; --pc-ring: #3b0d0d; }
+.pc-review .pc-eyebrow { color: var(--gold-light); }
+.pc-review .pc-name { color: #fff3dc; }
+.pc-review .pc-ornament { color: var(--gold); }
+.pc-review .pc-title { color: #fff3dc; font-size: 1.7rem; }
+.pc-review .pc-sub { color: #f1d8ad; }
+.pc-review .pc-foot { color: var(--gold-light); }
 @media print {
   .demo-cards-page { background: #fff !important; color: #000 !important; padding: 0 !important; max-width: none !important; min-height: 0 !important; }
   .demo-cards-row { display: block; margin: 0; }
