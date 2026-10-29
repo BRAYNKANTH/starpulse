@@ -6,7 +6,7 @@
   "redirects": [
     {
       "source": "/demo/review",
-      "destination": "https://search.google.com/local/writereview?placeid=ChIJ4X70MNn34joRjj4MMh0RQ0s",
+      "destination": "https://search.google.com/local/writereview?placeid=ChIJAzAcyndY4joRuKjmzPLJEt8",
       "permanent": false
     }
   ],
