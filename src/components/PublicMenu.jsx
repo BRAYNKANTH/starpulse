@@ -30,10 +30,10 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
     const update = () => {
       frame = 0;
       if (tapped.current) { setActive(tapped.current); return; }
-      const bar = root.current?.querySelector('.category-tabs, .menu-category-sidebar');
+      const bar = root.current?.querySelector('.menu-sticky-bar');
       const list = sections();
       if (!bar || !list.length) return;
-      const horizontal = bar.classList.contains('category-tabs') || window.matchMedia('(max-width: 700px)').matches;
+      const horizontal = !!bar.querySelector('.category-tabs') || window.matchMedia('(max-width: 700px)').matches;
       root.current.style.setProperty('--menu-bar-offset', `${horizontal ? bar.offsetHeight : 12}px`);
       const line = (horizontal ? bar.getBoundingClientRect().bottom : 24) + 24;
       let name = list[0].dataset.category;
@@ -77,7 +77,10 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
       {design.showSearch && <label className="menu-search"><Search size={18} /><input type="search" aria-label="Search menu" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search the menu…" /></label>}
     </div>
     <div className={sidebar ? 'menu-sidebar-shell' : 'menu-category-shell'}>
-      {design.showCategories && shown.length > 0 && categoryNavigation}
+      {design.showCategories && shown.length > 0 && <div className="menu-sticky-bar">
+        <p className="menu-sticky-name">{profile.logo && <img src={profile.logo} alt="" />}<span>{profile.name || 'Menu'}</span></p>
+        {categoryNavigation}
+      </div>}
       <div className="menu-category-content">{shown.map((name, index) => <section className="public-menu-category" key={name} data-category={name}><div className="menu-category-heading">{design.numbered && <span className="menu-section-number">{String(index + 1).padStart(2, '0')}</span>}<h2>{name}</h2><span className="menu-heading-line" /></div><div className="public-menu-grid">{visible.filter(item => (item.category || 'Menu') === name).map(item => <MenuItem key={item.id} item={item} money={money} design={design} />)}</div></section>)}
         {query && <p className="sr-only" aria-live="polite">{visible.length} {visible.length === 1 ? 'item' : 'items'} shown</p>}
         {!visible.length && <div className="public-empty"><UtensilsCrossed size={32} /><h2>{items.length ? 'No matching items' : 'Menu coming soon'}</h2><p>{items.length ? 'Try a different search.' : 'Ask our team about today’s options.'}</p></div>}
