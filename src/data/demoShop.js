@@ -1,5 +1,6 @@
 import { MENU_EXAMPLE_IMAGES } from './menuExamples.js';
 import { normalizeMenuDesign } from './menuDesign.js';
+import { DEMO_GOOGLE_REVIEW_URL } from './demoReview.js';
 
 // Demo shop for Al Maas: shown at /demo, with two printable cards at /demo/cards.
 // Only the name is real. The dishes and prices are SAMPLE data, and the address, phone, email and hours
@@ -84,8 +85,7 @@ const ROWS = [
 ];
 
 export const DEMO_SHOP_ID = 'demo-al-maas';
-// Al Maas's Google place ID, as supplied by the owner.
-export const DEMO_GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJ4X70MNn34joRjj4MMh0RQ0s';
+export { DEMO_GOOGLE_REVIEW_URL };
 
 export const DEMO_SHOP = {
   id: DEMO_SHOP_ID,

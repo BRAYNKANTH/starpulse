@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ExternalLink, Printer, Star } from 'lucide-react';
 import ShopLanding from './ShopLanding';
 import { DEMO_SHOP, DEMO_SHOP_ID } from '../data/demoShop';
+import { DEMO_REVIEW_PATH } from '../data/demoReview';
 
 // The demo shop's menu page, and its two printable 4x6 cards: a table menu card and a Google review card.
 export function DemoShop() {
@@ -20,13 +21,13 @@ export default function DemoCards() {
   const requested = params.get('base') || '';
   const base = /^https?:\/\//.test(requested) ? requested.replace(/\/$/, '') : /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) ? HOSTED_URL : window.location.origin;
   const menuLink = `${base}/demo?view=menu`;
-  const reviewLink = DEMO_SHOP.googleReviewUrl;
+  const reviewLink = `${base}${DEMO_REVIEW_PATH}`;
   return <main className="demo-cards-page">
     <header className="demo-cards-head no-print">
       <div><h1>{DEMO_SHOP.name}: two printable cards</h1><p>Each card is 4 × 6 in, portrait. Print at 100% scale with margins set to None, one card per page.</p></div>
       <div className="demo-cards-actions"><button type="button" className="btn btn-primary" onClick={() => window.print()}><Printer size={16} aria-hidden="true" />Print both cards</button><a className="btn btn-secondary" href="/demo?view=menu" target="_blank" rel="noopener noreferrer">View demo menu <ExternalLink size={14} aria-hidden="true" /></a></div>
     </header>
-    <p className="demo-cards-note no-print">Sample data: dishes and prices are examples. The review card’s QR opens {DEMO_SHOP.name}’s Google review form using the place ID the owner supplied.</p>
+    <p className="demo-cards-note no-print">Sample data: dishes and prices are examples. The review card’s QR opens {reviewLink}, which sends the customer straight to {DEMO_SHOP.name}’s Google review form.</p>
     <div className="demo-cards-row">
       <section className="demo-card-sheet" aria-label="Table menu card">
         <div className="poster-preview-card poster-format-tabletop premium-card pc-menu">

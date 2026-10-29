@@ -3,6 +3,13 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/demo/review",
+      "destination": "https://search.google.com/local/writereview?placeid=ChIJ4X70MNn34joRjj4MMh0RQ0s",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",

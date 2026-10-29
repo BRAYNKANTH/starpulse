@@ -5,6 +5,7 @@ import { createStore } from './store.mjs';
 import { createApi } from './api.mjs';
 import { openDatabase } from './db.mjs';
 import { SECURITY_HEADERS } from './security.mjs';
+import { DEMO_GOOGLE_REVIEW_URL, DEMO_REVIEW_PATH } from '../src/data/demoReview.js';
 
 const root = resolve('dist');
 const store = await createStore(await openDatabase());
@@ -13,6 +14,8 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { awa
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
 createServer((req, res) => api(req, res, () => {
   if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); res.end(); return; }
+  // The Al Maas review card scans to this path, which sends the customer straight to Google's review form.
+  if (new URL(req.url, 'http://localhost').pathname === DEMO_REVIEW_PATH) { res.writeHead(302, { Location: DEMO_GOOGLE_REVIEW_URL, 'Cache-Control': 'no-store', ...SECURITY_HEADERS }); res.end(); return; }
   let path;
   try { path = resolve(root, `.${decodeURIComponent(new URL(req.url, 'http://localhost').pathname)}`); } catch { res.writeHead(400); res.end(); return; }
   if (path !== root && !path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
