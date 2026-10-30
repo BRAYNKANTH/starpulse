@@ -11,9 +11,10 @@ const DESTINATIONS = [
   { id: 'menu', name: 'Your menu', hint: 'Best for tables and counters.' },
   { id: 'landing', name: 'Your shop page', hint: 'Opening hours, contact details and the menu.' },
   { id: 'review', name: 'Feedback page', hint: 'Ask customers how their visit was.' },
+  { id: 'google', name: 'Google review', hint: 'Straight to your Google review box. Set the link in Business profile.' },
   { id: 'url', name: 'Another website', hint: 'For example your delivery or booking page.' },
 ];
-const HEADLINES = { menu: 'Scan to view our menu', landing: 'Scan to explore our shop', review: 'Scan to share your feedback', url: 'Scan to visit us online' };
+const HEADLINES = { menu: 'Scan to view our menu', landing: 'Scan to explore our shop', review: 'Scan to share your feedback', google: 'Scan to review us on Google', url: 'Scan to visit us online' };
 const SUBTITLE = 'Our menu, opening hours and feedback in one place.';
 const THEMES = [
   { id: 'bright', css: 'google_deluxe', name: 'Bright', description: 'White card with a strip in your brand colour', swatch: 'google-swatch', mark: <span aria-hidden="true">Aa</span> },
@@ -120,7 +121,7 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
   const link = new URL(`/q/${profile.id}`, window.location.origin).href;
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
   const contrastProblem = contrastRatio(design.foreground, design.background) < 4.5 ? 'The QR dots need more contrast with the background, or some phones won’t scan it. Use dark dots on a light background.' : '';
-  const urlProblem = destination === 'url' && !/^https:\/\//.test(profile.qrUrl || '') ? 'Enter the full website address, starting with https://' : '';
+  const urlProblem = destination === 'url' && !/^https:\/\//.test(profile.qrUrl || '') ? 'Enter the full website address, starting with https://' : destination === 'google' && !/^https:\/\//.test(profile.googleReviewUrl || '') ? 'Add your Google review link in Business profile first, then this code will open it.' : '';
   const blocked = !savedProfile?.published ? 'publish' : dirty ? 'save' : '';
   const headline = poster.headline || HEADLINES[destination];
   const subtitle = poster.subtitle || SUBTITLE;

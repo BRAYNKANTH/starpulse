@@ -16,7 +16,7 @@ export function validateProfile(input, id) {
   };
   const name = text(input.name, 150);
   if (!name) throw new Error('Business name is required.');
-  const qrDestination = ['landing', 'menu', 'review', 'url'].includes(input.qrDestination) ? input.qrDestination : 'landing';
+  const qrDestination = ['landing', 'menu', 'review', 'url', 'google'].includes(input.qrDestination) ? input.qrDestination : 'landing';
   const qrUrl = url(input.qrUrl);
   if (qrDestination === 'url' && qrUrl && !safeRedirect(qrUrl)) throw new Error('The QR link must be a secure https web address.');
   const menu = Array.isArray(input.menu) ? input.menu.slice(0, 200).map(item => {

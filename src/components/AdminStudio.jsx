@@ -6,6 +6,8 @@ import { INITIAL_PRESETS } from '../data/presets';
 import Field from './Field';
 import ShopLanding from './ShopLanding';
 import { resolveMenuDesign } from '../data/menuDesign';
+import { api } from '../data/api';
+import { isShortGoogleLink, placeFromGoogleText } from '../data/googlePlace';
 
 export default function AdminStudio({ businessProfile: p, setBusinessProfile, onNavigateToPrint }) {
   const resolved = resolveMenuDesign(p.menuDesign);
@@ -14,6 +16,8 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
   const setAccent = value => setBusinessProfile({ ...p, menuDesign: { ...p.menuDesign, accent: value } });
   const [error, setError] = useState('');
   const [tag, setTag] = useState('');
+  const [finding, setFinding] = useState(false);
+  const [lookup, setLookup] = useState({ text: '', ok: true });
   const update = (field, value) => {
     const next = { ...p, [field]: value };
     if (field === 'logo' || field === 'coverImage') { try { checkImageBudget(next); } catch (e) { setError(e.message); return; } }
@@ -22,6 +26,19 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
   const field = (name, label, props = {}) => <Field id={`business-${name}`} label={label} value={p[name]} onChange={value => update(name, value)} {...props} />;
   const tags = p.quickTags || [];
   const addTag = event => { event.preventDefault(); const value = tag.trim().slice(0, 80); if (value && !tags.includes(value) && tags.length < 20) update('quickTags', [...tags, value]); setTag(''); };
+
+  // Builds the review link from a pasted Google Maps link (long or the short Share link) or a Place ID.
+  const buildReviewLink = async () => {
+    const text = (p.googlePlaceId || '').trim();
+    let found = placeFromGoogleText(text), message = '';
+    if (!found && isShortGoogleLink(text)) {
+      setFinding(true);
+      try { found = await api('/google/place', { method: 'POST', body: JSON.stringify({ url: text }) }); } catch (e) { message = e.message; } finally { setFinding(false); }
+    }
+    if (!found) { setLookup({ text: message || 'Could not find a place in that. Paste your shop’s Google Maps link (from the Share button) or its Place ID.', ok: false }); return; }
+    setError(''); setBusinessProfile({ ...p, googlePlaceId: found.placeId, googleReviewUrl: found.reviewUrl });
+    setLookup({ text: 'Review link built. Press “Test review link” to check it opens your shop’s review box.', ok: true });
+  };
 
   return <div className="sp-page">
     <header className="page-header">
@@ -47,8 +64,9 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
           <div className="card-head"><div><h2>Reviews & feedback</h2><p>Every customer sees the Google link, whatever rating they choose.</p></div></div>
           {field('googleReviewUrl', 'Google review link', { type: 'url', placeholder: 'https://search.google.com/local/writereview?placeid=…' })}
           <details className="help-details"><summary>Don’t have the link?</summary>
-            <p className="field-help">On your Google Business Profile, choose <strong>Ask for reviews</strong> and copy the link. If you only have your Google Place ID, paste it here and we’ll build the link.</p>
-            <div className="form-grid form-grid-end">{field('googlePlaceId', 'Google Place ID')}<div className="form-group"><button type="button" className="btn btn-secondary" disabled={!p.googlePlaceId?.trim()} onClick={() => update('googleReviewUrl', `https://search.google.com/local/writereview?placeid=${encodeURIComponent(p.googlePlaceId.trim())}`)}>Build the link</button></div></div>
+            <p className="field-help">Easiest: open your shop in Google Maps, tap <strong>Share</strong>, copy the link and paste it below. We find your shop and build the review link for you. A Place ID works too. Or, on your Google Business Profile, choose <strong>Ask for reviews</strong> and paste that link above.</p>
+            <div className="form-grid form-grid-end">{field('googlePlaceId', 'Google Maps link or Place ID', { placeholder: 'https://maps.app.goo.gl/… or ChIJ…' })}<div className="form-group"><button type="button" className="btn btn-secondary" disabled={!p.googlePlaceId?.trim() || finding} onClick={buildReviewLink}>{finding ? 'Looking…' : 'Build the link'}</button></div></div>
+            {lookup.text && <p className={lookup.ok ? 'field-help' : 'notice error'} role={lookup.ok ? 'status' : 'alert'}>{lookup.text}</p>}
           </details>
           {p.googleReviewUrl && /^https?:\/\//.test(p.googleReviewUrl) && <p className="field-help"><a href={p.googleReviewUrl} target="_blank" rel="noopener noreferrer">Test review link <ExternalLink size={12} /></a></p>}
           {field('customPrompt', 'Question customers see', { placeholder: 'How was your experience today?' })}
