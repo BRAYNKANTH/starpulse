@@ -20,11 +20,33 @@
       "destination": "/api"
     },
     {
-      "source": "/((?!assets/|robots\\.txt|sitemap\\.xml|favicon\\.svg).*)",
+      "source": "/q/:id/google",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?:pricing|about|contact|terms|privacy|signin|login|demo|demo/cards)/?)",
       "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/demo",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/demo/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

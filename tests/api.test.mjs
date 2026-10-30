@@ -320,6 +320,23 @@ test('the Google review QR destination sends scans straight to the shop review l
   } finally { await close(); }
 });
 
+test('the printed review card path /q/<shop>/google always opens the review form, without changing where the other codes go', async () => {
+  const { client, close } = await setup();
+  const owner = client(), guest = client();
+  try {
+    await owner.signup('card@example.com');
+    const review = 'https://search.google.com/local/writereview?placeid=ChIJAzAcyndY4joRuKjmzPLJEt8';
+    assert.equal((await owner('/api/admin/businesses/cafe', 'PUT', { ...profile('Cafe'), qrDestination: 'menu', googleReviewUrl: review })).status, 200);
+    assert.equal((await guest('/q/cafe')).headers.get('location'), '/?biz=cafe&view=menu', 'the shop code still goes to the menu');
+    const card = await guest('/q/cafe/google');
+    assert.equal(card.status, 302);
+    assert.equal(card.headers.get('location'), review);
+    for (const path of ['/q/cafe/other', '/q/cafe/google/extra', '/q/cafe/']) assert.equal((await guest(path)).status, 404, `${path} is not a valid card path`);
+    assert.equal((await owner('/api/admin/businesses/cafe', 'PUT', { ...profile('Cafe'), qrDestination: 'menu', googleReviewUrl: '' })).status, 200);
+    assert.equal((await guest('/q/cafe/google')).status, 404, 'no review link yet gives a clear page, not a broken redirect');
+  } finally { await close(); }
+});
+
 test('the Google place lookup needs a signed-in account and refuses anything that is not a Google Maps short link', async () => {
   const { client, close } = await setup();
   const owner = client(), guest = client();

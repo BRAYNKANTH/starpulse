@@ -12,7 +12,7 @@ export function normalizeQrDesign(value = {}) {
 }
 
 export const POSTER_THEMES = ['bright', 'dark_luxe', 'minimal_stand', 'vibrant_neon', 'warm_bistro'];
-export const POSTER_FORMATS = ['tabletop', 'tent', 'sticker', 'poster'];
+export const POSTER_FORMATS = ['tabletop', 'tent', 'sticker', 'poster', 'review'];
 
 // Printed stand/poster settings, saved with the shop so a design is still there next time.
 export function normalizePosterDesign(value = {}) {

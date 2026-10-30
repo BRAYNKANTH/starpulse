@@ -1,0 +1,6 @@
+# Keep line endings the same on every machine: text files are stored with LF, so Windows checkouts stop warning about CRLF.
+* text=auto
+*.png binary
+*.jpg binary
+*.pdf binary
+*.ico binary

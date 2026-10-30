@@ -115,7 +115,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .shop-public-footer { padding: 32px max(24px, calc((100% - 1160px) / 2)); background: #e9ecdf; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: #546852; font-size: .85rem; }
 .shop-public-footer strong { color: #233d2e; }
 .shop-public-footer a { color: #233d2e; }
-.shop-public-footer small { margin-left: auto; }
+.shop-public-footer small { margin-left: auto; font-size: .8rem; }
 .shop-public .carrd-mobile-wrapper { background: #f7f5ef; padding: 40px 16px; }
 .shop-public .carrd-card { --text-main: #f8fafc; --text-muted: #94a3b8; color: var(--text-main); background: #111d2a; }
 @media (max-width: 700px) {
@@ -2056,7 +2056,9 @@ html, body {
 .pc-menu .pc-title { color: #5a1717; }
 .pc-menu .pc-foot { color: #8a5a2a; }
 
-.pc-review { background: radial-gradient(circle at 1px 1px, rgba(236, 208, 139, .13) 1px, transparent 0) 0 0 / 16px 16px, radial-gradient(ellipse at 50% 30%, #5e1616, #330a0a 85%); color: #fff3dc; --pc-ring: #3b0d0d; }
+.pc-review { background: radial-gradient(circle at 1px 1px, rgba(236, 208, 139, .13) 1px, transparent 0) 0 0 / 16px 16px, radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--pc-brand, #ab2828) 55%, #000), color-mix(in srgb, var(--pc-brand, #ab2828) 25%, #000) 85%); color: #fff3dc; --pc-ring: color-mix(in srgb, var(--pc-brand, #ab2828) 25%, #000); }
+.pc-brand { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.pc-logo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex: none; background: #fff; }
 .pc-review .pc-eyebrow { color: var(--gold-light); }
 .pc-review .pc-name { color: #fff3dc; }
 .pc-review .pc-ornament { color: var(--gold); }
@@ -2068,4 +2070,15 @@ html, body {
   .demo-cards-row { display: block; margin: 0; }
   .demo-card-sheet { width: auto; break-after: page; page-break-after: always; }
   .demo-card-sheet:last-child { break-after: auto; page-break-after: auto; }
+}
+
+/* Demo pages: a clear label so nobody mistakes the sample for a real menu. */
+.demo-banner { padding: 10px 16px; text-align: center; font-size: .9rem; line-height: 1.4; background: #fff1c2; color: #4a3200; border-bottom: 2px solid #e0a800; }
+
+/* Preview of the 4 x 6 in cards: real size inside, scaled to fit the column (see useFit in QrPrintStudio). */
+.poster-fit { width: 100%; overflow: hidden; }
+.poster-fit-inner { width: 384px; transform-origin: top left; }
+@media print {
+  .poster-fit { height: auto !important; overflow: visible !important; }
+  .poster-fit-inner { width: auto !important; transform: none !important; }
 }
