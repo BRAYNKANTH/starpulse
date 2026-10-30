@@ -3,6 +3,7 @@ import { SESSION_COOKIE, temporaryPassword, hashPassword, hashToken, newSessionT
 import { PLANS, planFor } from '../src/data/plans.js';
 import { SECURITY_HEADERS, safeRedirect, looksAutomated, isLinkPreviewer, previewPage } from './security.mjs';
 import { resetBaseUrl, sendPasswordResetEmail } from './mail.mjs';
+import { resolveGoogleMapsLink } from './googleLink.mjs';
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
@@ -49,10 +50,12 @@ export function createApi(store, { trustProxy = false } = {}) {
       try { profile = /^[a-z0-9-]{1,80}$/.test(id) ? await store.profile(id) : null; } catch { return sendUnavailable(res, 503, 'This QR link is temporarily unavailable.', req.method); }
       if (!profile?.published) return sendUnavailable(res, 404, 'This QR destination is unavailable or unpublished.', req.method);
       const destination = profile.qrDestination || 'landing';
-      const target = destination === 'url' ? profile.qrUrl : `/?biz=${encodeURIComponent(id)}${destination === 'landing' ? '' : '&view=' + destination}`;
-      if (!target) return sendUnavailable(res, 404, 'The QR destination has not been configured.', req.method);
+      // 'google' sends customers straight to the shop's Google review form, so the printed code never holds Google's address.
+      const external = destination === 'url' || destination === 'google';
+      const target = destination === 'url' ? profile.qrUrl : destination === 'google' ? profile.googleReviewUrl : `/?biz=${encodeURIComponent(id)}${destination === 'landing' ? '' : '&view=' + destination}`;
+      if (!target) return sendUnavailable(res, 404, destination === 'google' ? 'This shop has not added its Google review link yet.' : 'The QR destination has not been configured.', req.method);
       // Saved data may predate the redirect rules, so the target is checked again on every scan.
-      if (destination === 'url' && !safeRedirect(target)) return sendUnavailable(res, 404, 'The QR destination is not a safe web address.', req.method);
+      if (external && !safeRedirect(target)) return sendUnavailable(res, 404, 'The QR destination is not a safe web address.', req.method);
       try {
         // Crawlers and link previews are not customers, and one device cannot inflate a shop's count by refreshing.
         if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && !isLinkPreviewer(req.headers['user-agent']) && await store.allow(`scan:${clientAddress(req)}:${id}`, 30, 60)) await store.recordVisit(id);
@@ -128,6 +131,16 @@ export function createApi(store, { trustProxy = false } = {}) {
         if (!user) return send(res, 401, { error: 'Sign in to manage your shops.' });
         // A temporary password from an administrator must be replaced before anything else.
         if (user.mustChangePassword && !pathname.startsWith('/api/auth/')) return send(res, 403, { error: 'Choose a new password to continue.' });
+      }
+      // Turns a Google Maps short link into a place for the studio's "Build the link" box. Signed-in owners only, rate limited.
+      if (pathname === '/api/google/place' && req.method === 'POST') {
+        if (!user) return send(res, 401, { error: 'Sign in to manage your shops.' });
+        if (user.mustChangePassword) return send(res, 403, { error: 'Choose a new password to continue.' });
+        if (!await store.allow(`google-place:${user.id}`, 30, 60)) return send(res, 429, { error: 'Too many lookups. Try again in a minute.' });
+        const body = await readObject(req);
+        const found = typeof body.url === 'string' ? await resolveGoogleMapsLink(body.url).catch(() => null) : null;
+        if (!found) return send(res, 422, { error: 'Could not read that link. Open the shop in Google Maps in your browser and paste the long address from the address bar.' });
+        return send(res, 200, found);
       }
       if (pathname === '/api/auth/me') {
         if (req.method === 'GET') return send(res, 200, await account(user));

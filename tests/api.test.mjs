@@ -301,6 +301,37 @@ test('QR links only redirect to safe https addresses, checked when saving and ag
   } finally { await close(); }
 });
 
+test('the Google review QR destination sends scans straight to the shop review link, and refuses unsafe or missing ones', async () => {
+  const { store, client, close } = await setup();
+  const owner = client(), guest = client();
+  try {
+    await owner.signup('google@example.com');
+    const review = 'https://search.google.com/local/writereview?placeid=ChIJAzAcyndY4joRuKjmzPLJEt8';
+    assert.equal((await owner('/api/admin/businesses/cafe', 'PUT', { ...profile('Cafe'), qrDestination: 'google', googleReviewUrl: review })).status, 200);
+    const scan = await guest('/q/cafe');
+    assert.equal(scan.status, 302);
+    assert.equal(scan.headers.get('location'), review);
+    // No review link yet: a clear page, not a broken redirect.
+    assert.equal((await owner('/api/admin/businesses/cafe', 'PUT', { ...profile('Cafe'), qrDestination: 'google', googleReviewUrl: '' })).status, 200);
+    assert.equal((await guest('/q/cafe')).status, 404);
+    // Data saved before the rules existed must not become a redirect to a private address.
+    await store.save({ ...(await store.profile('cafe')), googleReviewUrl: 'https://169.254.169.254/latest' }, (await store.userByEmail('google@example.com')).id);
+    assert.equal((await guest('/q/cafe')).status, 404);
+  } finally { await close(); }
+});
+
+test('the Google place lookup needs a signed-in account and refuses anything that is not a Google Maps short link', async () => {
+  const { client, close } = await setup();
+  const owner = client(), guest = client();
+  try {
+    assert.equal((await guest('/api/google/place', 'POST', { url: 'https://maps.app.goo.gl/abc' })).status, 401);
+    await owner.signup('lookup@example.com');
+    for (const url of ['https://example.com/x', 'http://maps.app.goo.gl/abc', 'https://169.254.169.254/latest', 'not a link', 42]) {
+      assert.equal((await owner('/api/google/place', 'POST', { url })).status, 422, `${url} is refused`);
+    }
+  } finally { await close(); }
+});
+
 test('crawlers do not count as scans and one address cannot inflate a shop count', async () => {
   const { client, close } = await setup();
   const owner = client(), guest = client();
