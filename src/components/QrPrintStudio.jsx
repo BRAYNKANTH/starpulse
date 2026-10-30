@@ -23,8 +23,27 @@ const THEMES = [
   { id: 'vibrant_neon', css: 'vibrant_neon', name: 'Neon', description: 'Purple-to-pink gradient', swatch: 'neon-swatch', mark: <Sparkles size={12} color="#ffffff" /> },
   { id: 'warm_bistro', css: 'warm_bistro', name: 'Warm bistro', description: 'Cream and burgundy', swatch: 'bistro-swatch', mark: <span aria-hidden="true">☕</span> },
 ];
-const FORMATS = [['tabletop', 'Table stand · 4×6 in'], ['tent', 'Tent card · A5, folds in half'], ['sticker', 'Sticker · 3×3 in'], ['poster', 'Wall poster · A4']];
+const FORMATS = [['tabletop', 'Table stand · 4×6 in'], ['tent', 'Tent card · A5, folds in half'], ['sticker', 'Sticker · 3×3 in'], ['poster', 'Wall poster · A4'], ['review', 'Google review card · 4×6 in']];
+// A thin rule with a diamond in the middle, used on the Google review card.
+const Ornament = () => <svg className="pc-ornament" viewBox="0 0 120 10" aria-hidden="true"><path d="M0 5h50M70 5h50" stroke="currentColor" strokeWidth="1" /><path d="M60 0.5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="currentColor" /></svg>;
 const OTHER_TYPES = [{ id: 'url', name: 'Website', icon: Globe }, { id: 'whatsapp', name: 'WhatsApp', icon: Smartphone }, { id: 'wifi', name: 'Wi-Fi', icon: Wifi }];
+
+// The 4 x 6 in cards (table stand, review card) always keep their real size (384 x 576 px), so the PNG download and the print are exact.
+// In a narrow preview column they are shown scaled down inside a wrapper, instead of being squeezed.
+const CARD_WIDTH = 384, CARD_HEIGHT = 576;
+function useFit() {
+  const [box, setBox] = useState(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    if (!box) return undefined;
+    const measure = () => setScale(Math.min(1, box.clientWidth / CARD_WIDTH || 1));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [box]);
+  return [setBox, scale];
+}
 
 function useDownload() {
   const [file, setFile] = useState(null);
@@ -113,6 +132,7 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
   const [copied, setCopied] = useState(false);
   const [file, deliver] = useDownload();
   const art = useRef(null), posterRef = useRef(null);
+  const [fitRef, fit] = useFit();
 
   const change = patch => setBusinessProfile({ ...profile, ...patch });
   const style = patch => change({ qrDesign: { ...design, ...patch } });
@@ -121,7 +141,10 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
   const link = new URL(`/q/${profile.id}`, window.location.origin).href;
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
   const contrastProblem = contrastRatio(design.foreground, design.background) < 4.5 ? 'The QR dots need more contrast with the background, or some phones won’t scan it. Use dark dots on a light background.' : '';
-  const urlProblem = destination === 'url' && !/^https:\/\//.test(profile.qrUrl || '') ? 'Enter the full website address, starting with https://' : destination === 'google' && !/^https:\/\//.test(profile.googleReviewUrl || '') ? 'Add your Google review link in Business profile first, then this code will open it.' : '';
+  const reviewCard = poster.format === 'review';
+  const reviewLink = new URL(`/q/${profile.id}/google`, window.location.origin).href;
+  const https = value => /^https:\/\//.test(value || '');
+  const urlProblem = reviewCard || destination === 'google' ? (https(profile.googleReviewUrl) ? '' : 'Add your Google review link in Business profile first, then this code will open it.') : destination === 'url' && !https(profile.qrUrl) ? 'Enter the full website address, starting with https://' : '';
   const blocked = !savedProfile?.published ? 'publish' : dirty ? 'save' : '';
   const headline = poster.headline || HEADLINES[destination];
   const subtitle = poster.subtitle || SUBTITLE;
@@ -153,6 +176,18 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
       <div className="nfc-text-wrapper"><span className="nfc-bold-label">SCAN THE CODE OR TAP YOUR PHONE HERE</span></div>
       <Smartphone size={18} className="nfc-phone-icon" />
     </div>}
+  </>;
+
+  // The review card has its own premium look in the shop's brand colour. Its code always opens the Google review form, whatever destination the other formats use.
+  const reviewFace = <>
+    <p className="pc-eyebrow">Enjoyed your visit?</p>
+    <div className="pc-brand">{profile.logo && <img className="pc-logo" src={profile.logo} alt="" />}<h2 className="pc-name pc-name-sm">{profile.name}</h2></div>
+    <Ornament />
+    <div className="pc-stars" role="img" aria-label="Five stars">{[0, 1, 2, 3, 4].map(n => <Star key={n} size={34} fill="currentColor" aria-hidden="true" />)}</div>
+    <h3 className="pc-title">{poster.headline || 'Rate us on Google'}</h3>
+    <p className="pc-sub">{poster.subtitle || 'Scan, tap your stars and share a few words.'}</p>
+    <div className="pc-qr"><QRCodeSVG value={reviewLink} size={200} level="H" marginSize={2} fgColor="#1b1b1b" bgColor="#FFFFFF" /></div>
+    <p className="pc-foot">Thank you for visiting</p>
   </>;
 
   return <div className="sp-page print-page">
@@ -205,7 +240,7 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
           <div className="form-grid print-options">
             <div className="form-group"><label className="form-label" htmlFor="poster-format">Size</label><select id="poster-format" className="form-input" value={poster.format} onChange={e => setPoster({ format: e.target.value })}>{FORMATS.map(([v, text]) => <option key={v} value={v}>{text}</option>)}</select></div>
             {profile.logo && <div className="form-group"><label className="form-label" htmlFor="poster-logo-shape">Logo shape</label><select id="poster-logo-shape" className="form-input" value={poster.logoShape} onChange={e => setPoster({ logoShape: e.target.value })}><option value="squircle">Rounded square</option><option value="circle">Circle</option><option value="banner">Wide banner</option></select></div>}
-            <div className="form-group"><label className="form-label" htmlFor="poster-title">Headline</label><input id="poster-title" className="form-input" maxLength={60} placeholder={HEADLINES[destination]} value={poster.headline} onChange={e => setPoster({ headline: e.target.value })} /></div>
+            <div className="form-group"><label className="form-label" htmlFor="poster-title">Headline</label><input id="poster-title" className="form-input" maxLength={60} placeholder={reviewCard ? 'Rate us on Google' : HEADLINES[destination]} value={poster.headline} onChange={e => setPoster({ headline: e.target.value })} /></div>
             <div className="form-group"><label className="form-label" htmlFor="poster-subtitle">Line under the headline</label><input id="poster-subtitle" className="form-input" maxLength={90} placeholder={SUBTITLE} value={poster.subtitle} onChange={e => setPoster({ subtitle: e.target.value })} /></div>
           </div>
           <label className="toggle-label"><input type="checkbox" checked={poster.showNfc} onChange={e => setPoster({ showNfc: e.target.checked })} />Add “tap your phone here” (only if you stick an NFC tag on the stand)</label>
@@ -223,6 +258,12 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
             <div className={`poster-preview-card poster-theme-${theme.css} tent-panel tent-panel-upside-down`}>{face(true)}</div>
             <div className="tent-fold-line no-print"><span>✂ Fold here. The top half prints upside down so both sides read the right way up.</span></div>
             <div className={`poster-preview-card poster-theme-${theme.css} tent-panel`}>{face(true)}</div>
+          </div>
+          : reviewCard || poster.format === 'tabletop' ? <div ref={fitRef} className="poster-fit" style={{ height: CARD_HEIGHT * fit }}>
+            <div className="poster-fit-inner" style={{ transform: `scale(${fit})` }}>
+              {reviewCard ? <div ref={posterRef} className="poster-preview-card poster-format-tabletop premium-card pc-review" style={{ '--pc-brand': accent }}>{reviewFace}</div>
+                : <div ref={posterRef} className={`poster-preview-card poster-theme-${theme.css} poster-format-tabletop`}>{face()}</div>}
+            </div>
           </div>
           : <div ref={posterRef} className={`poster-preview-card poster-theme-${theme.css} poster-format-${poster.format}`}>{face()}</div>}
 

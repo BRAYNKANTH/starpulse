@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNoIndex } from '../utils/noindex';
 import './publicPages.css';
 
 // Public pages are real paths, not studio hash routes, so each one can be
@@ -204,6 +205,7 @@ export function PublicPage({ path }) {
 }
 
 export function PublicNotFound() {
+  useNoIndex();
   useEffect(() => { document.title = 'Page not found | DQ.lk'; }, []);
   return <div className="public-site">
     <header className="public-nav">

@@ -44,12 +44,14 @@ export function createApi(store, { trustProxy = false } = {}) {
   return async (req, res, next) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
     if (pathname.startsWith('/q/')) {
-      const id = pathname.slice(3);
+      // /q/<id> follows the shop's chosen destination. /q/<id>/google always goes to its Google review form (the printed review card).
+      const [id, variant, ...extra] = pathname.slice(3).split('/');
       if (!['GET', 'HEAD'].includes(req.method)) return send(res, 405, { error: 'Method not allowed.' });
+      if (extra.length || (variant !== undefined && variant !== 'google')) return sendUnavailable(res, 404, 'This QR link is not valid.', req.method);
       let profile;
       try { profile = /^[a-z0-9-]{1,80}$/.test(id) ? await store.profile(id) : null; } catch { return sendUnavailable(res, 503, 'This QR link is temporarily unavailable.', req.method); }
       if (!profile?.published) return sendUnavailable(res, 404, 'This QR destination is unavailable or unpublished.', req.method);
-      const destination = profile.qrDestination || 'landing';
+      const destination = variant === 'google' ? 'google' : profile.qrDestination || 'landing';
       // 'google' sends customers straight to the shop's Google review form, so the printed code never holds Google's address.
       const external = destination === 'url' || destination === 'google';
       const target = destination === 'url' ? profile.qrUrl : destination === 'google' ? profile.googleReviewUrl : `/?biz=${encodeURIComponent(id)}${destination === 'landing' ? '' : '&view=' + destination}`;

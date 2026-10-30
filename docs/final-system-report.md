@@ -18,7 +18,33 @@ There are **no blockers**. Four things need a decision or action from you, and t
 | Menu accessibility (25 templates x phone and desktop) | Pass, with two small notes. |
 | Live routes and headers | All main pages respond. Security headers present. |
 
-## Action needed
+## Fixes applied after this audit (PR "Fix the issues from the final audit")
+
+| Finding | Status |
+|---|---|
+| `/demo` pages show a real name with invented data, and are indexable | **Fixed in code.** A "Sample menu" banner now sits at the top of `/demo`, both demo pages carry a `noindex` tag, and `/demo*` sends `X-Robots-Tag: noindex, nofollow`. **Still needs you:** the restaurant's agreement, and do not give the menu card to Al Maas for real use until the menu is real. |
+| Vercel preview deploys fail (Neon integration) | **Not fixable in code.** It is a setting in your Vercel/Neon project. Delete old Neon preview branches, or turn off preview databases in the integration. |
+| Unknown addresses return HTTP 200 | **Fixed.** `vercel.json` now sends only the app's real addresses to the app, so anything else gets Vercel's 404, with a branded `public/404.html`. The Node server also answers 404. The pattern was checked against the same library Vercel uses, and a test keeps `vercel.json` and the list in `src/data/routes.js` in step. **Check after deploy:** `/pricing`, `/signin`, `/demo` still load, and `/nope-404` returns 404. |
+| Review card not in the studio | **Fixed.** New print size "Google review card · 4×6 in" in QR & print, in the shop's own brand colour. Its code goes to `/q/<shop>/google`, which always opens that shop's Google review form, so choosing it never changes where the other printed codes go. |
+| Dev-tool vulnerabilities | **Fixed.** vite 5 to 8 and the React plugin 4 to 6. `npm audit` now reports 0 vulnerabilities for everything. Build is faster (about 1.5 s). |
+| Footer text 11.3 px | **Fixed** (now 12.8 px). The unidentified 10.4 px element at desktop width was not found. |
+| Line-ending warnings | **Fixed.** `.gitattributes` added. The repository already stored LF everywhere, so nothing else changed. |
+| 13 merged branches on GitHub | **Not done.** The permission system blocked deleting remote branches. Run the command below yourself. |
+
+### One more bug found and fixed while testing
+The 4 x 6 table stand preview (added earlier) was squeezed to about 270 px wide in the real studio layout, which clipped its content, and the PNG download exported that squeezed size. The 4 x 6 cards now always keep their real size (384 x 576 px) and are shown scaled down inside a wrapper. The print path is unchanged. Verified: real size 384 x 576, nothing clipped, and the printed PDF is exactly 4 x 6 in.
+
+### Delete the merged branches (run once, on your machine)
+```
+git push origin --delete al-maas-place-id al-maas-wattala-place-id category-scroll-nav demo-review-redirect fix/c1-c3-public-pages fix/c4-c5-assisted-reset fix/template-ui google-review-link-builder lkr-demo-menu-polish menu-density-readability sticky-bar-shop-name table-stand-4x6 template-polish-and-hardening
+```
+
+### Still not tested
+Real phones, a real `maps.app.goo.gl` link through the lookup, the new `/q/<shop>/google` path on the live site, screen readers, and the Vercel rewrite itself (previews cannot deploy, so it was tested by pattern and by the Node server).
+
+---
+
+## Action needed (as found)
 
 1. **The `/demo` pages show a real restaurant with invented data, and Google can index them.**
    - `/demo` and `/demo/cards` use the real name "Al Maas" with sample dishes and prices that I made up. Nothing on the page says it is a sample.
@@ -39,7 +65,7 @@ There are **no blockers**. Four things need a decision or action from you, and t
 
 ### Dependencies
 - Production: `npm audit --omit=dev` reports 0 vulnerabilities.
-- Dev only: `vite` 5 (path traversal in the dev server's source maps, and an editor-launch issue), `esbuild` (any website can send requests to the dev server) and `source-map-js` (denial of service from crafted source maps). The fix for vite and esbuild is `vite@8`, which is a major upgrade and needs its own testing. `source-map-js` has a normal fix.
+- Dev only (**fixed afterwards: now 0**): `vite` 5 (path traversal in the dev server's source maps, and an editor-launch issue), `esbuild` (any website can send requests to the dev server) and `source-map-js` (denial of service from crafted source maps). The fix for vite and esbuild is `vite@8`, which is a major upgrade and needs its own testing. `source-map-js` has a normal fix.
 - Risk: only while running `npm run dev` on a machine. Do not expose the dev server to the internet.
 - `npm outdated` could not reach the registry during the audit, so I did not check for newer versions.
 

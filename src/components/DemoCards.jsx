@@ -3,10 +3,15 @@ import { ExternalLink, Printer, Star } from 'lucide-react';
 import ShopLanding from './ShopLanding';
 import { DEMO_SHOP, DEMO_SHOP_ID } from '../data/demoShop';
 import { DEMO_REVIEW_PATH } from '../data/demoReview';
+import { useNoIndex } from '../utils/noindex';
 
 // The demo shop's menu page, and its two printable 4x6 cards: a table menu card and a Google review card.
 export function DemoShop() {
-  return <ShopLanding businessProfile={DEMO_SHOP} initialView={new URLSearchParams(window.location.search).get('view') || 'menu'} />;
+  useNoIndex();
+  return <>
+    <div className="demo-banner" role="note"><strong>Sample menu.</strong> These dishes and prices are examples, not {DEMO_SHOP.name}’s real menu.</div>
+    <ShopLanding businessProfile={DEMO_SHOP} initialView={new URLSearchParams(window.location.search).get('view') || 'menu'} />
+  </>;
 }
 
 const HOSTED_URL = 'https://starpulse-beta.vercel.app';
@@ -16,6 +21,7 @@ const QR_COLOR = '#3b0d0d';
 const Ornament = () => <svg className="pc-ornament" viewBox="0 0 120 10" aria-hidden="true"><path d="M0 5h50M70 5h50" stroke="currentColor" strokeWidth="1" /><path d="M60 0.5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="currentColor" /></svg>;
 
 export default function DemoCards() {
+  useNoIndex();
   const params = new URLSearchParams(window.location.search);
   // The cards always point at the hosted site, even when printed from a local copy. ?base=https://other-domain overrides it.
   const requested = params.get('base') || '';

@@ -6,6 +6,7 @@ import { createApi } from './api.mjs';
 import { openDatabase } from './db.mjs';
 import { SECURITY_HEADERS } from './security.mjs';
 import { DEMO_GOOGLE_REVIEW_URL, DEMO_REVIEW_PATH } from '../src/data/demoReview.js';
+import { APP_PATHS } from '../src/data/routes.js';
 
 const root = resolve('dist');
 const store = await createStore(await openDatabase());
@@ -19,7 +20,15 @@ createServer((req, res) => api(req, res, () => {
   let path;
   try { path = resolve(root, `.${decodeURIComponent(new URL(req.url, 'http://localhost').pathname)}`); } catch { res.writeHead(400); res.end(); return; }
   if (path !== root && !path.startsWith(root + sep)) { res.writeHead(403); res.end(); return; }
-  if (path === root || !existsSync(path)) path = resolve(root, 'index.html');
-  res.writeHead(200, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', ...SECURITY_HEADERS });
+  // The app answers only its own addresses (src/data/routes.js). Anything else gets a real 404, with the app's "page not found" screen for pages.
+  const pathname = new URL(req.url, 'http://localhost').pathname.replace(/\/+$/, '') || '/';
+  let status = 200;
+  if (path === root || !existsSync(path)) {
+    if (extname(pathname)) { res.writeHead(404, SECURITY_HEADERS); res.end(); return; }
+    if (!APP_PATHS.includes(pathname)) status = 404;
+    path = resolve(root, 'index.html');
+  }
+  const demo = /^\/demo(\/|$)/.test(new URL(req.url, 'http://localhost').pathname);
+  res.writeHead(status, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', ...SECURITY_HEADERS, ...(demo ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}) });
   if (req.method === 'HEAD') res.end(); else createReadStream(path).on('error', () => res.destroy()).pipe(res);
 })).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`DQ.lk running on port ${process.env.PORT || 3000}`));

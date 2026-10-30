@@ -2,6 +2,7 @@ import './components/foodMenus.css';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import ShopLanding from './components/ShopLanding';
 import { api } from './data/api';
+import { PUBLIC_PATHS } from './data/routes';
 
 // The studio, public site and reset screen load separately, so a QR scan only downloads the shop page.
 const OwnerStudio = lazy(() => import('./OwnerStudio'));
@@ -11,7 +12,6 @@ const DemoShop = lazy(() => import('./components/DemoCards').then(module => ({ d
 const DemoCards = lazy(() => import('./components/DemoCards'));
 const PublicNotFound = lazy(() => import('./components/PublicPages').then(module => ({ default: module.PublicNotFound })));
 
-const PUBLIC_PATHS = ['/', '/pricing', '/about', '/contact', '/terms', '/privacy'];
 const loading = <div className="studio-loading" role="status">Loading…</div>;
 
 export default function App() {
