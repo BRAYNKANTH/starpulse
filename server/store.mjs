@@ -4,13 +4,17 @@ import { normalizeMenuDesign } from '../src/data/menuDesign.js';
 import { normalizeMenuTags } from '../src/data/menuTags.js';
 import { safeRedirect } from './security.mjs';
 
+// Photos live in their own table and a shop stores only their address, so a shop's photos never count against the request size limit.
+export const IMAGE_PATH = /^\/api\/images\/([a-f0-9-]{36})$/;
+const imageIdsIn = profile => [profile.logo, profile.coverImage, ...(profile.menu || []).map(item => item.image)].map(src => src?.match(IMAGE_PATH)?.[1]).filter(Boolean);
+
 export function validateProfile(input, id) {
   if (!input || typeof input !== 'object' || Array.isArray(input) || !/^[a-z0-9-]{1,80}$/.test(id)) throw new Error('Invalid business profile.');
   const text = (value, max = 500) => typeof value === 'string' ? value.trim().slice(0, max) : '';
   const url = (value, image = false) => {
     const result = text(value, image ? 1500000 : 2000);
     if (!result) return '';
-    if (image && /^data:image\/(png|jpeg|webp|gif);base64,[a-zA-Z0-9+/=]+$/.test(result)) return result;
+    if (image && (IMAGE_PATH.test(result) || /^data:image\/(png|jpeg|webp|gif);base64,[a-zA-Z0-9+/=]+$/.test(result))) return result;
     try { if (['https:', 'http:'].includes(new URL(result).protocol)) return result; } catch { /* handled below */ }
     throw new Error(image ? 'Use a valid image URL or upload a PNG, JPEG, WebP or GIF.' : 'Use a valid http or https review URL.');
   };
@@ -49,6 +53,10 @@ const SCHEMA = [
     id TEXT PRIMARY KEY, owner_id TEXT REFERENCES users(id) ON DELETE CASCADE, data JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
   'CREATE INDEX IF NOT EXISTS businesses_owner ON businesses (owner_id)',
+  `CREATE TABLE IF NOT EXISTS images (
+    id TEXT PRIMARY KEY, business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    mime TEXT NOT NULL, data TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE INDEX IF NOT EXISTS images_business ON images (business_id)',
   `CREATE TABLE IF NOT EXISTS feedback (
     id TEXT PRIMARY KEY, business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
     rating INTEGER NOT NULL, note TEXT NOT NULL, selected_tags JSONB NOT NULL, redirected_to_google BOOLEAN NOT NULL,
@@ -141,8 +149,13 @@ export async function createStore(db) {
     createShop: async (profile, ownerId, limit) => (await q(`INSERT INTO businesses (id, owner_id, data) SELECT $1::text, $2::text, $3::jsonb WHERE (SELECT COUNT(*) FROM businesses WHERE owner_id = $2::text) < $4::int ON CONFLICT (id) DO NOTHING RETURNING id`, profile.id, ownerId, JSON.stringify(profile), limit)).length > 0,
     save: async (profile, ownerId) => {
       await q('INSERT INTO businesses (id, owner_id, data) VALUES ($1, $2, $3::jsonb) ON CONFLICT (id) DO UPDATE SET data = excluded.data, updated_at = now()', profile.id, ownerId ?? null, JSON.stringify(profile));
+      // Replaced and removed photos are cleared here. The day's grace keeps photos uploaded but not yet saved in an open studio.
+      await q("DELETE FROM images WHERE business_id = $1 AND created_at < now() - interval '1 day' AND NOT (id = ANY($2::text[]))", profile.id, imageIdsIn(profile));
       return profile;
     },
+    // Adds a photo only while the shop is under the limit; the check and the insert are one statement. `data` is base64.
+    addImage: async (businessId, mime, data, limit) => (await one('INSERT INTO images (id, business_id, mime, data) SELECT $1::text, $2::text, $3::text, $4::text WHERE (SELECT COUNT(*) FROM images WHERE business_id = $2::text) < $5::int RETURNING id', randomUUID(), businessId, mime, data, limit))?.id,
+    image: id => one('SELECT mime, data FROM images WHERE id = $1', id),
     allShops: async () => (await q('SELECT id, owner_id, data FROM businesses ORDER BY created_at, id')).map(row => ({ id: row.id, name: row.data.name, published: row.data.published === true, ownerId: row.owner_id })),
     setOwner: async (id, ownerId) => (await q('UPDATE businesses SET owner_id = $1 WHERE id = $2 RETURNING id', ownerId, id)).length > 0,
     deleteProfile: async id => (await q('DELETE FROM businesses WHERE id = $1 RETURNING id', id)).length > 0,

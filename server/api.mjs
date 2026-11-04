@@ -1,4 +1,4 @@
-import { validateProfile } from './store.mjs';
+import { IMAGE_PATH, validateProfile } from './store.mjs';
 import { SESSION_COOKIE, temporaryPassword, hashPassword, hashToken, newSessionToken, readCookie, sessionCookie, validEmail, validPassword, verifyPassword, SESSION_DAYS } from './auth.mjs';
 import { PLANS, planFor } from '../src/data/plans.js';
 import { SECURITY_HEADERS, safeRedirect, looksAutomated, isLinkPreviewer, previewPage } from './security.mjs';
@@ -19,6 +19,8 @@ export function createApi(store, { trustProxy = false } = {}) {
     res.end(method === 'HEAD' ? '' : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>This shop isn’t available | DQ.lk</title><style>body{font-family:system-ui,sans-serif;background:#f7f5ef;color:#183329;margin:0;padding:48px 20px;text-align:center}main{max-width:520px;margin:0 auto}h1{font-size:1.6rem}a{color:#1d56d8}</style></head><body><main><h1>This shop isn’t available</h1><p>${escapeHtml(message)}</p><p>If you scanned a QR code, ask the staff for help.</p><p><a href="/">DQ.lk home</a></p></main></body></html>`);
   };
   const maxBody = 4 * 1024 * 1024;
+  // The studio compresses every photo to 180,000 characters or fewer before sending it (src/utils/images.js).
+  const maxImage = 200000, maxShopImages = 500;
   const readBody = async req => {
     if (Number(req.headers['content-length']) > maxBody) throw fail(413, 'Upload is too large. Use smaller images.');
     const chunks = [];
@@ -72,6 +74,15 @@ export function createApi(store, { trustProxy = false } = {}) {
     }
     if (!pathname.startsWith('/api/')) return next();
     try {
+      // Uploaded photos are public, like the pages that show them. An address never changes its photo, so browsers can keep it.
+      const photo = pathname.match(IMAGE_PATH);
+      if (photo && ['GET', 'HEAD'].includes(req.method)) {
+        const found = await store.image(photo[1]);
+        if (!found) return send(res, 404, { error: 'Image not found.' });
+        res.writeHead(200, { 'Content-Type': found.mime, 'Cache-Control': 'public, max-age=31536000, immutable', ...SECURITY_HEADERS });
+        res.end(req.method === 'HEAD' ? undefined : Buffer.from(found.data, 'base64'));
+        return;
+      }
       if (!['GET', 'HEAD'].includes(req.method)) {
         // Session cookies make every write a CSRF target: refuse other origins and anything a plain HTML form could send.
         if (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) return send(res, 403, { error: 'Cross-origin writes are not allowed.' });
@@ -237,6 +248,16 @@ export function createApi(store, { trustProxy = false } = {}) {
         }
         if (owner !== user.id) return send(res, 404, { error: 'Shop not found.' });
         if (!rest && req.method === 'DELETE') { await store.deleteProfile(id); return send(res, 200, { ok: true }); }
+        if (rest === '/images' && req.method === 'POST') {
+          if (!await store.allow(`image-upload:${user.id}`, 120, 60)) return send(res, 429, { error: 'Too many uploads. Try again in a minute.' });
+          const body = await readObject(req);
+          const parts = typeof body.data === 'string' ? body.data.match(/^data:(image\/(?:png|jpeg|webp|gif));base64,([a-zA-Z0-9+/=]+)$/) : null;
+          if (!parts) throw new Error('Upload a PNG, JPEG, WebP or GIF.');
+          if (body.data.length > maxImage) throw fail(413, 'This photo is too large. Choose a smaller image.');
+          const imageId = await store.addImage(id, parts[1], parts[2], maxShopImages);
+          if (!imageId) throw fail(403, `A shop can keep ${maxShopImages} photos. Remove some and try again.`);
+          return send(res, 201, { url: `/api/images/${imageId}` });
+        }
         if (rest === '/analytics' && req.method === 'GET') return send(res, 200, await store.visits(id));
         if (rest === '/feedback') {
           if (req.method === 'GET') return send(res, 200, await store.feedback(id));

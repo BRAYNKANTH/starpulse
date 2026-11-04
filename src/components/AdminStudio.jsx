@@ -57,7 +57,7 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
         </section>
         <section className="card">
           <div className="card-head"><div><h2>Branding</h2><p>Your logo, cover photo and brand colour, used on your pages, menu and printed stands.</p></div></div>
-          <div className="form-grid"><ImageUpload id="business-logo-upload" label="Logo" value={p.logo} maxWidth={512} onChange={value => update('logo', value)} /><ImageUpload id="business-cover-upload" label="Cover photo" value={p.coverImage} maxWidth={1400} onChange={value => update('coverImage', value)} /></div>
+          <div className="form-grid"><ImageUpload id="business-logo-upload" shopId={p.id} label="Logo" value={p.logo} maxWidth={512} onChange={value => update('logo', value)} /><ImageUpload id="business-cover-upload" shopId={p.id} label="Cover photo" value={p.coverImage} maxWidth={1400} onChange={value => update('coverImage', value)} /></div>
           <div className="form-group"><label className="form-label" htmlFor="brand-colour">Brand colour</label><div className="brand-colour-row"><input id="brand-colour" type="color" className="form-input" value={accent} onChange={e => setAccent(e.target.value)} /><code>{accent.toUpperCase()}</code>{p.menuDesign?.accent && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAccent('')}>Use the menu template’s colour</button>}</div><p className="field-help">Used for buttons, prices and highlights. {p.menuDesign?.accent ? 'Your own colour.' : `Currently the ${resolved.palette.name} template’s colour.`}</p></div>
         </section>
         <section className="card">

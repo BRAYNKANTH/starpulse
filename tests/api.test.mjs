@@ -406,3 +406,60 @@ test('link previews show the shop name and escape it safely', async () => {
   assert.equal(isLinkPreviewer('WhatsApp/2.23.20.0'), true);
   assert.equal(isLinkPreviewer('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)'), false);
 });
+
+test('uploaded photos are stored apart from the shop, so a full menu of photos saves and loads', async () => {
+  const { store, client, close, base, db } = await setup();
+  const owner = client(), stranger = client(), guest = client();
+  await owner.signup('photos@example.com', 'Owner', 'correct horse', { plan: 'pro' }); await stranger.signup('stranger@example.com');
+  assert.equal((await owner('/api/admin/businesses/photo-shop', 'PUT', profile('Photo Shop'))).status, 200);
+  const photo = Buffer.alloc(130000, 7);
+  const data = `data:image/webp;base64,${photo.toString('base64')}`;
+  const upload = (who, body = { data }, id = 'photo-shop') => who(`/api/admin/businesses/${id}/images`, 'POST', body);
+
+  // Only the shop's owner can upload, and only real photos of a sensible size.
+  assert.equal((await upload(guest)).status, 401);
+  assert.equal((await upload(stranger)).status, 404);
+  assert.equal((await upload(owner, { data: 'data:image/svg+xml;base64,PHN2Zz4=' })).status, 400);
+  assert.equal((await upload(owner, { data: `data:image/webp;base64,${'A'.repeat(200001)}` })).status, 413);
+
+  // 100 photos of this size would be 17 MB inside the shop; the saved shop now holds only their addresses.
+  const urls = [];
+  for (let i = 0; i < 100; i++) { const { status, body } = await upload(owner); assert.equal(status, 201); urls.push(body.url); }
+  const menu = urls.map((image, i) => ({ id: `dish-${i}`, name: `Dish ${i}`, price: 100, image }));
+  const body = JSON.stringify({ ...profile('Photo Shop'), logo: urls[0], coverImage: urls[1], menu });
+  assert.ok(body.length < 20000);
+  assert.equal((await owner('/api/admin/businesses/photo-shop', 'PUT', body)).status, 200);
+  assert.equal((await guest('/api/businesses/photo-shop')).body.menu.length, 100);
+
+  // Anyone can load a photo: the exact bytes, the right type and a long cache.
+  const served = await fetch(base + urls[2]);
+  assert.equal(served.status, 200);
+  assert.equal(served.headers.get('content-type'), 'image/webp');
+  assert.match(served.headers.get('cache-control'), /immutable/);
+  assert.equal(served.headers.get('x-content-type-options'), 'nosniff');
+  assert.deepEqual(Buffer.from(await served.arrayBuffer()), photo);
+  assert.equal((await fetch(`${base}/api/images/00000000-0000-0000-0000-000000000000`)).status, 404);
+
+  // A saved shop only accepts addresses in the right form.
+  assert.equal((await owner('/api/admin/businesses/photo-shop', 'PUT', { ...profile('Photo Shop'), logo: '/api/images/../../secret' })).status, 400);
+
+  // Saving clears old photos it no longer uses, but keeps recent ones an open studio may be about to save.
+  const count = async () => (await db.query('SELECT COUNT(*)::int AS n FROM images'))[0].n;
+  assert.equal(await count(), 100);
+  await owner('/api/admin/businesses/photo-shop', 'PUT', { ...profile('Photo Shop'), logo: urls[0] });
+  assert.equal(await count(), 100);
+  await db.query("UPDATE images SET created_at = now() - interval '2 days'");
+  const fresh = (await upload(owner)).body.url;
+  await owner('/api/admin/businesses/photo-shop', 'PUT', { ...profile('Photo Shop'), logo: urls[0] });
+  assert.equal(await count(), 2);
+  assert.equal((await fetch(base + urls[0])).status, 200);
+  assert.equal((await fetch(base + urls[2])).status, 404);
+  assert.equal((await fetch(base + fresh)).status, 200);
+
+  // A shop has a photo limit, and deleting a shop deletes its photos.
+  assert.equal(await store.addImage('photo-shop', 'image/webp', 'AAAA', 2), undefined);
+  assert.ok(await store.addImage('photo-shop', 'image/webp', 'AAAA', 3));
+  assert.equal((await owner('/api/admin/businesses/photo-shop', 'DELETE')).status, 200);
+  assert.equal(await count(), 0);
+  await close();
+});
