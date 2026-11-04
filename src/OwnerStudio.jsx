@@ -1,7 +1,7 @@
 import { ImageUploadStatus } from './components/ImageUploadStatus';
 import './components/brandedStudio.css';
 import './studio.css';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ExternalLink, EyeOff, Loader2, Menu as MenuIcon } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import Sidebar from './components/Sidebar';
@@ -55,6 +55,8 @@ function useTheme() {
   return [theme, toggle];
 }
 
+const STUDIO_TITLE = document.title;
+
 export default function OwnerStudio() {
   const [activeTab, setActiveTab] = useHashPage();
   const [theme, toggleTheme] = useTheme();
@@ -70,6 +72,19 @@ export default function OwnerStudio() {
   const [status, setStatus] = useState('loading'); // loading | signed-out | choose-password | ready
   const [navOpen, setNavOpen] = useState(false);
   const { toasts, notify, dismiss } = useToasts();
+
+  const main = useRef(null);
+  const openedPage = useRef(activeTab);
+  useEffect(() => {
+    const label = activeTab === 'new' ? 'New shop' : PAGES.find(p => p.id === activeTab)?.label;
+    document.title = status === 'ready' && label ? `${label} | DQ.lk` : STUDIO_TITLE;
+  }, [activeTab, status]);
+  // Moving between pages keeps the keyboard and screen readers with the new page, unless the page has already placed focus inside itself.
+  useEffect(() => {
+    if (openedPage.current === activeTab) return;
+    openedPage.current = activeTab;
+    if (!main.current?.contains(document.activeElement)) main.current?.focus({ preventScroll: true });
+  }, [activeTab]);
 
   const refreshOverview = useCallback(() => api('/admin/overview').then(setOverview).catch(() => { /* stats are optional */ }), []);
   const applyProfiles = useCallback(saved => {
@@ -191,6 +206,8 @@ export default function OwnerStudio() {
   const navigate = next => { setActiveTab(next); setNavOpen(false); };
 
   return <div className="studio" data-theme={theme}>
+    <a className="sp-skip-link no-print" href="#main-content" onClick={event => { event.preventDefault(); main.current?.focus(); }}>Skip to main content</a>
+    <p className="sr-only" role="status">{settingUp ? 'New shop' : page?.label}</p>
     <Sidebar active={settingUp && activeTab !== 'new' ? 'dashboard' : activeTab} onNavigate={navigate} unread={unreadTotal} theme={theme} onToggleTheme={toggleTheme} onSignOut={signOut} user={account.user} open={navOpen} onClose={() => setNavOpen(false)} />
     <div className="sp-main">
       <header className="sp-topbar no-print">
@@ -215,7 +232,7 @@ export default function OwnerStudio() {
           </div>
         </> : <span className="sp-topbar-title">{settingUp ? 'New shop' : page?.label}</span>}
       </header>
-      <main className="sp-content">
+      <main ref={main} id="main-content" tabIndex={-1} className="sp-content">
         {error && !settingUp && <div className="notice error" role="alert"><span>{error}</span><button type="button" className="btn btn-ghost btn-sm" onClick={() => setError('')}>Dismiss</button></div>}
         <ImageUploadStatus.Provider value={trackUpload}><fieldset disabled={saving || uploads > 0} className="studio-fieldset">
           {settingUp ? <ShopSetup first={!profiles.length} busy={saving} error={error} onCreate={createShop} onCancel={() => navigate('dashboard')} /> : <>

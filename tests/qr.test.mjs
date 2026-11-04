@@ -76,3 +76,19 @@ test('daily visit counts older than 120 days are pruned while the all-time total
     assert.deepEqual(Object.keys((await store.visits('cafe')).daily), ['2026-06-01']);
   } finally { t.mock.timers.reset(); await store.close(); }
 });
+
+test('a counted scan stops counting past its rate limit, and a current database skips setup on the next start', async () => {
+  const db = await localDatabase();
+  const store = await createStore(db);
+  try {
+    await store.save(validateProfile({ name: 'Cafe' }, 'cafe'), null);
+    for (let i = 0; i < 4; i++) await store.recordScan('cafe', 'scan:device:cafe', 3, 60);
+    const visits = await store.visits('cafe');
+    assert.equal(visits.count, 3);
+    assert.deepEqual(Object.values(visits.daily), [3]);
+
+    const statements = [];
+    await createStore({ ...db, query: (text, params) => { statements.push(text); return db.query(text, params); } });
+    assert.equal(statements.length, 1);
+  } finally { await store.close(); }
+});

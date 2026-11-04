@@ -62,7 +62,7 @@ export function createApi(store, { trustProxy = false } = {}) {
       if (external && !safeRedirect(target)) return sendUnavailable(res, 404, 'The QR destination is not a safe web address.', req.method);
       try {
         // Crawlers and link previews are not customers, and one device cannot inflate a shop's count by refreshing.
-        if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && !isLinkPreviewer(req.headers['user-agent']) && await store.allow(`scan:${clientAddress(req)}:${id}`, 30, 60)) await store.recordVisit(id);
+        if (req.method === 'GET' && !looksAutomated(req.headers['user-agent']) && !isLinkPreviewer(req.headers['user-agent'])) await store.recordScan(id, `scan:${clientAddress(req)}:${id}`, 30, 60);
       } catch { return sendUnavailable(res, 503, 'This QR link is temporarily unavailable.', req.method); }
       if (isLinkPreviewer(req.headers['user-agent'])) {
         const origin = `${req.headers['x-forwarded-proto'] === 'https' || req.socket?.encrypted ? 'https' : 'http'}://${req.headers.host}`;

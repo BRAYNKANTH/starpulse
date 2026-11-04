@@ -33,6 +33,8 @@ export function validateProfile(input, id) {
 }
 
 // Statements run one at a time: the Neon HTTP driver accepts a single statement per query.
+// Add new statements at the end and name the last object in SCHEMA_CURRENT: finding it means every earlier statement has run.
+const SCHEMA_CURRENT = 'images_business';
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY, email TEXT NOT NULL, name TEXT NOT NULL, password_hash TEXT NOT NULL,
@@ -53,10 +55,6 @@ const SCHEMA = [
     id TEXT PRIMARY KEY, owner_id TEXT REFERENCES users(id) ON DELETE CASCADE, data JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
   'CREATE INDEX IF NOT EXISTS businesses_owner ON businesses (owner_id)',
-  `CREATE TABLE IF NOT EXISTS images (
-    id TEXT PRIMARY KEY, business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-    mime TEXT NOT NULL, data TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
-  'CREATE INDEX IF NOT EXISTS images_business ON images (business_id)',
   `CREATE TABLE IF NOT EXISTS feedback (
     id TEXT PRIMARY KEY, business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
     rating INTEGER NOT NULL, note TEXT NOT NULL, selected_tags JSONB NOT NULL, redirected_to_google BOOLEAN NOT NULL,
@@ -68,6 +66,10 @@ const SCHEMA = [
     business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE, day TEXT NOT NULL, count INTEGER NOT NULL,
     PRIMARY KEY (business_id, day))`,
   'CREATE TABLE IF NOT EXISTS rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, reset_at TIMESTAMPTZ NOT NULL)',
+  `CREATE TABLE IF NOT EXISTS images (
+    id TEXT PRIMARY KEY, business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    mime TEXT NOT NULL, data TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`,
+  'CREATE INDEX IF NOT EXISTS images_business ON images (business_id)',
 ];
 
 const keepDays = 120;
@@ -81,7 +83,9 @@ const emptyVisits = () => ({ count: 0, lastVisited: null, daily: {} });
 
 // `db` comes from server/db.mjs: { query(text, params) → rows, close() }.
 export async function createStore(db) {
-  for (const statement of SCHEMA) await db.query(statement);
+  // A new server instance would otherwise wait on every statement before its first response.
+  const [{ current }] = await db.query('SELECT to_regclass($1) IS NOT NULL AS current', [SCHEMA_CURRENT]);
+  if (!current) for (const statement of SCHEMA) await db.query(statement);
   const q = (text, ...params) => db.query(text, params);
   const one = async (text, ...params) => (await db.query(text, params))[0];
 
@@ -91,6 +95,8 @@ export async function createStore(db) {
   };
   // The inbox loads in one piece, so a runaway shop cannot exhaust memory: only the newest 5,000 are returned.
   const feedback = async id => (await q('SELECT * FROM feedback WHERE business_id = $1 ORDER BY created_at DESC LIMIT 5000', id)).map(toFeedback);
+  // Only the first scan of a day (when its row is created) trims old days.
+  const trimDays = (id, now) => q('DELETE FROM visit_days WHERE business_id = $1 AND day <= $2', id, dayKey(new Date(now.getTime() - keepDays * 86400000)));
 
   return {
     close: () => db.close(),
@@ -198,8 +204,25 @@ export async function createStore(db) {
       const now = new Date();
       await q('INSERT INTO visit_totals (business_id, count, last_visited) VALUES ($1, 1, $2) ON CONFLICT (business_id) DO UPDATE SET count = visit_totals.count + 1, last_visited = excluded.last_visited', id, now.toISOString());
       const today = await one('INSERT INTO visit_days (business_id, day, count) VALUES ($1, $2, 1) ON CONFLICT (business_id, day) DO UPDATE SET count = visit_days.count + 1 RETURNING count', id, dayKey(now));
-      // Only the first scan of a day (when its row is created) trims old days.
-      if (today.count === 1) await q('DELETE FROM visit_days WHERE business_id = $1 AND day <= $2', id, dayKey(new Date(now.getTime() - keepDays * 86400000)));
+      if (today.count === 1) await trimDays(id, now);
+    },
+    // A customer's scan is waiting on this before its redirect, so the rate limit and both counts are one statement.
+    recordScan: async (id, key, limit, windowSeconds) => {
+      const now = new Date();
+      const today = await one(`WITH limited AS (
+          INSERT INTO rate_limits (key, count, reset_at) VALUES ($1, 1, now() + make_interval(secs => $2))
+          ON CONFLICT (key) DO UPDATE SET
+            count = CASE WHEN rate_limits.reset_at < now() THEN 1 ELSE rate_limits.count + 1 END,
+            reset_at = CASE WHEN rate_limits.reset_at < now() THEN excluded.reset_at ELSE rate_limits.reset_at END
+          RETURNING count
+        ), total AS (
+          INSERT INTO visit_totals (business_id, count, last_visited) SELECT $3::text, 1, $4::timestamptz FROM limited WHERE limited.count <= $5::int
+          ON CONFLICT (business_id) DO UPDATE SET count = visit_totals.count + 1, last_visited = excluded.last_visited
+        ), day AS (
+          INSERT INTO visit_days (business_id, day, count) SELECT $3::text, $6::text, 1 FROM limited WHERE limited.count <= $5::int
+          ON CONFLICT (business_id, day) DO UPDATE SET count = visit_days.count + 1 RETURNING count
+        ) SELECT count FROM day`, key, windowSeconds, id, now.toISOString(), limit, dayKey(now));
+      if (today?.count === 1) await trimDays(id, now);
     },
 
     // Feedback

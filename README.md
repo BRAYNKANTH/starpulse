@@ -91,7 +91,7 @@ APP_BASE_URL=https://starpulse-beta.vercel.app
 ## Deploy to Vercel with Neon
 
 1. Push this repository to GitHub and import it in Vercel (**Add New → Project**). Vercel reads `vercel.json`: the Vite build is served as static files, and `/api/*` and `/q/*` run the function in `api/index.js`.
-2. In the project, open **Storage → Create Database → Neon** (Serverless Postgres) and connect it to the project for all environments. This adds `DATABASE_URL`. Tables are created automatically on the first request.
+2. In the project, open **Storage → Create Database → Neon** (Serverless Postgres) and connect it to the project for all environments. This adds `DATABASE_URL`. Tables are created automatically on the first request. `vercel.json` runs the API in Singapore (`sin1`), beside the database; if your Neon database is elsewhere, change `regions` to match.
 3. Under **Settings → Environment Variables**, add `APP_TIME_ZONE` = `Asia/Colombo` (or your time zone). Redeploy after adding variables.
 4. Create your administrator against Neon from your computer:
 
