@@ -150,13 +150,13 @@ export default function MenuDesigner({ businessProfile, onChange }) {
         <p className="field-help">Save in the top bar to publish design changes. Printed QR codes keep working.</p>
       </div>}
 
-      <aside className="md-preview">
+      <section className="md-preview" aria-label="Live preview">
         <div className="md-preview-bar"><span><span className="preview-live-dot" />Live preview</span>
           <div className="segmented" role="group" aria-label="Preview size"><button type="button" aria-pressed={device === 'phone'} aria-label="Phone" onClick={() => setDevice('phone')}><Smartphone size={15} /></button><button type="button" aria-pressed={device === 'desktop'} aria-label="Desktop" onClick={() => setDevice('desktop')}><Monitor size={15} /></button></div>
         </div>
         <div ref={frame} className={`md-preview-frame ${device}`} aria-hidden="true" inert><div className="design-preview-scroll" style={device === 'desktop' ? { width: 1024, zoom: Math.min(1, frameWidth / 1024) } : undefined}><ShopLanding businessProfile={businessProfile.menu?.length ? businessProfile : { ...menuExample(template), name: businessProfile.name || menuExample(template).name, menuDesign: businessProfile.menuDesign }} initialView="menu" preview /></div></div>
         {!businessProfile.menu?.length && <p className="field-help">Showing sample dishes until you add menu items.</p>}
-      </aside>
+      </section>
     </div>
   </section>;
 }

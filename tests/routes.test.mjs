@@ -16,3 +16,10 @@ test('vercel.json sends exactly the app addresses to the app, so anything else i
   for (const path of ['/nope-404', '/pricing/x', '/prices', '/demo/review', '/api/x', '/q/abc', '/assets/a.js']) assert.equal(matches(path), false, `${path} is not an app page`);
   assert.ok(config.rewrites.some(item => item.source === '/q/:id/google' && item.destination === '/api'), 'the per-shop Google review path reaches the API');
 });
+
+test('the API runs beside the database in Singapore, and versioned files are cached for a year', async () => {
+  const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
+  assert.deepEqual(vercel.regions, ['sin1']);
+  const assets = vercel.headers.find(rule => rule.source === '/assets/(.*)');
+  assert.equal(assets.headers.find(header => header.key === 'Cache-Control').value, 'public, max-age=31536000, immutable');
+});

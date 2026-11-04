@@ -60,7 +60,7 @@ function useDownload() {
 // The QR artwork on its own (code, frame and caption), used for PNG and SVG downloads.
 function QrArt({ artRef, value, design, logo }) {
   return <div ref={artRef} className={`bqr-art bqr-frame-${design.frame}`} style={{ background: design.frame === 'none' ? design.background : design.frameColor, borderRadius: design.rounded ? 20 : 0 }}>
-    <QRCodeSVG value={value} size={300} level="H" marginSize={4} fgColor={design.foreground} bgColor={design.background} imageSettings={design.showLogo && logo ? { src: logo, height: 42, width: 42, excavate: true } : undefined} />
+    <QRCodeSVG title="QR code preview" value={value} size={300} level="H" marginSize={4} fgColor={design.foreground} bgColor={design.background} imageSettings={design.showLogo && logo ? { src: logo, height: 42, width: 42, excavate: true } : undefined} />
     <span className="bqr-caption" style={{ color: contrastRatio('#ffffff', design.frameColor) >= 4.5 ? '#ffffff' : '#172033' }}>{design.label}</span>
   </div>;
 }
@@ -167,7 +167,7 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
     </div>
     <div className="poster-cta-text-block"><h3 className="poster-main-title">{headline}</h3>{!compact && <p className="poster-subtitle">{subtitle}</p>}</div>
     <div className="poster-qr-frame">
-      <QRCodeSVG value={link} size={poster.format === 'sticker' ? 150 : poster.format === 'poster' ? 220 : poster.format === 'tabletop' ? 216 : compact ? 108 : 190} level="H" marginSize={4} fgColor={contrastRatio(design.foreground, posterBackground) >= 4.5 ? design.foreground : posterBackground === '#FFFFFF' ? '#172033' : '#F59E0B'} bgColor={posterBackground}
+      <QRCodeSVG title="QR code preview" value={link} size={poster.format === 'sticker' ? 150 : poster.format === 'poster' ? 220 : poster.format === 'tabletop' ? 216 : compact ? 108 : 190} level="H" marginSize={4} fgColor={contrastRatio(design.foreground, posterBackground) >= 4.5 ? design.foreground : posterBackground === '#FFFFFF' ? '#172033' : '#F59E0B'} bgColor={posterBackground}
         imageSettings={design.showLogo && profile.logo ? { src: profile.logo, height: poster.format === 'sticker' ? 30 : 38, width: poster.format === 'sticker' ? 30 : 38, excavate: true } : undefined} />
       <div className="poster-direct-link-badge"><ExternalLink size={12} color="#4285F4" aria-hidden="true" /><span>{DESTINATIONS.find(d => d.id === destination)?.name}</span></div>
     </div>
@@ -186,7 +186,7 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
     <div className="pc-stars" role="img" aria-label="Five stars">{[0, 1, 2, 3, 4].map(n => <Star key={n} size={34} fill="currentColor" aria-hidden="true" />)}</div>
     <h3 className="pc-title">{poster.headline || 'Rate us on Google'}</h3>
     <p className="pc-sub">{poster.subtitle || 'Scan, tap your stars and share a few words.'}</p>
-    <div className="pc-qr"><QRCodeSVG value={reviewLink} size={200} level="H" marginSize={2} fgColor="#1b1b1b" bgColor="#FFFFFF" /></div>
+    <div className="pc-qr"><QRCodeSVG title="Google review QR code" value={reviewLink} size={200} level="H" marginSize={2} fgColor="#1b1b1b" bgColor="#FFFFFF" /></div>
     <p className="pc-foot">Thank you for visiting</p>
   </>;
 

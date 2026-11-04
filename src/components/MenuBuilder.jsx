@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, FolderPlus, GripVertical, ImageIcon, LayoutList, Palette, Pencil, Plus, Search, Settings2, Trash2, TriangleAlert } from 'lucide-react';
 import ActionMenu from './ActionMenu';
 import ImageUpload from './ImageUpload';
@@ -13,6 +13,49 @@ const categoryOf = item => item.category?.trim() || 'Menu';
 const statusOf = item => item.available === false ? 'hidden' : item.soldOut ? 'soldout' : 'available';
 const STATUS = { available: ['Available', 'success'], soldout: ['Sold out', 'warning'], hidden: ['Hidden', 'neutral'] };
 const incomplete = item => !item.name?.trim() || String(item.price ?? '').trim() === '' || !(Number(item.price) >= 0);
+const formatMoney = (value, currency) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(Number(value) || 0); } catch { return `${currency} ${(Number(value) || 0).toFixed(2)}`; } };
+
+// Rows read their handlers from a ref, so typing in one dish leaves the other rows untouched.
+const MenuRow = memo(function MenuRow({ item, index, count, category, open, dropBefore, isDragging, dropEnabled, searching, atLimit, photosHidden, shopId, currency, actions }) {
+  const status = statusOf(item);
+  const drop = dropEnabled ? {
+    onDragOver: event => { event.preventDefault(); event.stopPropagation(); actions.current.setDropTarget(item.id); },
+    onDrop: event => { event.preventDefault(); event.stopPropagation(); actions.current.dropOn(category, item.id); },
+  } : {};
+  return <li className={`menu-row ${open ? 'open' : ''} ${dropBefore ? 'drop-before' : ''} ${isDragging ? 'dragging' : ''} status-${status}`} {...drop}>
+        <div className="menu-row-main" draggable={!searching && !open} onDragStart={event => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); actions.current.setDragging(item.id); }} onDragEnd={() => { actions.current.setDragging(null); actions.current.setDropTarget(null); }}>
+          <span className="drag-handle" aria-hidden="true" title="Drag to reorder"><GripVertical size={16} /></span>
+          {item.image ? <img className="menu-thumb" src={item.image} alt="" /> : <span className="menu-thumb placeholder" aria-hidden="true"><ImageIcon size={16} /></span>}
+          <button type="button" className="menu-row-title" aria-expanded={open} onClick={() => actions.current.setExpanded(open ? null : item.id)}>
+            <strong>{item.name || 'Untitled item'}{incomplete(item) && <TriangleAlert size={14} className="warn-icon" aria-label="Needs a name and price" />}</strong>
+            <span>{item.description || 'No description'}</span>
+          </button>
+          <div className="chip-row hide-sm">{(item.tags || []).map(tag => <span key={tag} className="chip">{menuTagLabel(tag)}</span>)}</div>
+          <span className="menu-row-price">{String(item.price ?? '').trim() === '' ? '—' : formatMoney(item.price, currency)}</span>
+          <span className={`badge badge-${STATUS[status][1]}`}>{STATUS[status][0]}</span>
+          <ActionMenu label={`${item.name || 'Untitled item'} actions`} actions={[
+            { label: 'Edit', icon: Pencil, onSelect: () => actions.current.setExpanded(item.id) },
+            { label: 'Move up', icon: ArrowUp, disabled: index === 0 || searching, onSelect: () => actions.current.moveItem(item, -1) },
+            { label: 'Move down', icon: ArrowDown, disabled: index === count - 1 || searching, onSelect: () => actions.current.moveItem(item, 1) },
+            { label: 'Duplicate', icon: Copy, disabled: atLimit, onSelect: () => actions.current.duplicateItem(item) },
+            { label: 'Delete', icon: Trash2, danger: true, onSelect: () => actions.current.removeItem(item) },
+          ]} />
+        </div>
+        {open && <div className="menu-row-editor">
+          <div className="form-grid">
+            <Field id={`name-${item.id}`} label="Item name" value={item.name} maxLength={150} onChange={value => actions.current.changeItem(item.id, { name: value })} placeholder="e.g. Iced latte" autoFocus={!item.name} />
+            <Field id={`price-${item.id}`} label={`Price (${currency})`} type="number" min="0" step="0.01" inputMode="decimal" value={item.price} onChange={value => actions.current.changeItem(item.id, { price: value })} />
+            <div className="form-group"><label className="form-label" htmlFor={`category-${item.id}`}>Category</label><input id={`category-${item.id}`} key={item.category} className="form-input" list="menu-categories" maxLength={80} defaultValue={item.category} onBlur={e => { const category = e.target.value.trim() || 'Menu'; if (category !== item.category) actions.current.moveTo(item.id, category); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }} /></div>
+            <div className="form-group"><span className="form-label" id={`status-${item.id}`}>Availability</span><div className="segmented" role="group" aria-labelledby={`status-${item.id}`}>{Object.entries(STATUS).map(([value, [label]]) => <button key={value} type="button" aria-pressed={status === value} onClick={() => actions.current.changeItem(item.id, { available: value !== 'hidden', soldOut: value === 'soldout' })}>{label}</button>)}</div></div>
+          </div>
+          <Field id={`description-${item.id}`} label="Description" multiline rows={2} value={item.description} onChange={value => actions.current.changeItem(item.id, { description: value })} placeholder="Ingredients, flavours or details…" />
+          <div className="form-group"><span className="form-label">Labels</span><div className="chip-row">{MENU_TAGS.map(tag => { const on = (item.tags || []).includes(tag.id); return <button key={tag.id} type="button" className={`chip chip-toggle ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => actions.current.changeItem(item.id, { tags: on ? item.tags.filter(t => t !== tag.id) : [...(item.tags || []), tag.id] })}>{tag.label}</button>; })}</div></div>
+          <ImageUpload id={`image-${item.id}`} shopId={shopId} label="Item photo" value={item.image} onChange={value => actions.current.changeItem(item.id, { image: value }, true)} />
+          {item.image && photosHidden && <p className="notice warning" role="status"><TriangleAlert size={16} aria-hidden="true" /><span>Customers can’t see this photo because item photos are switched off for this menu.</span><button type="button" className="btn btn-secondary btn-sm" onClick={() => actions.current.showPhotos()}>Turn on item photos</button></p>}
+          <div className="menu-row-editor-foot"><span className="muted">Sold out items stay visible with a label. Hidden items are removed from the customer menu.</span><button type="button" className="btn btn-secondary btn-sm" onClick={() => actions.current.setExpanded(null)}>Done</button></div>
+        </div>}
+  </li>;
+});
 
 export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) {
   const [tab, setTab] = useState('items');
@@ -36,7 +79,6 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
   const categories = [...new Set([...items.map(categoryOf), ...pending])];
   const groupsOf = list => categories.map(name => ({ name, items: list.filter(item => categoryOf(item) === name) }));
   const flatten = groups => groups.flatMap(group => group.items);
-  const money = value => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: p.currency || 'LKR' }).format(Number(value) || 0); } catch { return `${p.currency} ${(Number(value) || 0).toFixed(2)}`; } };
 
   const addItem = category => {
     const item = { id: newId(), name: '', category, description: '', price: '', image: '', available: true, soldOut: false, tags: [] };
@@ -87,6 +129,10 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
     setNewCategory(null);
   };
 
+  const actions = useRef(null);
+  const rowActions = { setDragging, setDropTarget, setExpanded, moveItem, duplicateItem, removeItem, changeItem, moveTo, showPhotos: () => update('menuDesign', { ...p.menuDesign, showImages: true }), dropOn: (category, beforeId) => { moveTo(dragging, category, beforeId); setDragging(null); setDropTarget(null); } };
+  useLayoutEffect(() => { actions.current = rowActions; });
+
   const needsAttention = items.filter(incomplete).length;
   const search = query.trim().toLowerCase();
   const matches = item => !search || `${item.name} ${item.description} ${item.category}`.toLowerCase().includes(search);
@@ -131,38 +177,7 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
               { label: 'Delete category', icon: Trash2, danger: true, onSelect: () => deleteCategory(group) },
             ]} />
           </div>
-          <ul className="menu-rows">{group.items.map((item, index) => { const status = statusOf(item), open = expanded === item.id; return <li key={item.id} className={`menu-row ${open ? 'open' : ''} ${dropTarget === item.id ? 'drop-before' : ''} ${dragging === item.id ? 'dragging' : ''} status-${status}`} {...dragProps(group.name, item.id)}>
-            <div className="menu-row-main" draggable={!search && !open} onDragStart={event => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id); setDragging(item.id); }} onDragEnd={() => { setDragging(null); setDropTarget(null); }}>
-              <span className="drag-handle" aria-hidden="true" title="Drag to reorder"><GripVertical size={16} /></span>
-              {item.image ? <img className="menu-thumb" src={item.image} alt="" /> : <span className="menu-thumb placeholder" aria-hidden="true"><ImageIcon size={16} /></span>}
-              <button type="button" className="menu-row-title" aria-expanded={open} onClick={() => setExpanded(open ? null : item.id)}>
-                <strong>{item.name || 'Untitled item'}{incomplete(item) && <TriangleAlert size={14} className="warn-icon" aria-label="Needs a name and price" />}</strong>
-                <span>{item.description || 'No description'}</span>
-              </button>
-              <div className="chip-row hide-sm">{(item.tags || []).map(tag => <span key={tag} className="chip">{menuTagLabel(tag)}</span>)}</div>
-              <span className="menu-row-price">{String(item.price ?? '').trim() === '' ? '—' : money(item.price)}</span>
-              <span className={`badge badge-${STATUS[status][1]}`}>{STATUS[status][0]}</span>
-              <ActionMenu label={`${item.name || 'Untitled item'} actions`} actions={[
-                { label: 'Edit', icon: Pencil, onSelect: () => setExpanded(item.id) },
-                { label: 'Move up', icon: ArrowUp, disabled: index === 0 || !!search, onSelect: () => moveItem(item, -1) },
-                { label: 'Move down', icon: ArrowDown, disabled: index === group.items.length - 1 || !!search, onSelect: () => moveItem(item, 1) },
-                { label: 'Duplicate', icon: Copy, disabled: items.length >= 200, onSelect: () => duplicateItem(item) },
-                { label: 'Delete', icon: Trash2, danger: true, onSelect: () => removeItem(item) },
-              ]} />
-            </div>
-            {open && <div className="menu-row-editor">
-              <div className="form-grid">
-                <Field id={`name-${item.id}`} label="Item name" value={item.name} maxLength={150} onChange={value => changeItem(item.id, { name: value })} placeholder="e.g. Iced latte" autoFocus={!item.name} />
-                <Field id={`price-${item.id}`} label={`Price (${p.currency || 'LKR'})`} type="number" min="0" step="0.01" inputMode="decimal" value={item.price} onChange={value => changeItem(item.id, { price: value })} />
-                <div className="form-group"><label className="form-label" htmlFor={`category-${item.id}`}>Category</label><input id={`category-${item.id}`} key={item.category} className="form-input" list="menu-categories" maxLength={80} defaultValue={item.category} onBlur={e => { const category = e.target.value.trim() || 'Menu'; if (category !== item.category) moveTo(item.id, category); }} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }} /></div>
-                <div className="form-group"><span className="form-label" id={`status-${item.id}`}>Availability</span><div className="segmented" role="group" aria-labelledby={`status-${item.id}`}>{Object.entries(STATUS).map(([value, [label]]) => <button key={value} type="button" aria-pressed={status === value} onClick={() => changeItem(item.id, { available: value !== 'hidden', soldOut: value === 'soldout' })}>{label}</button>)}</div></div>
-              </div>
-              <Field id={`description-${item.id}`} label="Description" multiline rows={2} value={item.description} onChange={value => changeItem(item.id, { description: value })} placeholder="Ingredients, flavours or details…" />
-              <div className="form-group"><span className="form-label">Labels</span><div className="chip-row">{MENU_TAGS.map(tag => { const on = (item.tags || []).includes(tag.id); return <button key={tag.id} type="button" className={`chip chip-toggle ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => changeItem(item.id, { tags: on ? item.tags.filter(t => t !== tag.id) : [...(item.tags || []), tag.id] })}>{tag.label}</button>; })}</div></div>
-              <ImageUpload id={`image-${item.id}`} shopId={p.id} label="Item photo" value={item.image} onChange={value => changeItem(item.id, { image: value }, true)} />
-              <div className="menu-row-editor-foot"><span className="muted">Sold out items stay visible with a label. Hidden items are removed from the customer menu.</span><button type="button" className="btn btn-secondary btn-sm" onClick={() => setExpanded(null)}>Done</button></div>
-            </div>}
-          </li>; })}
+          <ul className="menu-rows">{group.items.map((item, index) => <MenuRow key={item.id} item={item} index={index} count={group.items.length} category={group.name} open={expanded === item.id} dropBefore={dropTarget === item.id} isDragging={dragging === item.id} dropEnabled={!!dragging && !search} searching={!!search} atLimit={items.length >= 200} photosHidden={p.menuDesign?.showImages === false} shopId={p.id} currency={p.currency || 'LKR'} actions={actions} />)}
             {!group.items.length && <li className="menu-row-empty">No items yet.</li>}
           </ul>
           {!search && <div className="card-foot"><button type="button" className="btn btn-ghost btn-sm" disabled={items.length >= 200} onClick={() => addItem(group.name)}><Plus size={15} />Add item to {group.name}</button></div>}

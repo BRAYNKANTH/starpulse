@@ -39,7 +39,7 @@ export default function DemoCards() {
         <div className="poster-preview-card poster-format-tabletop premium-card pc-menu">
           <div className="pc-arch"><h2 className="pc-name">{DEMO_SHOP.name}</h2><Ornament /><p className="pc-eyebrow">Biryani · Rice · Curries · Tandoor</p></div>
           <h3 className="pc-title">Scan to view our menu</h3>
-          <div className="pc-qr"><QRCodeSVG value={menuLink} size={200} level="H" marginSize={2} fgColor={QR_COLOR} bgColor="#FFFFFF" /></div>
+          <div className="pc-qr"><QRCodeSVG title="Menu QR code" value={menuLink} size={200} level="H" marginSize={2} fgColor={QR_COLOR} bgColor="#FFFFFF" /></div>
           <p className="pc-foot">{DEMO_SHOP.menu.length} dishes · 15 kinds of rice</p>
         </div>
       </section>
@@ -51,7 +51,7 @@ export default function DemoCards() {
           <div className="pc-stars" role="img" aria-label="Five stars">{[0, 1, 2, 3, 4].map(n => <Star key={n} size={34} fill="currentColor" aria-hidden="true" />)}</div>
           <h3 className="pc-title">Rate us on Google</h3>
           <p className="pc-sub">Scan, tap your stars and share a few words.</p>
-          <div className="pc-qr"><QRCodeSVG value={reviewLink} size={200} level="H" marginSize={2} fgColor={QR_COLOR} bgColor="#FFFFFF" /></div>
+          <div className="pc-qr"><QRCodeSVG title="Google review QR code" value={reviewLink} size={200} level="H" marginSize={2} fgColor={QR_COLOR} bgColor="#FFFFFF" /></div>
           <p className="pc-foot">Thank you for dining with us</p>
         </div>
       </section>
