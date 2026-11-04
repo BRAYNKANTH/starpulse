@@ -112,7 +112,7 @@ APP_BASE_URL=https://starpulse-beta.vercel.app
 
 `.env.local` holds the database password. It is ignored by Git; do not commit or share it. Neon keeps point-in-time backups; check your plan's retention.
 
-Rate limits are stored in the database, so they apply across all Vercel instances. Requests are limited to 4 MB, below Vercel's 4.5 MB function limit, so keep uploaded images small.
+Rate limits are stored in the database, so they apply across all Vercel instances. Requests are limited to 4 MB, below Vercel's 4.5 MB function limit. Photos are uploaded one at a time, so this does not limit how many a shop has.
 
 ### Self-hosting
 
@@ -176,4 +176,4 @@ When WhatsApp, Facebook, Telegram and similar apps fetch a shop link to draw a p
 
 Subscriptions and billing (checkout, trials, invoices), team members per account, media-file hosting and an AI design assistant are not implemented yet. Selling is assisted-only (see Accounts and plans), and password reset by email works once SMTP is configured (see above).
 
-Images are uploaded from the device: the logo and cover photo in Business profile, and item photos in Menu. PNG/JPEG/WebP/GIF inputs up to 10 MB are resized and compressed in the browser; transparency is preserved with WebP, and GIF uploads use a still frame. Previews can be replaced or removed. Optimized images are stored with the shop on Save; total profile uploads are checked against the API request limit. Existing image URLs still render, while editing uses file uploads.
+Images are uploaded from the device: the logo and cover photo in Business profile, and item photos in Menu. PNG/JPEG/WebP/GIF inputs up to 10 MB are resized and compressed in the browser; transparency is preserved with WebP, and GIF uploads use a still frame. Previews can be replaced or removed. Optimized images are uploaded straight away and stored in the database's `images` table, up to 500 per shop, and served from `/api/images/<id>`. The shop saves only their addresses, so photos do not count toward the request limit. Replaced or removed photos are deleted the next time the shop is saved, once they are a day old, and deleting a shop deletes its photos. Photos saved inside a shop by earlier versions, and existing image URLs, still work.

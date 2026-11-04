@@ -159,7 +159,7 @@ export default function MenuBuilder({ businessProfile: p, setBusinessProfile }) 
               </div>
               <Field id={`description-${item.id}`} label="Description" multiline rows={2} value={item.description} onChange={value => changeItem(item.id, { description: value })} placeholder="Ingredients, flavours or details…" />
               <div className="form-group"><span className="form-label">Labels</span><div className="chip-row">{MENU_TAGS.map(tag => { const on = (item.tags || []).includes(tag.id); return <button key={tag.id} type="button" className={`chip chip-toggle ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => changeItem(item.id, { tags: on ? item.tags.filter(t => t !== tag.id) : [...(item.tags || []), tag.id] })}>{tag.label}</button>; })}</div></div>
-              <ImageUpload id={`image-${item.id}`} label="Item photo" value={item.image} onChange={value => changeItem(item.id, { image: value }, true)} />
+              <ImageUpload id={`image-${item.id}`} shopId={p.id} label="Item photo" value={item.image} onChange={value => changeItem(item.id, { image: value }, true)} />
               <div className="menu-row-editor-foot"><span className="muted">Sold out items stay visible with a label. Hidden items are removed from the customer menu.</span><button type="button" className="btn btn-secondary btn-sm" onClick={() => setExpanded(null)}>Done</button></div>
             </div>}
           </li>; })}

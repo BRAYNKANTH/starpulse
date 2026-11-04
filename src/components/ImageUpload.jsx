@@ -1,9 +1,10 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Upload, Trash2, ImagePlus } from 'lucide-react';
+import { api } from '../data/api';
 import { prepareImage } from '../utils/images';
 import { ImageUploadStatus } from './ImageUploadStatus';
 
-export default function ImageUpload({ id, label, value, onChange, maxWidth = 1000 }) {
+export default function ImageUpload({ id, shopId, label, value, onChange, maxWidth = 1000 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const callback = useRef(onChange);
@@ -20,7 +21,8 @@ export default function ImageUpload({ id, label, value, onChange, maxWidth = 100
     pending.current = true; trackUpload(1);
     try {
       const data = await prepareImage(file, maxWidth);
-      if (mounted.current) callback.current(data);
+      const { url } = await api(`/admin/businesses/${shopId}/images`, { method: 'POST', body: JSON.stringify({ data }) });
+      if (mounted.current) callback.current(url);
     } catch (e) { if (mounted.current) setError(e.message); }
     finally { if (pending.current) { pending.current = false; trackUpload(-1); } if (mounted.current) setBusy(false); }
   };
