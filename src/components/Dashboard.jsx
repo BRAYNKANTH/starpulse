@@ -65,7 +65,7 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
 
     <div className="sp-grid-2-1">
       <section className="card">
-        <div className="card-head"><div><h2>QR scans per day</h2><p>Last {range} days · includes test scans and bots</p></div>
+        <div className="card-head"><div><h2>QR scans per day</h2><p>Last {range} days · may include your own test scans</p></div>
           <div className="segmented" role="group" aria-label="Display as"><button type="button" aria-pressed={view === 'chart'} aria-label="Chart" onClick={() => setView('chart')}><BarChart3 size={15} /></button><button type="button" aria-pressed={view === 'table'} aria-label="Table" onClick={() => setView('table')}><TableProperties size={15} /></button></div>
         </div>
         {view === 'chart' ? (scans ? <ColumnChart data={series} unit="scans" /> : <div className="empty-state"><QrCode size={28} /><p>No scans in this period yet.</p><button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('qr')}><Printer size={15} />Print your QR code</button></div>)
@@ -84,7 +84,7 @@ export default function Dashboard({ profile, savedProfile, profiles, overview, s
         {feedback.recent.length ? <ul className="sp-feed">{feedback.recent.map(item => <li key={item.id} className={item.read ? '' : 'unread'}>
           <div><Stars rating={item.rating} /><time dateTime={item.timestamp} title={new Date(item.timestamp).toLocaleString()}>{relativeTime(item.timestamp)}</time></div>
           <p>{item.note || item.selectedTags?.join(' · ') || <span className="muted">No written note</span>}</p>
-        </li>)}</ul> : <div className="empty-state"><MessageSquare size={28} /><p>No feedback yet.</p></div>}
+        </li>)}</ul> : <div className="empty-state"><MessageSquare size={28} /><p>No feedback yet. Point a QR code at your feedback page to start collecting it.</p><button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('qr')}><QrCode size={15} />Open QR &amp; print</button></div>}
       </section>
       <section className="card">
         <div className="card-head"><div><h2>Quick actions</h2></div></div>

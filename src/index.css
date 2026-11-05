@@ -2032,7 +2032,8 @@ html, body {
 .demo-cards-head p, .demo-cards-note { color: #b3bfd1; font-size: .9rem; margin: 0; }
 .demo-cards-note { margin: 0 0 22px; }
 .demo-cards-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.demo-cards-actions a { color: #e8edf5; }
+.demo-cards-actions .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 1px solid #52617a; border-radius: 8px; background: transparent; color: #e8edf5; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.demo-cards-actions .btn-primary { border-color: #e8edf5; background: #e8edf5; color: #0b1220; }
 .demo-cards-row { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
 .demo-card-sheet { width: 384px; max-width: 100%; }
 

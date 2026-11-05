@@ -35,13 +35,13 @@ export default function AccountSettings({ account, onAccountChange, notify }) {
         <div className="plan-grid">{Object.values(PLANS).map(p => <div key={p.id} className={`plan-option ${p.id === plan.id ? 'current' : ''}`}><strong>{p.name}</strong><span>{p.shops} shop{p.shops === 1 ? '' : 's'}</span>{p.id === plan.id && <small>Current plan</small>}</div>)}</div>
         <section aria-label="Request a plan change">
           <h3>Request a plan change</h3>
-          <p>There is no checkout on this site: plans are set by a DQ.lk administrator after payment is confirmed offline. To request a change, contact your administrator and include:</p>
+          <p>There is no checkout on this site. To change your plan, contact your DQ.lk administrator and include:</p>
           <ol>
             <li>Your account email ({user.email}) and your current plan ({plan.name}).</li>
             <li>The plan you want (Free: 1 shop, Pro: 5 shops, Business: 50 shops) and how many shops you need.</li>
             <li>Confirmation that payment has been arranged with the administrator.</li>
           </ol>
-          <p className="field-help">How it works: (1) you contact the administrator, (2) the administrator confirms payment offline, (3) the administrator sets your plan on the Clients page or with the set-plan command, (4) your new shop limit applies immediately — refresh this page to see it. To close your account, contact your DQ.lk administrator.</p>
+          <p className="field-help">Once payment is arranged, the administrator upgrades your account and your new shop limit applies immediately — refresh this page to see it. To close your account, contact your DQ.lk administrator.</p>
         </section>
       </section>
       <form className="card" onSubmit={saveName}>

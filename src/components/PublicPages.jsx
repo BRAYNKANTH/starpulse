@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { MENU_TEMPLATES } from '../data/menuDesign';
 import { useNoIndex } from '../utils/noindex';
 import './publicPages.css';
 
@@ -15,10 +16,14 @@ const NAV = [
   { href: '/privacy', label: 'Privacy' },
 ];
 
+// Terms and Privacy stay in the footer, so the phone header fits on one row.
+const HEADER_NAV = NAV.filter(item => !['/', '/terms', '/privacy'].includes(item.href));
+const TEMPLATE_COUNT = MENU_TEMPLATES.length;
+
 const PAGES = {
   '/': {
     title: 'DQ.lk | Branded QR & Digital Menu Studio',
-    description: 'DQ.lk is a branded QR and digital menu studio for restaurants, cafes and hotels: 23 designer menu templates, branded QR codes, a private feedback inbox and scan analytics.',
+    description: `DQ.lk is a branded QR and digital menu studio for restaurants, cafes and hotels: ${TEMPLATE_COUNT} designer menu templates, branded QR codes, a private feedback inbox and scan analytics.`,
     heading: 'Your shop’s menu, QR codes and reviews in one studio.',
     intro: 'DQ.lk gives restaurants, cafés and hotels a digital menu customers can open by scanning a QR code — plus a private place to hear feedback before it becomes a public review.',
   },
@@ -26,7 +31,7 @@ const PAGES = {
     title: 'Pricing | DQ.lk',
     description: 'DQ.lk plans: Free with 1 shop, Pro with 5 shops, Business with 50 shops. Prices are not published yet — contact the administrator to buy.',
     heading: 'Pricing',
-    intro: 'Plans are based on how many shops you manage. Billing is not connected yet, so prices are not published here — contact the administrator to buy or upgrade, and your plan is set by the administrator.',
+    intro: 'Plans are based on how many shops you manage. Prices are not listed here yet — contact the administrator to get an account or upgrade.',
   },
   '/about': {
     title: 'About | DQ.lk',
@@ -36,7 +41,7 @@ const PAGES = {
   },
   '/contact': {
     title: 'Contact | DQ.lk',
-    description: 'Contact DQ.lk: accounts are created by an administrator. This page explains how to get an account; contact details are to be confirmed by the owner.',
+    description: 'Contact DQ.lk: how to get an account, buy or change a plan, and get back into your account.',
     heading: 'Contact',
     intro: 'There is no self-service sign-up yet. Accounts are created by a DQ.lk administrator, who gives you a sign-in and a temporary password to replace on first sign-in.',
   },
@@ -44,7 +49,7 @@ const PAGES = {
     title: 'Terms of Service | DQ.lk',
     description: 'DQ.lk terms of service: what the studio provides, what shop owners are responsible for, and how plans and published shop pages work.',
     heading: 'Terms of Service',
-    intro: 'These are the starter terms for using DQ.lk. By using the studio or a published shop page, you agree to the terms below.',
+    intro: 'These terms apply when you use DQ.lk. By using the studio or a published shop page, you agree to the terms below.',
   },
   '/privacy': {
     title: 'Privacy Policy | DQ.lk',
@@ -65,7 +70,7 @@ function Layout({ path, children }) {
     <header className="public-nav">
       <a className="public-brand" href="/">DQ.lk</a>
       <nav aria-label="Public pages">
-        {NAV.filter(item => item.href !== '/').map(item => <a key={item.href} href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>)}
+        {HEADER_NAV.map(item => <a key={item.href} href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>)}
         <a className="public-signin" href="/signin">Sign in</a>
       </nav>
     </header>
@@ -84,10 +89,11 @@ function Layout({ path, children }) {
   </div>;
 }
 
+const PAID_DETAIL = 'Price on request. You arrange payment with the administrator, not on this site.';
 const PLANS = [
-  { name: 'Free', shops: '1 shop', note: 'For trying DQ.lk with a single shop.' },
-  { name: 'Pro', shops: '5 shops', note: 'For a small group of shops.' },
-  { name: 'Business', shops: '50 shops', note: 'For agencies and larger groups, including client accounts.' },
+  { name: 'Free', shops: '1 shop', note: 'For trying DQ.lk with a single shop.', price: 'Free', detail: 'No payment needed. Ask the administrator to create your account.' },
+  { name: 'Pro', shops: '5 shops', note: 'For a small group of shops.', price: 'Contact to buy', detail: PAID_DETAIL },
+  { name: 'Business', shops: '50 shops', note: 'For agencies and larger groups.', price: 'Contact to buy', detail: PAID_DETAIL },
 ];
 
 export function PublicPage({ path }) {
@@ -97,16 +103,16 @@ export function PublicPage({ path }) {
         <h2>{plan.name}</h2>
         <p><strong>{plan.shops}</strong></p>
         <p>{plan.note}</p>
-        <p className="public-price">Contact to buy</p>
-        <p className="public-note">No price is published yet and no payment is taken on this site. The administrator sets your plan after you contact them.</p>
+        <p className="public-price">{plan.price}</p>
+        <p className="public-note">{plan.detail}</p>
       </article>)}
     </section>
-    <h2>How buying or upgrading works (assisted only)</h2>
+    <h2>How buying or upgrading works</h2>
     <ol>
       <li><strong>Contact the administrator</strong> with your account email, your current plan, the plan you want, and how many shops you need.</li>
-      <li><strong>The administrator confirms payment offline.</strong> No payment, checkout, trial or invoice is taken on this site, and no price is published here yet.</li>
-      <li><strong>The administrator sets your plan</strong> on the Accounts page or with the set-plan command.</li>
-      <li><strong>Your new shop limit applies immediately</strong> — refresh your Account page to see it. Plan limits are enforced in the studio: you cannot add shops beyond your plan.</li>
+      <li><strong>You arrange payment with the administrator.</strong> No payment is taken on this site.</li>
+      <li><strong>The administrator upgrades your account.</strong></li>
+      <li><strong>Your new shop limit applies immediately</strong> — refresh My account in the studio to see it.</li>
     </ol>
     <p>Menus in the studio price items in LKR by default (other currencies are available in the menu settings).</p>
     <p><a href="/contact">Contact the administrator</a> to set up a plan, or <a href="/signin">sign in</a> if you already have an account.</p>
@@ -115,7 +121,7 @@ export function PublicPage({ path }) {
   if (path === '/about') return <Layout path={path}>
     <h2>What DQ.lk does</h2>
     <ul>
-      <li><strong>Menus customers love</strong> — 23 designer templates, live on every table in minutes. Change items and prices in the studio; the customer menu updates without reprinting.</li>
+      <li><strong>Menus customers love</strong> — {TEMPLATE_COUNT} designer templates, live on every table in minutes. Change items and prices in the studio; the customer menu updates without reprinting.</li>
       <li><strong>Branded QR</strong> — Print once, change the destination any time. A printed QR code can point to the shop page, the digital menu, the feedback page, or a custom website.</li>
       <li><strong>Private feedback inbox</strong> — Hear from guests before they post a review. Customers can leave a rating and note privately, or follow the shop’s Google review link.</li>
       <li><strong>Scan analytics</strong> — See scan totals for each shop over 7, 30 or 90 days. Scans are counted per shop; they do not identify individual visitors.</li>
@@ -136,19 +142,18 @@ export function PublicPage({ path }) {
     <ol>
       <li>Contact the DQ.lk administrator with your shop name and the plan you want (Free: 1 shop, Pro: 5 shops, Business: 50 shops).</li>
       <li>The administrator creates your account and gives you a temporary password.</li>
-      <li>Sign in at <a href="/signin">/signin</a> and replace the temporary password on first sign-in.</li>
+      <li><a href="/signin">Sign in</a> and replace the temporary password on first sign-in.</li>
       <li>Set up your shop, build your menu, publish your customer page, then print your QR code.</li>
     </ol>
     <section className="public-card">
       <h2>Contact details</h2>
-      <p>Contact details are to be confirmed by the owner — no phone number, email address or postal address is published here yet, because none has been confirmed for this page. This page will be updated once the owner confirms them. Until then, use the administrator contact you were given when your account was set up.</p>
-      <p>There is no contact form on this page yet, so that a message cannot be sent into the void: a form will be added together with a confirmed contact address.</p>
+      <p>Public contact details are not listed here yet. If you already have an account, use the administrator contact you were given when it was set up.</p>
     </section>
     <h2>Buying or changing a plan</h2>
     <ol>
       <li>Contact the DQ.lk administrator with your account email, your current plan, the plan you want, and how many shops you need.</li>
-      <li>The administrator confirms payment offline and sets your plan. No payment is taken on this site.</li>
-      <li>Your new shop limit applies immediately — refresh your Account page to see it.</li>
+      <li>You arrange payment with the administrator, who then upgrades your account. No payment is taken on this site.</li>
+      <li>Your new shop limit applies immediately — refresh My account in the studio to see it.</li>
     </ol>
     <p>If you already have an account, <a href="/signin">sign in</a>. If you have forgotten your password, use <a href="/signin">Forgot password?</a> on the sign-in page — a reset link is emailed to your account address, works once, and expires in 1 hour. If you do not receive it, contact your DQ.lk administrator, who can also reset your password directly.</p>
   </Layout>;
@@ -173,14 +178,17 @@ export function PublicPage({ path }) {
     <h2>What is collected</h2>
     <ul>
       <li><strong>Account data:</strong> your name, email address, plan and sign-in session, so the studio can identify your shops.</li>
-      <li><strong>Shop data:</strong> shop details, menu items, images, branding and settings you enter. Images are stored with your shop data.</li>
+      <li><strong>Shop data:</strong> shop details, menu items, images, branding and settings you enter. Images are stored in the DQ.lk database with your shop.</li>
       <li><strong>Customer feedback:</strong> the rating, note and tags a customer leaves, and whether they clicked through to Google. Feedback is not tied to a customer account.</li>
-      <li><strong>Scan counts:</strong> how many times a shop’s QR link was visited, and on which days. Scans do not identify individual visitors, and automated crawlers are filtered out.</li>
+      <li><strong>Scan counts:</strong> how many times a shop’s QR link was visited, and on which days. Scan counts do not identify individual visitors, and known automated crawlers are filtered out.</li>
+      <li><strong>IP addresses:</strong> used to limit repeated sign-in attempts, feedback and scans. They are stored in short-lived rate-limit records, which are deleted regularly after they expire, and are not added to scan counts or feedback.</li>
     </ul>
     <h2>What is public</h2>
     <p>Published shop pages are public by design: shop details, menu and contact details on a published page can be seen by anyone. Unpublished shops, draft menus and your feedback inbox are only visible to the signed-in shop owner and administrators.</p>
     <h2>What is not done with your data</h2>
     <p>Your data is not sold. It is used to run your shop pages, menus, feedback and scan counts, and to keep accounts secure (including rate limits on sign-in and feedback).</p>
+    <h2>Other services</h2>
+    <p>DQ.lk runs on Vercel and stores its data with Neon. Pages load fonts from Google Fonts, so a visitor’s browser shares its IP address with Google when a page opens.</p>
     <h2>Cookies and sessions</h2>
     <p>Sign-in uses a session cookie so you stay signed in on your device. Changing your password signs you out on every other device.</p>
     <h2>Password reset</h2>
@@ -188,8 +196,12 @@ export function PublicPage({ path }) {
   </Layout>;
 
   return <Layout path={path}>
+    <div className="public-actions">
+      <a className="public-button public-button-primary" href="/demo">See a live menu</a>
+      <a className="public-button" href="/pricing">See plans</a>
+    </div>
     <section className="public-cards">
-      <article className="public-card"><h2>Menus customers love</h2><p>23 designer templates, live on every table in minutes.</p></article>
+      <article className="public-card"><h2>Menus customers love</h2><p>{TEMPLATE_COUNT} designer templates, live on every table in minutes.</p></article>
       <article className="public-card"><h2>Branded QR &amp; NFC</h2><p>Print once, change the destination any time. NFC-ready links for tags you program yourself.</p></article>
       <article className="public-card"><h2>Private feedback inbox</h2><p>Hear from guests before they post a review.</p></article>
       <article className="public-card"><h2>Scan analytics</h2><p>See scan totals for each shop.</p></article>
@@ -197,7 +209,7 @@ export function PublicPage({ path }) {
     <h2>How it works</h2>
     <ol>
       <li><strong>Set up your shop</strong> — add your details, logo and cover photo, and your Google review link.</li>
-      <li><strong>Build your menu</strong> — add items and prices (LKR by default), pick one of 23 templates, and customise layout, fonts and colours.</li>
+      <li><strong>Build your menu</strong> — add items and prices (LKR by default), pick one of {TEMPLATE_COUNT} templates, and customise layout, fonts and colours.</li>
       <li><strong>Print your QR code</strong> — design a table stand, tent card, sticker or wall poster, print it, and change its destination any time without reprinting.</li>
     </ol>
     <p>Accounts are created by a DQ.lk administrator — there is no self-service sign-up yet. <a href="/pricing">See plans</a>, <a href="/contact">contact the administrator</a>, or <a href="/signin">sign in</a> if you already have an account.</p>
@@ -211,7 +223,7 @@ export function PublicNotFound() {
     <header className="public-nav">
       <a className="public-brand" href="/">DQ.lk</a>
       <nav aria-label="Public pages">
-        {NAV.filter(item => item.href !== '/').map(item => <a key={item.href} href={item.href}>{item.label}</a>)}
+        {HEADER_NAV.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}
         <a className="public-signin" href="/signin">Sign in</a>
       </nav>
     </header>
