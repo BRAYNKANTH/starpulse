@@ -8,8 +8,8 @@ those exist.
 
 ## The flow the buyer sees
 
-1. The buyer reads `/pricing` (Free: 1 shop, Pro: 5 shops, Business: 50 shops,
-   all marked "Contact to buy" — no prices are published on the site).
+1. The buyer reads `/pricing` (Free: 1 shop; Pro: 5 shops and Business: 50 shops,
+   both marked "Contact to buy" — no prices are published on the site).
 2. The buyer contacts the administrator with: account email, current plan,
    desired plan, and how many shops they need.
 3. The administrator confirms payment offline, then sets the plan.

@@ -243,7 +243,7 @@ export default function OwnerStudio() {
             {activeTab === 'profiles' && <SavedProfiles profiles={profiles} overview={overview} activeProfile={businessProfile} onSelect={profile => select(profile, 'dashboard')} onNew={newBusiness} onDelete={deleteShop} plan={account.plan} />}
             {activeTab === 'account' && <AccountSettings account={account} onAccountChange={setAccount} notify={notify} />}
             {activeTab === 'accounts' && account.user.role === 'admin' && <AdminAccounts currentUser={account.user} notify={notify} onShopsChanged={reloadShops} />}
-            {activeTab === 'inbox' && <FeedbackInbox key={businessProfile.id} businessProfile={businessProfile} savedProfile={savedProfile} onChange={refreshOverview} notify={notify} />}
+            {activeTab === 'inbox' && <FeedbackInbox key={businessProfile.id} businessProfile={businessProfile} savedProfile={savedProfile} onChange={refreshOverview} notify={notify} onNavigate={navigate} />}
           </>}
         </fieldset></ImageUploadStatus.Provider>
       </main>

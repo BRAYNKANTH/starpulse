@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCheck, Download, ExternalLink, Inbox, Mail, MailOpen, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { CheckCheck, Download, ExternalLink, Inbox, Mail, MailOpen, QrCode, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { api } from '../data/api';
 import { downloadBlob } from '../utils/export';
 import { relativeTime } from '../utils/format';
@@ -7,7 +7,7 @@ import Stars from './Stars';
 
 const PAGE_SIZE = 25;
 
-export default function FeedbackInbox({ businessProfile, savedProfile, onChange, notify }) {
+export default function FeedbackInbox({ businessProfile, savedProfile, onChange, notify, onNavigate }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(() => Boolean(savedProfile));
@@ -88,7 +88,7 @@ export default function FeedbackInbox({ businessProfile, savedProfile, onChange,
       </div>
 
       {loading && !items.length ? <div className="empty-state"><p>Loading feedback…</p></div>
-        : !visible.length ? <div className="empty-state"><Inbox size={30} /><p>{items.length ? 'No feedback matches these filters.' : 'No feedback yet. Responses from your customer page appear here.'}</p></div>
+        : !visible.length ? <div className="empty-state"><Inbox size={30} /><p>{items.length ? 'No feedback matches these filters.' : 'No feedback yet. Responses from your customer page appear here. Point a QR code at your feedback page to start collecting them.'}</p>{!items.length && <button type="button" className="btn btn-secondary btn-sm" onClick={() => onNavigate('qr')}><QrCode size={15} />Open QR &amp; print</button>}</div>
         : <ul className="sp-inbox">{visible.slice(0, shown).map(item => <li key={item.id} className={item.read ? '' : 'unread'}>
           <span className="sp-unread-dot" aria-hidden="true" />
           <div className="sp-inbox-body">

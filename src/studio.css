@@ -343,6 +343,9 @@ body:has(.studio[data-theme="dark"]) { background: #0d0f14; }
   :scope .menu-row-title strong { display: inline-flex; align-items: center; gap: 6px; color: var(--sp-text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s; }
   :scope .menu-row-title span { color: var(--sp-muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   :scope .menu-row-title:hover strong { color: var(--sp-primary-text); }
+  /* On phones a dish's name wraps, because the end of the name is often what tells two dishes apart. */
+  @media (max-width: 640px) { :scope .menu-row-title strong { white-space: normal; } }
+  :scope .review-test-link { display: inline-flex; align-items: center; gap: 4px; min-height: 24px; }
   :scope .warn-icon { color: var(--sp-warning); flex-shrink: 0; }
   :scope .menu-row-price { text-align: right; font-weight: 700; color: var(--sp-text); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 13.5px; }
   :scope .menu-row-main .badge { justify-self: start; }

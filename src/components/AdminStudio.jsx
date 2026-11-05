@@ -68,7 +68,7 @@ export default function AdminStudio({ businessProfile: p, setBusinessProfile, on
             <div className="form-grid form-grid-end">{field('googlePlaceId', 'Google Maps link or Place ID', { placeholder: 'https://maps.app.goo.gl/… or ChIJ…' })}<div className="form-group"><button type="button" className="btn btn-secondary" disabled={!p.googlePlaceId?.trim() || finding} onClick={buildReviewLink}>{finding ? 'Looking…' : 'Build the link'}</button></div></div>
             {lookup.text && <p className={lookup.ok ? 'field-help' : 'notice error'} role={lookup.ok ? 'status' : 'alert'}>{lookup.text}</p>}
           </details>
-          {p.googleReviewUrl && /^https?:\/\//.test(p.googleReviewUrl) && <p className="field-help"><a href={p.googleReviewUrl} target="_blank" rel="noopener noreferrer">Test review link <ExternalLink size={12} /></a></p>}
+          {p.googleReviewUrl && /^https?:\/\//.test(p.googleReviewUrl) && <p className="field-help"><a className="review-test-link" href={p.googleReviewUrl} target="_blank" rel="noopener noreferrer">Test review link <ExternalLink size={12} /></a></p>}
           {field('customPrompt', 'Question customers see', { placeholder: 'How was your experience today?' })}
           {field('notePlaceholder', 'Hint inside the comment box', { placeholder: 'Type your experience here…' })}
           <div className="form-group"><label className="form-label" htmlFor="quick-tag">Quick replies customers can tap</label>

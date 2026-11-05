@@ -17,6 +17,14 @@
 .public-card h2 { margin-top: 0; }
 .public-price { font-size: 1.25rem; font-weight: 800; color: #183329; }
 .public-note { color: #50645a; font-size: 0.95rem; }
+.public-main ol, .public-main ul { padding-left: 1.5rem; }
+.public-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+.public-site a.public-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border: 1px solid #385e43; border-radius: 8px; color: #183329; font-weight: 700; text-decoration: none; }
+.public-site a.public-button:hover { background: #eef1ea; }
+.public-site a.public-button-primary { background: #385e43; color: #fff; }
+.public-site a.public-button-primary:hover { background: #2d4c36; }
+/* The global ring is for dark surfaces; on this light site it measured 2.52:1 (WCAG 1.4.11 needs 3:1). */
+.public-site a:focus-visible { outline-color: #1d56d8; }
 .public-footer { border-top: 1px solid #e0e5dc; padding: 24px max(20px, calc((100% - 1100px) / 2)); color: #50645a; }
 .public-footer nav { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
 .public-footer nav a { color: #50645a; text-decoration: none; }

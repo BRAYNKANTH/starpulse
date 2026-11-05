@@ -79,7 +79,7 @@ export default function AuthScreen({ onAuthenticated }) {
       {error && <p className="notice error" role="alert">{error}</p>}
       <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       <button type="button" className="btn btn-ghost btn-block" onClick={() => setView('forgot')}>Forgot password?</button>
-      <p className="auth-footnote">Need an account? Contact your DQ.lk administrator.</p>
+      <p className="auth-footnote">Need an account? <a href="/contact">Contact your DQ.lk administrator</a>.</p>
     </form>
   </AuthLayout>;
 }
