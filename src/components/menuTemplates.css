@@ -149,6 +149,8 @@
 .shop-public .menu-sticky-search { flex: none; display: grid; place-items: center; width: 44px; height: 40px; margin: -5px 0 -6px; padding: 10px 0 0; background: none; border: 0; color: var(--menu-text); cursor: pointer; }
 .shop-public .menu-sticky-search:focus-visible, .shop-public .menu-clear-search:focus-visible { outline: 3px solid color-mix(in srgb, var(--menu-accent-on-surface, #2563eb) 70%, transparent); outline-offset: 2px; }
 .shop-public .menu-search { scroll-margin-top: 16px; }
+/* Letters that match the search. Text on the accent colour is contrast-tested for every template and custom colour. */
+.shop-public .menu-search-match { background: var(--menu-accent); color: var(--menu-on-accent); border-radius: 3px; padding: 0 .08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .shop-public .menu-clear-search { min-height: 44px; margin-top: 16px; padding: 0 20px; background: none; border: 1px solid color-mix(in srgb, var(--menu-text) 40%, var(--menu-bg)); border-radius: 10px; color: var(--menu-text); font: inherit; font-weight: 600; cursor: pointer; }
 .shop-public .menu-sticky-name img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex: none; }
 .shop-public .menu-sticky-name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

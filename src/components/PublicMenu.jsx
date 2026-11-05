@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, UtensilsCrossed, ArrowUpRight } from 'lucide-react';
 import { menuTagLabel } from '../data/menuTags';
-import { matchesMenuSearch } from '../data/menuSearch';
+import { highlightParts, matchesMenuSearch } from '../data/menuSearch';
 
 // Category names move with the page, like a delivery app: the bar stays at the top, the section you are reading is
 // highlighted and slid into view, and tapping a name scrolls to that section.
@@ -107,7 +107,7 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
         </div>
         {categoryNavigation}
       </div>}
-      <div className="menu-category-content">{shown.map((name, index) => <section className="public-menu-category" key={name} data-category={name}><div className="menu-category-heading">{design.numbered && <span className="menu-section-number">{String(index + 1).padStart(2, '0')}</span>}<h2>{name}</h2><span className="menu-heading-line" /></div><div className="public-menu-grid">{visible.filter(item => (item.category || 'Menu') === name).map(item => <MenuItem key={item.id} item={item} money={money} design={design} />)}</div></section>)}
+      <div className="menu-category-content">{shown.map((name, index) => <section className="public-menu-category" key={name} data-category={name}><div className="menu-category-heading">{design.numbered && <span className="menu-section-number">{String(index + 1).padStart(2, '0')}</span>}<h2><Highlight text={name} query={query} /></h2><span className="menu-heading-line" /></div><div className="public-menu-grid">{visible.filter(item => (item.category || 'Menu') === name).map(item => <MenuItem key={item.id} item={item} money={money} design={design} query={query} />)}</div></section>)}
         {query && <p className="sr-only" aria-live="polite">{visible.length} {visible.length === 1 ? 'item' : 'items'} shown</p>}
         {!visible.length && <div className="public-empty"><UtensilsCrossed size={32} /><h2>{items.length ? 'No matching items' : 'Menu coming soon'}</h2><p>{items.length ? 'Try a different search.' : 'Ask our team about today’s options.'}</p>{items.length > 0 && <button type="button" className="menu-clear-search" onClick={clearSearch}>Clear search</button>}</div>}
       </div>
@@ -115,13 +115,17 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
   </Main>;
 }
 
-export function MenuItem({ item, money, design }) {
+function Highlight({ text, query }) {
+  return highlightParts(text, query).map((part, index) => part.match ? <mark key={index} className="menu-search-match">{part.text}</mark> : part.text);
+}
+
+export function MenuItem({ item, money, design, query = '' }) {
   const placeholder = (design.template === 'catalog' && design.layout === 'cards') || design.layout === 'tiles';
   const tags = item.tags || [];
   return <article className={`public-menu-item ${item.soldOut ? 'sold-out' : ''}`}>
     {design.showImages && (item.image ? <img src={item.image} alt="" loading="lazy" /> : placeholder && <div className="menu-item-image-placeholder" aria-hidden="true"><UtensilsCrossed size={32} /></div>)}
-    <div className="public-menu-item-body"><div className="public-item-title"><h3>{item.name || 'Untitled item'}</h3>{design.showPrices && <strong>{money(item.price)}</strong>}</div>{design.showDescriptions && item.description && <p>{item.description}</p>}
-      {(item.soldOut || tags.length > 0) && <div className="menu-item-labels">{item.soldOut && <span className="menu-label sold">Sold out</span>}{tags.map(tag => <span key={tag} className={`menu-label tag-${tag}`}>{menuTagLabel(tag)}</span>)}</div>}
+    <div className="public-menu-item-body"><div className="public-item-title"><h3><Highlight text={item.name || 'Untitled item'} query={query} /></h3>{design.showPrices && <strong>{money(item.price)}</strong>}</div>{design.showDescriptions && item.description && <p><Highlight text={item.description} query={query} /></p>}
+      {(item.soldOut || tags.length > 0) && <div className="menu-item-labels">{item.soldOut && <span className="menu-label sold">Sold out</span>}{tags.map(tag => <span key={tag} className={`menu-label tag-${tag}`}><Highlight text={menuTagLabel(tag)} query={query} /></span>)}</div>}
     </div>
   </article>;
 }
