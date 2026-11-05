@@ -143,7 +143,13 @@
    current section is highlighted (see PublicMenu). */
 .shop-public .public-menu-category { scroll-margin-top: calc(var(--menu-bar-offset, 64px) + 12px); }
 .shop-public .menu-sticky-bar { position: sticky; top: 0; z-index: 20; background: var(--menu-bg); margin-bottom: 24px; min-width: 0; }
-.shop-public .menu-sticky-name { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 2px 0; font-size: .95rem; font-weight: 700; line-height: 1.25; color: var(--menu-text); }
+.shop-public .menu-sticky-top { display: flex; align-items: center; min-width: 0; }
+.shop-public .menu-sticky-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 2px 0; font-size: .95rem; font-weight: 700; line-height: 1.25; color: var(--menu-text); }
+/* A full-size tap area that does not make the pinned bar taller when it appears. */
+.shop-public .menu-sticky-search { flex: none; display: grid; place-items: center; width: 44px; height: 40px; margin: -5px 0 -6px; padding: 10px 0 0; background: none; border: 0; color: var(--menu-text); cursor: pointer; }
+.shop-public .menu-sticky-search:focus-visible, .shop-public .menu-clear-search:focus-visible { outline: 3px solid color-mix(in srgb, var(--menu-accent-on-surface, #2563eb) 70%, transparent); outline-offset: 2px; }
+.shop-public .menu-search { scroll-margin-top: 16px; }
+.shop-public .menu-clear-search { min-height: 44px; margin-top: 16px; padding: 0 20px; background: none; border: 1px solid color-mix(in srgb, var(--menu-text) 40%, var(--menu-bg)); border-radius: 10px; color: var(--menu-text); font: inherit; font-weight: 600; cursor: pointer; }
 .shop-public .menu-sticky-name img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex: none; }
 .shop-public .menu-sticky-name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shop-public .category-tabs { position: static; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 6px 28px 8px 2px; margin-bottom: 0; justify-content: flex-start !important; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
@@ -154,8 +160,10 @@
 /* The sidebar template keeps its side list on desktop (no name there), and becomes the same pinned bar on phones. */
 .shop-public .menu-sidebar-shell > .menu-sticky-bar { top: 24px; background: none; align-self: start; margin-bottom: 0; }
 .shop-public .menu-sidebar-shell .menu-sticky-name { display: none; }
+.shop-public .menu-sidebar-shell .menu-sticky-top { position: absolute; top: 0; right: 0; }
 @media (max-width: 700px) {
   .shop-public .menu-sidebar-shell > .menu-sticky-bar { top: 0; background: var(--menu-bg); margin-bottom: 16px; }
+  .shop-public .menu-sidebar-shell .menu-sticky-top { position: static; }
   .shop-public .menu-sidebar-shell .menu-sticky-name { display: flex; }
   .shop-public .menu-category-sidebar { position: static; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 4px 24px 8px 0; margin-bottom: 0; }
   .shop-public .menu-category-sidebar::-webkit-scrollbar { display: none; }

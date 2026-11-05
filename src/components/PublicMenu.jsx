@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, UtensilsCrossed, ArrowUpRight } from 'lucide-react';
 import { menuTagLabel } from '../data/menuTags';
+import { matchesMenuSearch } from '../data/menuSearch';
 
 // Category names move with the page, like a delivery app: the bar stays at the top, the section you are reading is
 // highlighted and slid into view, and tapping a name scrolls to that section.
@@ -13,9 +14,11 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
   const tapped = useRef('');
   const [active, setActive] = useState('');
   const [search, setSearch] = useState('');
+  const searchInput = useRef(null);
+  const [searchOnScreen, setSearchOnScreen] = useState(true);
   const categories = [...new Set(items.map(item => item.category || 'Menu'))];
-  const query = design.showSearch ? search.toLowerCase() : '';
-  const visible = items.filter(item => `${item.name} ${item.description} ${item.category}`.toLowerCase().includes(query));
+  const query = design.showSearch ? search.trim() : '';
+  const visible = items.filter(item => matchesMenuSearch(item, query));
   const shown = categories.filter(name => visible.some(item => (item.category || 'Menu') === name));
   const shownKey = shown.join('|');
   const current = shown.includes(active) ? active : shown[0] || '';
@@ -62,6 +65,26 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
     bar.scrollTo({ left: button.offsetLeft - (bar.clientWidth - button.offsetWidth) / 2, behavior: smoothScroll() });
   }, [current]);
 
+  // The search box scrolls away with the heading, so the pinned bar offers a way back to it once it has gone.
+  useEffect(() => {
+    const box = searchInput.current;
+    if (preview || !box) return undefined;
+    const observer = new IntersectionObserver(([entry]) => setSearchOnScreen(entry.isIntersecting));
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [preview, design.showSearch]);
+
+  // Focus first, while still inside the tap, or phones will not open the keyboard.
+  const openSearch = () => {
+    tapped.current = '';
+    searchInput.current?.focus({ preventScroll: true });
+    searchInput.current?.closest('.menu-search')?.scrollIntoView({ behavior: smoothScroll(), block: 'start' });
+  };
+  const clearSearch = () => {
+    setSearch('');
+    searchInput.current?.focus();
+  };
+
   const goTo = name => {
     tapped.current = name;
     setActive(name);
@@ -74,16 +97,19 @@ export default function PublicMenu({ profile, design, items, money, preview = fa
   return <Main ref={root} className={`shop-menu-main layout-${design.layout} density-${design.density}`}>
     {foodTemplate && <div className="food-menu-masthead">{design.showCover && profile.coverImage && <img className="food-menu-cover" src={profile.coverImage} alt={`${profile.name} atmosphere`} />}{design.showBrand && <div className="food-menu-brand">{profile.logo ? <img src={profile.logo} alt="" /> : <span className="food-brand-mark"><UtensilsCrossed size={25} /></span>}<strong>{profile.name || 'Your restaurant'}</strong></div>}</div>}
     <div className="menu-public-heading"><div><p className="shop-kicker">{design.palette.eyebrow}</p><h1>{design.title || 'Our menu'}</h1><p>{design.subtitle || profile.tagline || 'Find your next favourite.'}</p>{design.showPrices && design.priceStyle === 'number' && <small className="menu-currency-note">Prices in {profile.currency || 'LKR'}</small>}</div>
-      {design.showSearch && <label className="menu-search"><Search size={18} /><input type="search" aria-label="Search menu" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search the menu…" /></label>}
+      {design.showSearch && <label className="menu-search"><Search size={18} /><input ref={searchInput} type="search" aria-label="Search menu" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search the menu…" /></label>}
     </div>
     <div className={sidebar ? 'menu-sidebar-shell' : 'menu-category-shell'}>
       {design.showCategories && shown.length > 0 && <div className="menu-sticky-bar">
-        <p className="menu-sticky-name">{profile.logo && <img src={profile.logo} alt="" />}<span>{profile.name || 'Menu'}</span></p>
+        <div className="menu-sticky-top">
+          <p className="menu-sticky-name">{profile.logo && <img src={profile.logo} alt="" />}<span>{profile.name || 'Menu'}</span></p>
+          {design.showSearch && !searchOnScreen && <button type="button" className="menu-sticky-search" aria-label="Search menu" onClick={openSearch}><Search size={18} /></button>}
+        </div>
         {categoryNavigation}
       </div>}
       <div className="menu-category-content">{shown.map((name, index) => <section className="public-menu-category" key={name} data-category={name}><div className="menu-category-heading">{design.numbered && <span className="menu-section-number">{String(index + 1).padStart(2, '0')}</span>}<h2>{name}</h2><span className="menu-heading-line" /></div><div className="public-menu-grid">{visible.filter(item => (item.category || 'Menu') === name).map(item => <MenuItem key={item.id} item={item} money={money} design={design} />)}</div></section>)}
         {query && <p className="sr-only" aria-live="polite">{visible.length} {visible.length === 1 ? 'item' : 'items'} shown</p>}
-        {!visible.length && <div className="public-empty"><UtensilsCrossed size={32} /><h2>{items.length ? 'No matching items' : 'Menu coming soon'}</h2><p>{items.length ? 'Try a different search.' : 'Ask our team about today’s options.'}</p></div>}
+        {!visible.length && <div className="public-empty"><UtensilsCrossed size={32} /><h2>{items.length ? 'No matching items' : 'Menu coming soon'}</h2><p>{items.length ? 'Try a different search.' : 'Ask our team about today’s options.'}</p>{items.length > 0 && <button type="button" className="menu-clear-search" onClick={clearSearch}>Clear search</button>}</div>}
       </div>
     </div>
   </Main>;
