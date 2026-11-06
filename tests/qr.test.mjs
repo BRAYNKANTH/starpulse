@@ -48,7 +48,8 @@ test('poster cover photos default to the shop cover, can be changed or turned of
 
   for (const bad of ['javascript:alert(1)', 'data:text/html;base64,AAAA', '/etc/passwd', 42, { a: 1 }, `data:image/png;base64,${'A'.repeat(1500001)}`]) assert.equal(normalizePosterDesign({ coverImage: bad }).coverImage, '');
   assert.equal(normalizePosterDesign({ cover: 'surprise' }).cover, 'shop');
-  assert.equal(normalizePosterDesign({ coverFocus: 'left' }).coverFocus, 'center');
+  assert.equal(normalizePosterDesign({ coverFocus: 'left' }).coverFocus, 'whole', 'the whole photo shows unless the owner chooses to crop it');
+  assert.equal(normalizePosterDesign({ coverFocus: 'top' }).coverFocus, 'top');
   const saved = validateProfile({ name: 'Cafe', posterDesign: { theme: 'ticket', cover: 'custom', coverImage: image, coverFocus: 'top' } }, 'cafe').posterDesign;
   assert.deepEqual([saved.theme, saved.cover, saved.coverImage, saved.coverFocus], ['ticket', 'custom', image, 'top']);
 });

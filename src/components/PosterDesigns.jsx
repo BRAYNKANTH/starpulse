@@ -44,11 +44,13 @@ function Face({ theme, format, profile, poster, design, headline, subtitle, link
   const colors = posterQrColors(palette, design);
   const coverSrc = posterCover({ ...poster, theme }, profile.coverImage, format);
   const hasLogo = !!profile.logo;
-  useFitText(root, [theme, format, profile.name, headline, subtitle, coverSrc, hasLogo, poster.showNfc, poster.logoShape]);
+  useFitText(root, [theme, format, profile.name, headline, subtitle, coverSrc, poster.coverFocus, hasLogo, poster.showNfc, poster.logoShape]);
 
   const qrSize = POSTER_SIZES[format].qr;
   const logoSize = Math.round(qrSize * .17);
-  const cover = coverSrc && <img className="ph-cover" src={coverSrc} alt="" style={{ objectPosition: `center ${poster.coverFocus}` }} />;
+  // "Whole" never crops the photo and never lays the logo or name over it, so words inside a banner stay readable.
+  const whole = !!coverSrc && poster.coverFocus === 'whole';
+  const cover = coverSrc && <img className="ph-cover" src={coverSrc} alt="" style={whole ? undefined : { objectPosition: `center ${poster.coverFocus}` }} />;
   const logo = hasLogo && <span className={`ph-logo shape-${poster.logoShape}`}><img src={profile.logo} alt="" /></span>;
   const name = <h2 className="ph-name" data-fit>{profile.name}</h2>;
   const head = <h3 className="ph-head" data-fit>{headline}</h3>;
@@ -57,23 +59,29 @@ function Face({ theme, format, profile, poster, design, headline, subtitle, link
   const qr = <span className="ph-plate"><QRCodeSVG title={`QR code for ${profile.name}`} value={link} size={qrSize} level="H" marginSize={4} fgColor={colors.foreground} bgColor={colors.background}
     imageSettings={design.showLogo && hasLogo ? { src: profile.logo, height: logoSize, width: logoSize, excavate: true } : undefined} /></span>;
 
+  const idRow = <div className="ph-idrow">{logo}{name}</div>;
   const layouts = {
-    archway: <>
+    archway: whole ? <>
+      <div className="ph-a-top">{cover}</div>
+      <div className="ph-a-door"><i className="ph-a-echo" />{idRow}{head}{qr}{poster.subtitle && sub}{nfc}</div>
+    </> : <>
       <div className="ph-a-top">{cover}{cover && <i className="ph-scrim" />}{name}</div>
       <div className="ph-a-door"><i className="ph-a-echo" />{logo}{head}{qr}{sub}{nfc}</div>
     </>,
     estate: <>
       <i className="ph-e-frame" /><i className="ph-e-frame inner" />
-      <div className="ph-e-cameo">{cover ? <span className="ph-e-oval">{cover}</span> : logo}{cover && logo}</div>
-      {name}
+      {whole ? <><div className="ph-e-cameo">{cover}</div>{idRow}</> : <>
+        <div className="ph-e-cameo">{cover ? <span className="ph-e-oval">{cover}</span> : logo}{cover && logo}</div>
+        {name}
+      </>}
       <svg className="ph-e-rule" viewBox="0 0 120 10" aria-hidden="true"><path d="M0 5h50M70 5h50" stroke="currentColor" strokeWidth="1" /><path d="M60 .5l4.5 4.5-4.5 4.5-4.5-4.5z" fill="currentColor" /></svg>
       {head}{qr}{sub}{nfc}
     </>,
     marquee: <>
       {cover && <div className="ph-m-photo">{cover}</div>}
       <div className="ph-m-body">
-        {logo}{name}
-        <div className="ph-m-foot"><div className="ph-m-copy">{head}{sub}{nfc}</div>{qr}</div>
+        {!whole && logo}{name}
+        <div className="ph-m-foot"><div className="ph-m-copy">{whole && logo}{head}{sub}{nfc}</div>{qr}</div>
       </div>
     </>,
     ticket: <div className="ph-t-paper">
@@ -85,7 +93,7 @@ function Face({ theme, format, profile, poster, design, headline, subtitle, link
       <i className="ph-g-edge" />
       <div className="ph-g-main">
         {cover && <div className="ph-g-photo">{cover}</div>}
-        {logo}{name}{head}
+        {whole ? idRow : <>{logo}{name}</>}{head}
         <div className="ph-g-foot"><div className="ph-g-note">{sub}{nfc}</div>{qr}</div>
       </div>
     </>,
@@ -102,7 +110,7 @@ function Face({ theme, format, profile, poster, design, headline, subtitle, link
     <div className="ph-s-id">{logo}{name}</div>{qr}{head}
   </> : layouts[theme];
 
-  return <div ref={root} className={`ph-card ph-${theme} ph-f-${format} ${format === 'tent' || format === 'sticker' ? '' : 'ph-portrait'} ${coverSrc ? 'with-cover' : 'no-cover'} ${hasLogo ? 'with-logo' : 'no-logo'}`}
+  return <div ref={root} className={`ph-card ph-${theme} ph-f-${format} ${format === 'tent' || format === 'sticker' ? '' : 'ph-portrait'} ${coverSrc ? 'with-cover' : 'no-cover'} ${whole ? 'cover-whole' : ''} ${hasLogo ? 'with-logo' : 'no-logo'}`}
     style={{ '--ph-field': palette.field, '--ph-on-field': palette.onField, '--ph-metal': palette.metal, '--ph-plate': palette.plate, '--ph-ink': palette.ink }}>{content}</div>;
 }
 

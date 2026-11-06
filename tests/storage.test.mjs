@@ -78,7 +78,7 @@ test('prices use each currency’s home formatting and its own decimals', async 
 
 test('poster designs are saved with safe defaults, and the old Google theme becomes Bright', async () => {
   const { normalizePosterDesign } = await import('../src/data/qrDesign.js');
-  assert.deepEqual(normalizePosterDesign(), { theme: 'bright', format: 'tabletop', headline: '', subtitle: '', logoShape: 'squircle', logoSize: 'large', showNfc: false, cover: 'shop', coverImage: '', coverFocus: 'center' });
+  assert.deepEqual(normalizePosterDesign(), { theme: 'bright', format: 'tabletop', headline: '', subtitle: '', logoShape: 'squircle', logoSize: 'large', showNfc: false, cover: 'shop', coverImage: '', coverFocus: 'whole' });
   const saved = normalizePosterDesign({ theme: 'warm_bistro', format: 'tent', headline: 'x'.repeat(80), showNfc: true, logoSize: 'huge' });
   assert.equal(saved.theme, 'warm_bistro'); assert.equal(saved.format, 'tent'); assert.equal(saved.headline.length, 60); assert.equal(saved.showNfc, true); assert.equal(saved.logoSize, 'large');
   assert.equal(normalizePosterDesign({ theme: 'google_deluxe' }).theme, 'bright');
