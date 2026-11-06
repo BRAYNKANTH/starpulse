@@ -41,7 +41,7 @@ export function normalizePosterDesign(value = {}) {
     showNfc: source.showNfc === true,
     cover: choice('cover', ['shop', 'custom', 'none'], 'shop'),
     coverImage: typeof source.coverImage === 'string' && source.coverImage.length <= 1500000 && POSTER_IMAGE.test(source.coverImage) ? source.coverImage : '',
-    coverFocus: choice('coverFocus', ['center', 'top', 'bottom'], 'center'),
+    coverFocus: choice('coverFocus', ['whole', 'center', 'top', 'bottom'], 'whole'),
   };
 }
 
