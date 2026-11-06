@@ -25,6 +25,14 @@ Run these from the repo root. `.env.local` points the command at Neon, and its f
 7. Under **Shop ownership**, change Golden Cafe to the new account.
 8. The customer menu is at `https://starpulse-beta.vercel.app/?biz=golden-cafe&view=menu`. The QR code is set to open the menu, and moving the shop doesn't change its address.
 
+## Change the categories on a shop that's already live
+
+`import-json` skips a shop that already exists, so it can't update Golden Cafe. Run this from the repo root instead. It changes only the categories and their order, and keeps names, prices, photos and anything added in the studio. It's safe to run twice.
+
+```bash
+node docs/shops/golden-cafe/update-categories.mjs
+```
+
 ## Please confirm against the board
 
 The photo is low resolution with some glare, and a fan covers part of the shop name.
@@ -41,12 +49,22 @@ The photo is low resolution with some glare, and a fan covers part of the shop n
 
 - **Vegetable ST. Biryani:** "ST." is kept from the board. It may mean string hopper. Tell me what it stands for, or leave it.
 - **Milkshake (390) and Rolls (120):** the board gives no flavour or filling.
-- **Cheese Onion, Garlic Masala, Garlic Onion Masala, Garlic Cheese Masala:** the board doesn't say "Dosa" in these names, so it isn't added. They do appear under Dosa.
+- **Cheese Onion, Garlic Masala, Garlic Onion Masala, Garlic Cheese Masala:** the board doesn't say "Dosa" in these names, so it isn't added. They do appear under Dosa & Uthappam.
 
-**Layout kept from the board**
+**Categories**
 
-- Chapathi, Poori and the three curries are listed under **Dosa**.
-- Coffee, milk, Milo and Nestomalt are listed under **Hot Tea**.
+The menu doesn't follow the board's sections. On the board, everything in **Short Eats** and most of **Idli, Hoppers & Breads** sat under Vada, and the rest was under Dosa.
+
+| Category | Items |
+| --- | --- |
+| Fresh Juice | 15 |
+| Hot Tea | 6 (also coffee, milk, Milo and Nestomalt, as on the board) |
+| Short Eats | 7: vadas, bonda, roti, bajji, rolls and samosa |
+| Idli, Hoppers & Breads | 7: idli, string hoppers, parathas, chapathi and poori |
+| Special Items | 5 |
+| Dosa & Uthappam | 29 |
+| Curries | 3 |
+
 - Board numbers aren't shown to customers. Numbers 16-21 and 60-64 aren't on the board, so check that no items are missing.
 
 **Details not given, left blank**

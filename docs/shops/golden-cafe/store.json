@@ -253,7 +253,7 @@
         {
           "id": "gc-28",
           "name": "Masala Vada",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 130,
           "image": "",
@@ -264,7 +264,7 @@
         {
           "id": "gc-29",
           "name": "Ulundu Vada",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 140,
           "image": "",
@@ -275,7 +275,7 @@
         {
           "id": "gc-30",
           "name": "Ala Bonda",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 130,
           "image": "",
@@ -286,7 +286,7 @@
         {
           "id": "gc-31",
           "name": "Vegetable Roti",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 130,
           "image": "",
@@ -297,7 +297,7 @@
         {
           "id": "gc-32",
           "name": "Capsicum Bajji",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 140,
           "image": "",
@@ -308,7 +308,7 @@
         {
           "id": "gc-33",
           "name": "Rolls",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 120,
           "image": "",
@@ -319,7 +319,7 @@
         {
           "id": "gc-33-1",
           "name": "Samosa",
-          "category": "Vada",
+          "category": "Short Eats",
           "description": "",
           "price": 120,
           "image": "https://upload.wikimedia.org/wikipedia/commons/9/95/Samosa_with_sweet_chutney.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
@@ -330,7 +330,7 @@
         {
           "id": "gc-34",
           "name": "Idli",
-          "category": "Vada",
+          "category": "Idli, Hoppers & Breads",
           "description": "",
           "price": 280,
           "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Sambar-idli.jpg/960px-Sambar-idli.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -341,7 +341,7 @@
         {
           "id": "gc-35",
           "name": "String Hoppers White (10)",
-          "category": "Vada",
+          "category": "Idli, Hoppers & Breads",
           "description": "",
           "price": 240,
           "image": "",
@@ -352,7 +352,7 @@
         {
           "id": "gc-35-1",
           "name": "String Hoppers Red (10)",
-          "category": "Vada",
+          "category": "Idli, Hoppers & Breads",
           "description": "",
           "price": 240,
           "image": "",
@@ -363,7 +363,7 @@
         {
           "id": "gc-36",
           "name": "Paratha with Sambar (1 pc)",
-          "category": "Vada",
+          "category": "Idli, Hoppers & Breads",
           "description": "",
           "price": 140,
           "image": "",
@@ -374,9 +374,31 @@
         {
           "id": "gc-37",
           "name": "Ala Paratha",
-          "category": "Vada",
+          "category": "Idli, Hoppers & Breads",
           "description": "",
           "price": 300,
+          "image": "",
+          "available": true,
+          "soldOut": false,
+          "tags": []
+        },
+        {
+          "id": "gc-53",
+          "name": "Chapathi with Curry",
+          "category": "Idli, Hoppers & Breads",
+          "description": "",
+          "price": 330,
+          "image": "",
+          "available": true,
+          "soldOut": false,
+          "tags": []
+        },
+        {
+          "id": "gc-54",
+          "name": "Poori with Curry",
+          "category": "Idli, Hoppers & Breads",
+          "description": "",
+          "price": 330,
           "image": "",
           "available": true,
           "soldOut": false,
@@ -440,7 +462,7 @@
         {
           "id": "gc-38",
           "name": "Tomato Uthappam",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 350,
           "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Uttapam-garnishing.jpg/960px-Uttapam-garnishing.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -451,7 +473,7 @@
         {
           "id": "gc-39",
           "name": "Onion Uthappam",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 350,
           "image": "",
@@ -462,7 +484,7 @@
         {
           "id": "gc-40",
           "name": "Cheese Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 440,
           "image": "",
@@ -473,7 +495,7 @@
         {
           "id": "gc-41",
           "name": "Cheese Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 490,
           "image": "",
@@ -484,7 +506,7 @@
         {
           "id": "gc-42",
           "name": "Cheese Onion",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 460,
           "image": "",
@@ -495,7 +517,7 @@
         {
           "id": "gc-43",
           "name": "Garlic Onion Masala",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 450,
           "image": "",
@@ -506,7 +528,7 @@
         {
           "id": "gc-44",
           "name": "Garlic Masala",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 430,
           "image": "",
@@ -517,7 +539,7 @@
         {
           "id": "gc-45",
           "name": "Garlic Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 410,
           "image": "",
@@ -528,7 +550,7 @@
         {
           "id": "gc-46",
           "name": "Garlic Dosa with Cheese",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 500,
           "image": "",
@@ -539,7 +561,7 @@
         {
           "id": "gc-47",
           "name": "Garlic Cheese Masala",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 500,
           "image": "",
@@ -550,7 +572,7 @@
         {
           "id": "gc-48",
           "name": "Mushroom Cheese Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 580,
           "image": "",
@@ -561,7 +583,7 @@
         {
           "id": "gc-49",
           "name": "Mushroom Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 520,
           "image": "",
@@ -572,7 +594,7 @@
         {
           "id": "gc-50",
           "name": "Mushroom Masala with Cheese",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 600,
           "image": "",
@@ -583,7 +605,7 @@
         {
           "id": "gc-51",
           "name": "Paneer Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 670,
           "image": "",
@@ -594,7 +616,7 @@
         {
           "id": "gc-52",
           "name": "Paneer Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 600,
           "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/PANEER_MASALA_DOSA_-_Mini_MADRAS_2026-05-03.jpg/960px-PANEER_MASALA_DOSA_-_Mini_MADRAS_2026-05-03.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -603,31 +625,9 @@
           "tags": []
         },
         {
-          "id": "gc-53",
-          "name": "Chapathi with Curry",
-          "category": "Dosa",
-          "description": "",
-          "price": 330,
-          "image": "",
-          "available": true,
-          "soldOut": false,
-          "tags": []
-        },
-        {
-          "id": "gc-54",
-          "name": "Poori with Curry",
-          "category": "Dosa",
-          "description": "",
-          "price": 330,
-          "image": "",
-          "available": true,
-          "soldOut": false,
-          "tags": []
-        },
-        {
           "id": "gc-65",
           "name": "Chilli Cheese Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 550,
           "image": "",
@@ -638,7 +638,7 @@
         {
           "id": "gc-66",
           "name": "Cauliflower Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 570,
           "image": "",
@@ -649,7 +649,7 @@
         {
           "id": "gc-67",
           "name": "Ghee Rava Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 420,
           "image": "",
@@ -660,7 +660,7 @@
         {
           "id": "gc-68",
           "name": "Rava Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 350,
           "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6c/Rava_dosa.JPG/960px-Rava_dosa.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -671,7 +671,7 @@
         {
           "id": "gc-69",
           "name": "Plain Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 140,
           "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/PLAIN_DOSA_-_Mini_Madras_2026-03-13.jpg/960px-PLAIN_DOSA_-_Mini_Madras_2026-03-13.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -682,7 +682,7 @@
         {
           "id": "gc-70",
           "name": "Paper Roast",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 300,
           "image": "",
@@ -693,7 +693,7 @@
         {
           "id": "gc-71",
           "name": "Ghee Roast",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 370,
           "image": "",
@@ -704,7 +704,7 @@
         {
           "id": "gc-72",
           "name": "Gingelly Oil Roast",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 390,
           "image": "",
@@ -715,7 +715,7 @@
         {
           "id": "gc-73",
           "name": "Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 420,
           "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Masala_Dosa_served_as_lunch_in_Howrah_Maidan%2C_West_Bengal.jpg/960px-Masala_Dosa_served_as_lunch_in_Howrah_Maidan%2C_West_Bengal.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -726,7 +726,7 @@
         {
           "id": "gc-74",
           "name": "Gingelly Oil Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 460,
           "image": "",
@@ -737,7 +737,7 @@
         {
           "id": "gc-75",
           "name": "Atta Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 360,
           "image": "",
@@ -748,7 +748,7 @@
         {
           "id": "gc-76",
           "name": "Rava Ghee Masala Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 480,
           "image": "",
@@ -759,7 +759,7 @@
         {
           "id": "gc-77",
           "name": "Kurakkan Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 360,
           "image": "",
@@ -770,7 +770,7 @@
         {
           "id": "gc-78",
           "name": "Onion Dosa",
-          "category": "Dosa",
+          "category": "Dosa & Uthappam",
           "description": "",
           "price": 390,
           "image": "",
@@ -781,7 +781,7 @@
         {
           "id": "gc-79",
           "name": "Kadala Curry",
-          "category": "Dosa",
+          "category": "Curries",
           "description": "",
           "price": 250,
           "image": "",
@@ -792,7 +792,7 @@
         {
           "id": "gc-80",
           "name": "Soya Curry",
-          "category": "Dosa",
+          "category": "Curries",
           "description": "",
           "price": 250,
           "image": "",
@@ -803,7 +803,7 @@
         {
           "id": "gc-81",
           "name": "Potato Curry",
-          "category": "Dosa",
+          "category": "Curries",
           "description": "",
           "price": 250,
           "image": "",
