@@ -40,7 +40,7 @@ function useFitText(root, deps) {
 
 function Face({ theme, format, profile, poster, design, headline, subtitle, link }) {
   const root = useRef(null);
-  const palette = posterPalette(theme, profile.accentColor);
+  const palette = posterPalette(theme, poster.accent || profile.accentColor);
   const colors = posterQrColors(palette, design);
   const coverSrc = posterCover({ ...poster, theme }, profile.coverImage, format);
   const hasLogo = !!profile.logo;

@@ -42,6 +42,7 @@ export function normalizePosterDesign(value = {}) {
     cover: choice('cover', ['shop', 'custom', 'none'], 'shop'),
     coverImage: typeof source.coverImage === 'string' && source.coverImage.length <= 1500000 && POSTER_IMAGE.test(source.coverImage) ? source.coverImage : '',
     coverFocus: choice('coverFocus', ['whole', 'center', 'top', 'bottom'], 'whole'),
+    accent: /^#[0-9a-f]{6}$/i.test(source.accent) ? source.accent : '', // Empty means the shop's brand colour.
   };
 }
 
