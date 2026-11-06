@@ -13,7 +13,7 @@ export async function resolveGoogleMapsLink(link, fetchImpl = fetch) {
     if (url.protocol !== 'https:' || !ALLOWED_HOSTS.has(url.hostname)) return null;
     const found = placeFromGoogleText(url.href);
     if (found) return found;
-    const response = await fetchImpl(url.href, { redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DQ.lk link check)' }, signal: AbortSignal.timeout(8000) });
+    const response = await fetchImpl(url.href, { redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Scan Hub link check)' }, signal: AbortSignal.timeout(8000) });
     const next = response.headers.get('location');
     if (response.status < 300 || response.status >= 400 || !next) return null;
     url = new URL(next, url);

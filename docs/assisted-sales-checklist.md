@@ -1,6 +1,6 @@
 # Assisted sales checklist — completing a paid plan upgrade end-to-end
 
-DQ.lk has **no checkout, trial, invoice, or automatic upgrade**. Plans are
+Scan Hub has **no checkout, trial, invoice, or automatic upgrade**. Plans are
 changed by an administrator, after payment is confirmed offline. This is the
 procedure for every paid upgrade or new paid account. Do not promise a buyer
 an automatic upgrade, a trial period, or an invoice from the site — none of
@@ -24,7 +24,7 @@ those exist.
       `npm run create-admin` for an administrator) and give them the
       temporary password — they must replace it on first sign-in.
 - [ ] **Confirm payment offline.** Record how and when payment was received,
-      outside DQ.lk. Do not mark a plan as paid until payment is confirmed.
+      outside Scan Hub. Do not mark a plan as paid until payment is confirmed.
 - [ ] **Set the plan.** Either:
       - Studio: **Accounts** → find the account → change its plan, or
       - CLI: `npm run set-plan -- owner@example.com pro`

@@ -22,40 +22,40 @@ const TEMPLATE_COUNT = MENU_TEMPLATES.length;
 
 const PAGES = {
   '/': {
-    title: 'DQ.lk | Branded QR & Digital Menu Studio',
-    description: `DQ.lk is a branded QR and digital menu studio for restaurants, cafes and hotels: ${TEMPLATE_COUNT} designer menu templates, branded QR codes, a private feedback inbox and scan analytics.`,
+    title: 'Scan Hub | Branded QR & Digital Menu Studio',
+    description: `Scan Hub is a branded QR and digital menu studio for restaurants, cafes and hotels: ${TEMPLATE_COUNT} designer menu templates, branded QR codes, a private feedback inbox and scan analytics.`,
     heading: 'Your shop’s menu, QR codes and reviews in one studio.',
-    intro: 'DQ.lk gives restaurants, cafés and hotels a digital menu customers can open by scanning a QR code — plus a private place to hear feedback before it becomes a public review.',
+    intro: 'Scan Hub gives restaurants, cafés and hotels a digital menu customers can open by scanning a QR code — plus a private place to hear feedback before it becomes a public review.',
   },
   '/pricing': {
-    title: 'Pricing | DQ.lk',
-    description: 'DQ.lk plans: Free with 1 shop, Pro with 5 shops, Business with 50 shops. Prices are not published yet — contact the administrator to buy.',
+    title: 'Pricing | Scan Hub',
+    description: 'Scan Hub plans: Free with 1 shop, Pro with 5 shops, Business with 50 shops. Prices are not published yet — contact the administrator to buy.',
     heading: 'Pricing',
     intro: 'Plans are based on how many shops you manage. Prices are not listed here yet — contact the administrator to get an account or upgrade.',
   },
   '/about': {
-    title: 'About | DQ.lk',
-    description: 'About DQ.lk: a branded QR and digital menu studio for shops in Sri Lanka, with editable menus, branded QR posters and a private feedback inbox.',
-    heading: 'About DQ.lk',
-    intro: 'DQ.lk is a studio for shops that want a menu on every table without reprinting it every time something changes.',
+    title: 'About | Scan Hub',
+    description: 'About Scan Hub: a branded QR and digital menu studio for shops in Sri Lanka, with editable menus, branded QR posters and a private feedback inbox.',
+    heading: 'About Scan Hub',
+    intro: 'Scan Hub is a studio for shops that want a menu on every table without reprinting it every time something changes.',
   },
   '/contact': {
-    title: 'Contact | DQ.lk',
-    description: 'Contact DQ.lk: how to get an account, buy or change a plan, and get back into your account.',
+    title: 'Contact | Scan Hub',
+    description: 'Contact Scan Hub: how to get an account, buy or change a plan, and get back into your account.',
     heading: 'Contact',
-    intro: 'There is no self-service sign-up yet. Accounts are created by a DQ.lk administrator, who gives you a sign-in and a temporary password to replace on first sign-in.',
+    intro: 'There is no self-service sign-up yet. Accounts are created by a Scan Hub administrator, who gives you a sign-in and a temporary password to replace on first sign-in.',
   },
   '/terms': {
-    title: 'Terms of Service | DQ.lk',
-    description: 'DQ.lk terms of service: what the studio provides, what shop owners are responsible for, and how plans and published shop pages work.',
+    title: 'Terms of Service | Scan Hub',
+    description: 'Scan Hub terms of service: what the studio provides, what shop owners are responsible for, and how plans and published shop pages work.',
     heading: 'Terms of Service',
-    intro: 'These terms apply when you use DQ.lk. By using the studio or a published shop page, you agree to the terms below.',
+    intro: 'These terms apply when you use Scan Hub. By using the studio or a published shop page, you agree to the terms below.',
   },
   '/privacy': {
-    title: 'Privacy Policy | DQ.lk',
-    description: 'DQ.lk privacy policy: what shop, menu, feedback and scan data is collected, what is public on a published shop page, and what is not sold.',
+    title: 'Privacy Policy | Scan Hub',
+    description: 'Scan Hub privacy policy: what shop, menu, feedback and scan data is collected, what is public on a published shop page, and what is not sold.',
     heading: 'Privacy Policy',
-    intro: 'DQ.lk collects only what it needs to run shop pages, menus, feedback and scan counts. It does not sell your data.',
+    intro: 'Scan Hub collects only what it needs to run shop pages, menus, feedback and scan counts. It does not sell your data.',
   },
 };
 
@@ -68,7 +68,7 @@ function Layout({ path, children }) {
   }, [page]);
   return <div className="public-site">
     <header className="public-nav">
-      <a className="public-brand" href="/">DQ.lk</a>
+      <a className="public-brand" href="/">Scan Hub</a>
       <nav aria-label="Public pages">
         {HEADER_NAV.map(item => <a key={item.href} href={item.href} aria-current={path === item.href ? 'page' : undefined}>{item.label}</a>)}
         <a className="public-signin" href="/signin">Sign in</a>
@@ -84,14 +84,14 @@ function Layout({ path, children }) {
         {NAV.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}
         <a href="/signin">Sign in</a>
       </nav>
-      <p>DQ.lk — Branded QR &amp; Digital Menu Studio. Already have an account? <a href="/signin">Sign in</a>.</p>
+      <p>Scan Hub — Branded QR &amp; Digital Menu Studio. Already have an account? <a href="/signin">Sign in</a>.</p>
     </footer>
   </div>;
 }
 
 const PAID_DETAIL = 'Price on request. You arrange payment with the administrator, not on this site.';
 const PLANS = [
-  { name: 'Free', shops: '1 shop', note: 'For trying DQ.lk with a single shop.', price: 'Free', detail: 'No payment needed. Ask the administrator to create your account.' },
+  { name: 'Free', shops: '1 shop', note: 'For trying Scan Hub with a single shop.', price: 'Free', detail: 'No payment needed. Ask the administrator to create your account.' },
   { name: 'Pro', shops: '5 shops', note: 'For a small group of shops.', price: 'Contact to buy', detail: PAID_DETAIL },
   { name: 'Business', shops: '50 shops', note: 'For agencies and larger groups.', price: 'Contact to buy', detail: PAID_DETAIL },
 ];
@@ -119,7 +119,7 @@ export function PublicPage({ path }) {
   </Layout>;
 
   if (path === '/about') return <Layout path={path}>
-    <h2>What DQ.lk does</h2>
+    <h2>What Scan Hub does</h2>
     <ul>
       <li><strong>Menus customers love</strong> — {TEMPLATE_COUNT} designer templates, live on every table in minutes. Change items and prices in the studio; the customer menu updates without reprinting.</li>
       <li><strong>Branded QR</strong> — Print once, change the destination any time. A printed QR code can point to the shop page, the digital menu, the feedback page, or a custom website.</li>
@@ -127,20 +127,20 @@ export function PublicPage({ path }) {
       <li><strong>Scan analytics</strong> — See scan totals for each shop over 7, 30 or 90 days. Scans are counted per shop; they do not identify individual visitors.</li>
       <li><strong>Printed posters</strong> — Design table stands, tent cards, stickers and wall posters from your QR code, then print them yourself.</li>
     </ul>
-    <h2>What DQ.lk does not do</h2>
+    <h2>What Scan Hub does not do</h2>
     <ul>
       <li>It is not an ordering, reservation or delivery system — it is a menu, QR and feedback studio.</li>
       <li>It does not write NFC tags for you. It gives you an NFC-ready link and poster wording; you program a physical tag yourself with an NFC-writing app.</li>
       <li>It does not import Google reviews. The Google review link is one you provide for your shop; a click on it is counted, but a click does not confirm that a review was posted.</li>
       <li>It does not break scans down by individual poster. Every poster for a shop uses that shop’s QR code, so scan counts are per shop.</li>
     </ul>
-    <p>DQ.lk is built for restaurants, cafés, hotels and other shops in Sri Lanka that want a simple, branded menu on every table.</p>
+    <p>Scan Hub is built for restaurants, cafés, hotels and other shops in Sri Lanka that want a simple, branded menu on every table.</p>
   </Layout>;
 
   if (path === '/contact') return <Layout path={path}>
     <h2>How to get an account</h2>
     <ol>
-      <li>Contact the DQ.lk administrator with your shop name and the plan you want (Free: 1 shop, Pro: 5 shops, Business: 50 shops).</li>
+      <li>Contact the Scan Hub administrator with your shop name and the plan you want (Free: 1 shop, Pro: 5 shops, Business: 50 shops).</li>
       <li>The administrator creates your account and gives you a temporary password.</li>
       <li><a href="/signin">Sign in</a> and replace the temporary password on first sign-in.</li>
       <li>Set up your shop, build your menu, publish your customer page, then print your QR code.</li>
@@ -151,16 +151,16 @@ export function PublicPage({ path }) {
     </section>
     <h2>Buying or changing a plan</h2>
     <ol>
-      <li>Contact the DQ.lk administrator with your account email, your current plan, the plan you want, and how many shops you need.</li>
+      <li>Contact the Scan Hub administrator with your account email, your current plan, the plan you want, and how many shops you need.</li>
       <li>You arrange payment with the administrator, who then upgrades your account. No payment is taken on this site.</li>
       <li>Your new shop limit applies immediately — refresh My account in the studio to see it.</li>
     </ol>
-    <p>If you already have an account, <a href="/signin">sign in</a>. If you have forgotten your password, use <a href="/signin">Forgot password?</a> on the sign-in page — a reset link is emailed to your account address, works once, and expires in 1 hour. If you do not receive it, contact your DQ.lk administrator, who can also reset your password directly.</p>
+    <p>If you already have an account, <a href="/signin">sign in</a>. If you have forgotten your password, use <a href="/signin">Forgot password?</a> on the sign-in page — a reset link is emailed to your account address, works once, and expires in 1 hour. If you do not receive it, contact your Scan Hub administrator, who can also reset your password directly.</p>
   </Layout>;
 
   if (path === '/terms') return <Layout path={path}>
     <h2>What the service provides</h2>
-    <p>DQ.lk provides a studio to create and publish shop pages, digital menus, branded QR codes and posters, and to collect private customer feedback and scan counts. Billing is not connected yet: plans are set by an administrator, and no payment is taken through this site.</p>
+    <p>Scan Hub provides a studio to create and publish shop pages, digital menus, branded QR codes and posters, and to collect private customer feedback and scan counts. Billing is not connected yet: plans are set by an administrator, and no payment is taken through this site.</p>
     <h2>What shop owners are responsible for</h2>
     <ul>
       <li>The accuracy of their menu items, prices, opening hours and shop details.</li>
@@ -171,14 +171,14 @@ export function PublicPage({ path }) {
     <h2>Published pages</h2>
     <p>A published shop page is public. Its shop details, menu and any contact details on it can be seen by anyone with the link or QR code. Do not put private contact details on a published page unless you intend them to be public.</p>
     <h2>Availability and changes</h2>
-    <p>DQ.lk is provided as-is and may change, including plan limits and features. Unpublished shops are hidden from customers, and a QR code for an unpublished shop shows an “isn’t available” page rather than the shop.</p>
+    <p>Scan Hub is provided as-is and may change, including plan limits and features. Unpublished shops are hidden from customers, and a QR code for an unpublished shop shows an “isn’t available” page rather than the shop.</p>
   </Layout>;
 
   if (path === '/privacy') return <Layout path={path}>
     <h2>What is collected</h2>
     <ul>
       <li><strong>Account data:</strong> your name, email address, plan and sign-in session, so the studio can identify your shops.</li>
-      <li><strong>Shop data:</strong> shop details, menu items, images, branding and settings you enter. Images are stored in the DQ.lk database with your shop.</li>
+      <li><strong>Shop data:</strong> shop details, menu items, images, branding and settings you enter. Images are stored in the Scan Hub database with your shop.</li>
       <li><strong>Customer feedback:</strong> the rating, note and tags a customer leaves, and whether they clicked through to Google. Feedback is not tied to a customer account.</li>
       <li><strong>Scan counts:</strong> how many times a shop’s QR link was visited, and on which days. Scan counts do not identify individual visitors, and known automated crawlers are filtered out.</li>
       <li><strong>IP addresses:</strong> used to limit repeated sign-in attempts, feedback and scans. They are stored in short-lived rate-limit records, which are deleted regularly after they expire, and are not added to scan counts or feedback.</li>
@@ -188,7 +188,7 @@ export function PublicPage({ path }) {
     <h2>What is not done with your data</h2>
     <p>Your data is not sold. It is used to run your shop pages, menus, feedback and scan counts, and to keep accounts secure (including rate limits on sign-in and feedback).</p>
     <h2>Other services</h2>
-    <p>DQ.lk runs on Vercel and stores its data with Neon. Pages load fonts from Google Fonts, so a visitor’s browser shares its IP address with Google when a page opens.</p>
+    <p>Scan Hub runs on Vercel and stores its data with Neon. Pages load fonts from Google Fonts, so a visitor’s browser shares its IP address with Google when a page opens.</p>
     <h2>Cookies and sessions</h2>
     <p>Sign-in uses a session cookie so you stay signed in on your device. Changing your password signs you out on every other device.</p>
     <h2>Password reset</h2>
@@ -212,16 +212,16 @@ export function PublicPage({ path }) {
       <li><strong>Build your menu</strong> — add items and prices (LKR by default), pick one of {TEMPLATE_COUNT} templates, and customise layout, fonts and colours.</li>
       <li><strong>Print your QR code</strong> — design a table stand, tent card, sticker or wall poster, print it, and change its destination any time without reprinting.</li>
     </ol>
-    <p>Accounts are created by a DQ.lk administrator — there is no self-service sign-up yet. <a href="/pricing">See plans</a>, <a href="/contact">contact the administrator</a>, or <a href="/signin">sign in</a> if you already have an account.</p>
+    <p>Accounts are created by a Scan Hub administrator — there is no self-service sign-up yet. <a href="/pricing">See plans</a>, <a href="/contact">contact the administrator</a>, or <a href="/signin">sign in</a> if you already have an account.</p>
   </Layout>;
 }
 
 export function PublicNotFound() {
   useNoIndex();
-  useEffect(() => { document.title = 'Page not found | DQ.lk'; }, []);
+  useEffect(() => { document.title = 'Page not found | Scan Hub'; }, []);
   return <div className="public-site">
     <header className="public-nav">
-      <a className="public-brand" href="/">DQ.lk</a>
+      <a className="public-brand" href="/">Scan Hub</a>
       <nav aria-label="Public pages">
         {HEADER_NAV.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}
         <a className="public-signin" href="/signin">Sign in</a>
@@ -232,6 +232,6 @@ export function PublicNotFound() {
       <p className="public-lead">That page does not exist. Try one of the pages below, or sign in to the studio.</p>
       <p><a href="/">Home</a> · <a href="/pricing">Pricing</a> · <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/signin">Sign in</a></p>
     </main>
-    <footer className="public-footer"><p>DQ.lk — Branded QR &amp; Digital Menu Studio.</p></footer>
+    <footer className="public-footer"><p>Scan Hub — Branded QR &amp; Digital Menu Studio.</p></footer>
   </div>;
 }

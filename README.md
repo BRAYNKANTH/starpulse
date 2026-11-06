@@ -1,4 +1,4 @@
-# DQ.lk (Digital QR) — shop pages, menus and QR posters
+# Scan Hub — shop pages, menus and QR posters
 
 React + Vite owner studio with a Node.js API and Postgres, built to host on Vercel with Neon. Each business owner has an account created by an administrator; each shop has its own saved profile, landing page, searchable menu, QR destinations and feedback inbox.
 
@@ -82,7 +82,7 @@ SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=you@example.com
 SMTP_PASS=…
-SMTP_FROM=DQ.lk <you@example.com>
+SMTP_FROM=Scan Hub <you@example.com>
 APP_BASE_URL=https://starpulse-beta.vercel.app
 ```
 
