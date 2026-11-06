@@ -77,7 +77,7 @@ export default function OwnerStudio() {
   const openedPage = useRef(activeTab);
   useEffect(() => {
     const label = activeTab === 'new' ? 'New shop' : PAGES.find(p => p.id === activeTab)?.label;
-    document.title = status === 'ready' && label ? `${label} | DQ.lk` : STUDIO_TITLE;
+    document.title = status === 'ready' && label ? `${label} | Scan Hub` : STUDIO_TITLE;
   }, [activeTab, status]);
   // Moving between pages keeps the keyboard and screen readers with the new page, unless the page has already placed focus inside itself.
   useEffect(() => {

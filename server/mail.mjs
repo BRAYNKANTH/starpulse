@@ -35,9 +35,9 @@ export async function sendPasswordResetEmail(to, resetUrl) {
     await transport.sendMail({
       from: process.env.SMTP_FROM,
       to,
-      subject: 'Reset your DQ.lk password',
-      text: `You asked to reset your DQ.lk password.\n\nUse this link within 1 hour. It works once only:\n${resetUrl}\n\nIf you did not ask for this, ignore this email — your password has not changed, and you can still sign in with it. If you cannot sign in at all, contact your DQ.lk administrator.`,
-      html: `<p>You asked to reset your DQ.lk password.</p><p><a href="${resetUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}">Reset your password</a> — this link works once only and expires in 1 hour.</p><p>If you did not ask for this, ignore this email — your password has not changed. If you cannot sign in at all, contact your DQ.lk administrator.</p>`,
+      subject: 'Reset your Scan Hub password',
+      text: `You asked to reset your Scan Hub password.\n\nUse this link within 1 hour. It works once only:\n${resetUrl}\n\nIf you did not ask for this, ignore this email — your password has not changed, and you can still sign in with it. If you cannot sign in at all, contact your Scan Hub administrator.`,
+      html: `<p>You asked to reset your Scan Hub password.</p><p><a href="${resetUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;')}">Reset your password</a> — this link works once only and expires in 1 hour.</p><p>If you did not ask for this, ignore this email — your password has not changed. If you cannot sign in at all, contact your Scan Hub administrator.</p>`,
     });
     return true;
   } catch {

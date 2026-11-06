@@ -16,7 +16,7 @@ export function createApi(store, { trustProxy = false } = {}) {
   const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
   const sendUnavailable = (res, status, message, method) => {
     res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...SECURITY_HEADERS });
-    res.end(method === 'HEAD' ? '' : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>This shop isn’t available | DQ.lk</title><style>body{font-family:system-ui,sans-serif;background:#f7f5ef;color:#183329;margin:0;padding:48px 20px;text-align:center}main{max-width:520px;margin:0 auto}h1{font-size:1.6rem}a{color:#1d56d8}</style></head><body><main><h1>This shop isn’t available</h1><p>${escapeHtml(message)}</p><p>If you scanned a QR code, ask the staff for help.</p><p><a href="/">DQ.lk home</a></p></main></body></html>`);
+    res.end(method === 'HEAD' ? '' : `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>This shop isn’t available | Scan Hub</title><style>body{font-family:system-ui,sans-serif;background:#f7f5ef;color:#183329;margin:0;padding:48px 20px;text-align:center}main{max-width:520px;margin:0 auto}h1{font-size:1.6rem}a{color:#1d56d8}</style></head><body><main><h1>This shop isn’t available</h1><p>${escapeHtml(message)}</p><p>If you scanned a QR code, ask the staff for help.</p><p><a href="/">Scan Hub home</a></p></main></body></html>`);
   };
   const maxBody = 4 * 1024 * 1024;
   // The studio compresses every photo to 180,000 characters or fewer before sending it (src/utils/images.js).

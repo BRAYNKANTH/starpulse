@@ -31,4 +31,4 @@ createServer((req, res) => api(req, res, () => {
   const demo = /^\/demo(\/|$)/.test(new URL(req.url, 'http://localhost').pathname);
   res.writeHead(status, { 'Content-Type': mime[extname(path)] || 'application/octet-stream', ...SECURITY_HEADERS, ...(demo ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}) });
   if (req.method === 'HEAD') res.end(); else createReadStream(path).on('error', () => res.destroy()).pipe(res);
-})).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`DQ.lk running on port ${process.env.PORT || 3000}`));
+})).listen(Number(process.env.PORT || 3000), process.env.HOST || '127.0.0.1', () => console.log(`Scan Hub running on port ${process.env.PORT || 3000}`));

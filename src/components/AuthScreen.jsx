@@ -9,11 +9,11 @@ const FEATURES = [
   { icon: BarChart3, title: 'Scan analytics', text: 'See which shops and posters get scanned.' },
 ];
 
-const Brand = ({ className = '' }) => <div className={`sp-brand ${className}`}><span className="sp-brand-mark"><QrCode size={16} /></span>DQ.lk</div>;
+const Brand = ({ className = '' }) => <div className={`sp-brand ${className}`}><span className="sp-brand-mark"><QrCode size={16} /></span>Scan Hub</div>;
 
 function AuthLayout({ children }) {
   return <main className="auth-layout">
-    <section className="auth-pitch" aria-label="About DQ.lk">
+    <section className="auth-pitch" aria-label="About Scan Hub">
       <Brand />
       <p className="auth-pitch-title">Your shop’s menu, QR codes and reviews in one studio.</p>
       <ul>{FEATURES.map(({ icon: Icon, title, text }) => <li key={title}><span className="auth-feature-icon"><Icon size={18} /></span><span><strong>{title}</strong>{text}</span></li>)}</ul>
@@ -57,7 +57,7 @@ export default function AuthScreen({ onAuthenticated }) {
       <h1>Forgot your password?</h1>
       {forgotSent
         ? <><p>If an account exists for that email, a reset link has been sent to it. The link works once only and expires in 1 hour.</p>
-          <p>If you do not receive it, check your spam folder, or contact your DQ.lk administrator — they can also reset your password directly.</p></>
+          <p>If you do not receive it, check your spam folder, or contact your Scan Hub administrator — they can also reset your password directly.</p></>
         : <><p>Enter the email you sign in with. We will send you a reset link.</p>
           <label className="form-label" htmlFor="forgot-email">Email</label>
           <input id="forgot-email" className="form-input" type="email" autoComplete="email" required autoFocus value={forgotEmail} onChange={event => setForgotEmail(event.target.value)} />
@@ -79,7 +79,7 @@ export default function AuthScreen({ onAuthenticated }) {
       {error && <p className="notice error" role="alert">{error}</p>}
       <button className="btn btn-primary btn-block" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       <button type="button" className="btn btn-ghost btn-block" onClick={() => setView('forgot')}>Forgot password?</button>
-      <p className="auth-footnote">Need an account? <a href="/contact">Contact your DQ.lk administrator</a>.</p>
+      <p className="auth-footnote">Need an account? <a href="/contact">Contact your Scan Hub administrator</a>.</p>
     </form>
   </AuthLayout>;
 }
