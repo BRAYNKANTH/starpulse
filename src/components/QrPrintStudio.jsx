@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Check, Copy, Download, ExternalLink, Globe, Printer, Radio, Smartphone, Star, Sparkles, Wifi } from 'lucide-react';
-import { contrastRatio, normalizePosterDesign, normalizeQrDesign, qrPayload, QR_PRESETS } from '../data/qrDesign';
+import { contrastRatio, isSignatureTheme, normalizePosterDesign, normalizeQrDesign, posterCover, POSTER_SIZES, qrPayload, QR_PRESETS } from '../data/qrDesign';
 import { exportPoster, standaloneClone } from '../utils/export';
+import { posterFontCss } from '../utils/posterFonts';
+import ImageUpload from './ImageUpload';
+import { PosterSheet, PosterThumb } from './PosterDesigns';
 
 // One page for the shop's QR code: where it goes, how it looks, and the printed stand or poster.
 // Everything here is saved with the shop, so a printed design is still there next time.
@@ -16,6 +19,13 @@ const DESTINATIONS = [
 ];
 const HEADLINES = { menu: 'Scan to view our menu', landing: 'Scan to explore our shop', review: 'Scan to share your feedback', google: 'Scan to review us on Google', url: 'Scan to visit us online' };
 const SUBTITLE = 'Our menu, opening hours and feedback in one place.';
+const SIGNATURE_DESIGNS = [
+  { id: 'archway', name: 'Archway', description: 'The code sits in a doorway, your name above it' },
+  { id: 'estate', name: 'Tea label', description: 'Engraved label with a brass frame' },
+  { id: 'marquee', name: 'Marquee', description: 'Your name, as big as it can go' },
+  { id: 'ticket', name: 'Ticket', description: 'A perforated paper ticket' },
+  { id: 'gallery', name: 'Gallery', description: 'Quiet white space and a colour edge' },
+];
 const THEMES = [
   { id: 'bright', css: 'google_deluxe', name: 'Bright', description: 'White card with a strip in your brand colour', swatch: 'google-swatch', mark: <span aria-hidden="true">Aa</span> },
   { id: 'dark_luxe', css: 'dark_luxe', name: 'Obsidian & gold', description: 'Dark card with gold accents', swatch: 'dark-swatch', mark: <Star size={12} fill="#F59E0B" color="#F59E0B" /> },
@@ -31,17 +41,17 @@ const OTHER_TYPES = [{ id: 'url', name: 'Website', icon: Globe }, { id: 'whatsap
 // The 4 x 6 in cards (table stand, review card) always keep their real size (384 x 576 px), so the PNG download and the print are exact.
 // In a narrow preview column they are shown scaled down inside a wrapper, instead of being squeezed.
 const CARD_WIDTH = 384, CARD_HEIGHT = 576;
-function useFit() {
+function useFit(width = CARD_WIDTH) {
   const [box, setBox] = useState(null);
   const [scale, setScale] = useState(1);
   useEffect(() => {
     if (!box) return undefined;
-    const measure = () => setScale(Math.min(1, box.clientWidth / CARD_WIDTH || 1));
+    const measure = () => setScale(Math.min(1, box.clientWidth / width || 1));
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(box);
     return () => observer.disconnect();
-  }, [box]);
+  }, [box, width]);
   return [setBox, scale];
 }
 
@@ -132,7 +142,9 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
   const [copied, setCopied] = useState(false);
   const [file, deliver] = useDownload();
   const art = useRef(null), posterRef = useRef(null);
-  const [fitRef, fit] = useFit();
+  const signature = isSignatureTheme(poster.theme) && poster.format !== 'review';
+  const sheetSize = POSTER_SIZES[poster.format] || POSTER_SIZES.tabletop;
+  const [fitRef, fit] = useFit(signature ? sheetSize.width : CARD_WIDTH);
 
   const change = patch => setBusinessProfile({ ...profile, ...patch });
   const style = patch => change({ qrDesign: { ...design, ...patch } });
@@ -155,7 +167,10 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
   const copyLink = async () => { try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setCopied(false); } };
   const run = async action => { setBusy(true); setError(''); try { await action(); } catch (e) { setError(e.message); } finally { setBusy(false); } };
   const downloadCode = format => run(async () => deliver(format === 'png' ? await exportPoster(art.current) : await svgFile(art.current, design), `${profile.id}-qr.${format}`));
-  const downloadPoster = () => run(async () => deliver(await exportPoster(posterRef.current), `${profile.id}-${poster.format}.png`));
+  // Signature designs are drawn at about 300 dpi, with their fonts embedded in the image.
+  const downloadPoster = () => run(async () => deliver(await exportPoster(posterRef.current, signature ? { css: await posterFontCss(poster.theme), scale: 3 } : undefined), `${profile.id}-${poster.format}.png`));
+  const designProps = { profile, poster, design, link, headline, subtitle };
+  const posterHasPhoto = !!posterCover(poster, profile.coverImage);
 
   const face = (compact = false) => <>
     {poster.theme === 'bright' && <div className="google-top-color-strip" aria-hidden="true"><span style={{ background: accent }} /></div>}
@@ -230,13 +245,37 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
 
         <section className="card">
           <div className="card-head"><div><h2>Printed stand or poster</h2><p>Pick a look and size, then download or print.</p></div></div>
-          <div className="poster-theme-selector-grid" role="group" aria-label="Poster style">
-            {THEMES.map(t => <button key={t.id} type="button" aria-pressed={poster.theme === t.id} className={`poster-theme-btn ${poster.theme === t.id ? 'active' : ''}`} onClick={() => setPoster({ theme: t.id })}>
-              <span className={`theme-preview-swatch ${t.swatch}`} aria-hidden="true">{t.mark}</span>
-              <span className="theme-btn-info"><span className="theme-name">{t.name}</span><span className="theme-desc">{t.description}</span></span>
-              {poster.theme === t.id && <Check size={16} className="theme-check" aria-hidden="true" />}
-            </button>)}
-          </div>
+          {reviewCard ? <p className="field-help">The Google review card has its own look in your brand colour.</p> : <>
+            <div className="ph-picker" role="group" aria-label="Poster design">
+              {SIGNATURE_DESIGNS.map(d => <button key={d.id} type="button" className="ph-pick" aria-pressed={poster.theme === d.id} onClick={() => setPoster({ theme: d.id })}>
+                <PosterThumb theme={d.id} {...designProps} />
+                <span className="ph-pick-title">{d.name}{poster.theme === d.id && <Check size={15} aria-hidden="true" />}</span>
+                <span className="ph-pick-desc">{d.description}</span>
+              </button>)}
+            </div>
+            <details className="ph-classics" open={!signature || undefined}>
+              <summary>Classic designs</summary>
+              <div className="poster-theme-selector-grid" role="group" aria-label="Classic designs">
+                {THEMES.map(t => <button key={t.id} type="button" aria-pressed={poster.theme === t.id} className={`poster-theme-btn ${poster.theme === t.id ? 'active' : ''}`} onClick={() => setPoster({ theme: t.id })}>
+                  <span className={`theme-preview-swatch ${t.swatch}`} aria-hidden="true">{t.mark}</span>
+                  <span className="theme-btn-info"><span className="theme-name">{t.name}</span><span className="theme-desc">{t.description}</span></span>
+                  {poster.theme === t.id && <Check size={16} className="theme-check" aria-hidden="true" />}
+                </button>)}
+              </div>
+            </details>
+            {signature ? <fieldset className="ph-cover-field">
+              <legend>Cover photo</legend>
+              <div className="ph-cover-options">
+                <label className={profile.coverImage ? '' : 'is-disabled'}><input type="radio" name="poster-cover" checked={poster.cover === 'shop' && !!profile.coverImage} disabled={!profile.coverImage} onChange={() => setPoster({ cover: 'shop' })} />My shop’s cover photo</label>
+                <label><input type="radio" name="poster-cover" checked={poster.cover === 'custom'} onChange={() => setPoster({ cover: 'custom' })} />Another photo</label>
+                <label><input type="radio" name="poster-cover" checked={poster.cover === 'none' || (poster.cover === 'shop' && !profile.coverImage)} onChange={() => setPoster({ cover: 'none' })} />No photo</label>
+              </div>
+              {!profile.coverImage && poster.cover !== 'custom' && <p className="field-help">Your shop has no cover photo yet. Add one in Business profile, or choose another photo for this poster.</p>}
+              {poster.cover === 'custom' && <ImageUpload id="poster-cover-upload" shopId={profile.id} label="Poster photo" value={poster.coverImage} maxWidth={1400} onChange={value => setPoster({ coverImage: value })} />}
+              {poster.format === 'sticker' && <p className="field-help">Stickers leave the photo out, so the code stays big enough to scan.</p>}
+              {posterHasPhoto && <div className="form-group"><label className="form-label" htmlFor="poster-cover-focus">Keep in view</label><select id="poster-cover-focus" className="form-input" value={poster.coverFocus} onChange={e => setPoster({ coverFocus: e.target.value })}><option value="center">Middle of the photo</option><option value="top">Top of the photo</option><option value="bottom">Bottom of the photo</option></select></div>}
+            </fieldset> : <p className="field-help">Cover photos are on the designs at the top.</p>}
+          </>}
           <div className="form-grid print-options">
             <div className="form-group"><label className="form-label" htmlFor="poster-format">Size</label><select id="poster-format" className="form-input" value={poster.format} onChange={e => setPoster({ format: e.target.value })}>{FORMATS.map(([v, text]) => <option key={v} value={v}>{text}</option>)}</select></div>
             {profile.logo && <div className="form-group"><label className="form-label" htmlFor="poster-logo-shape">Logo shape</label><select id="poster-logo-shape" className="form-input" value={poster.logoShape} onChange={e => setPoster({ logoShape: e.target.value })}><option value="squircle">Rounded square</option><option value="circle">Circle</option><option value="banner">Wide banner</option></select></div>}
@@ -254,20 +293,26 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
           <div className="segmented" role="group" aria-label="Preview"><button type="button" aria-pressed={view === 'poster'} onClick={() => setView('poster')}>{FORMATS.find(([v]) => v === poster.format)[1].split(' ·')[0]}</button><button type="button" aria-pressed={view === 'code'} onClick={() => setView('code')}>QR code only</button></div>
         </div>
         {view === 'code' ? <div className="qp-code-preview"><QrArt artRef={art} value={link} design={design} logo={profile.logo} /></div>
-          : poster.format === 'tent' ? <div ref={posterRef} className="tent-sheet-wrapper">
+          : signature ? <div ref={fitRef} className="ph-stage">
+            <div className="ph-stage-frame" style={{ width: sheetSize.width * fit, height: sheetSize.height * fit }}>
+              <div className="ph-stage-scale" style={{ transform: `scale(${fit})` }}><PosterSheet sheetRef={posterRef} format={poster.format} theme={poster.theme} {...designProps} /></div>
+            </div>
+          </div>
+          : poster.format === 'tent' ? <div ref={posterRef} data-print-sheet className="tent-sheet-wrapper">
             <div className={`poster-preview-card poster-theme-${theme.css} tent-panel tent-panel-upside-down`}>{face(true)}</div>
             <div className="tent-fold-line no-print"><span>✂ Fold here. The top half prints upside down so both sides read the right way up.</span></div>
             <div className={`poster-preview-card poster-theme-${theme.css} tent-panel`}>{face(true)}</div>
           </div>
           : reviewCard || poster.format === 'tabletop' ? <div ref={fitRef} className="poster-fit" style={{ height: CARD_HEIGHT * fit }}>
             <div className="poster-fit-inner" style={{ transform: `scale(${fit})` }}>
-              {reviewCard ? <div ref={posterRef} className="poster-preview-card poster-format-tabletop premium-card pc-review" style={{ '--pc-brand': accent }}>{reviewFace}</div>
-                : <div ref={posterRef} className={`poster-preview-card poster-theme-${theme.css} poster-format-tabletop`}>{face()}</div>}
+              {reviewCard ? <div ref={posterRef} data-print-sheet className="poster-preview-card poster-format-tabletop premium-card pc-review" style={{ '--pc-brand': accent }}>{reviewFace}</div>
+                : <div ref={posterRef} data-print-sheet className={`poster-preview-card poster-theme-${theme.css} poster-format-tabletop`}>{face()}</div>}
             </div>
           </div>
-          : <div ref={posterRef} className={`poster-preview-card poster-theme-${theme.css} poster-format-${poster.format}`}>{face()}</div>}
+          : <div ref={posterRef} data-print-sheet className={`poster-preview-card poster-theme-${theme.css} poster-format-${poster.format}`}>{face()}</div>}
 
         <div className="qp-actions no-print">
+          {signature && view === 'poster' && poster.format === 'tent' && <p className="field-help ph-preview-note">Print on A5, then fold at the marks. The top half is upside down so both sides read the right way up.</p>}
           {blocked ? <div className="notice warning qp-blocked"><span>{blocked === 'publish' ? 'Publish your shop first. Customers can only open the code once it’s live.' : 'Save your changes first, so the printed code matches your live shop.'}</span>{blocked === 'publish' && <button type="button" className="btn btn-primary btn-sm" onClick={onPublish}>Publish</button>}</div>
             : view === 'poster' ? <div className="page-actions"><button type="button" className="btn btn-primary" disabled={busy || !!urlProblem} onClick={downloadPoster}><Download size={16} aria-hidden="true" />{busy ? 'Preparing…' : 'Download poster'}</button><button type="button" className="btn btn-secondary" disabled={busy || !!urlProblem} onClick={() => window.print()}><Printer size={16} aria-hidden="true" />Print</button></div>
               : <div className="page-actions"><button type="button" className="btn btn-primary" disabled={busy || !!contrastProblem || !!urlProblem} onClick={() => downloadCode('png')}><Download size={16} aria-hidden="true" />{busy ? 'Preparing…' : 'Download PNG'}</button><button type="button" className="btn btn-secondary" disabled={busy || !!contrastProblem || !!urlProblem} onClick={() => downloadCode('svg')}>Download SVG</button></div>}

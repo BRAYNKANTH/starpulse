@@ -6,7 +6,7 @@ import { safeRedirect } from './security.mjs';
 
 // Photos live in their own table and a shop stores only their address, so a shop's photos never count against the request size limit.
 export const IMAGE_PATH = /^\/api\/images\/([a-f0-9-]{36})$/;
-const imageIdsIn = profile => [profile.logo, profile.coverImage, ...(profile.menu || []).map(item => item.image)].map(src => src?.match(IMAGE_PATH)?.[1]).filter(Boolean);
+const imageIdsIn = profile => [profile.logo, profile.coverImage, profile.posterDesign?.coverImage, ...(profile.menu || []).map(item => item.image)].map(src => src?.match(IMAGE_PATH)?.[1]).filter(Boolean);
 
 export function validateProfile(input, id) {
   if (!input || typeof input !== 'object' || Array.isArray(input) || !/^[a-z0-9-]{1,80}$/.test(id)) throw new Error('Invalid business profile.');

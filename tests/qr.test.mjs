@@ -5,7 +5,69 @@ import { createStore, validateProfile } from '../server/store.mjs';
 import { createApi } from '../server/api.mjs';
 import { hashPassword } from '../server/auth.mjs';
 import { localDatabase } from '../server/db.mjs';
-import { qrPayload, normalizeQrDesign, contrastRatio } from '../src/data/qrDesign.js';
+import { qrPayload, normalizeQrDesign, normalizePosterDesign, contrastRatio, posterCover, posterPalette, posterQrColors, POSTER_SIZES, SIGNATURE_THEMES } from '../src/data/qrDesign.js';
+
+// A spread of brand colours, including the awkward ones: mid grey, pure yellow, white and black.
+const ACCENTS = ['#F59E0B', '#6A9A55', '#808080', '#767676', '#FFFF00', '#FFFFFF', '#000000', '#00FFFF', '#FF00FF', '#E11D48', '#385E43', '#123456', 'not a colour', undefined];
+
+test('signature designs keep readable text and a dark-on-light QR code for any brand colour', () => {
+  for (const theme of SIGNATURE_THEMES) for (const accent of ACCENTS) {
+    const palette = posterPalette(theme, accent);
+    const label = `${theme} on ${accent}`;
+    const light = hex => contrastRatio(hex, '#000000') > contrastRatio(hex, '#FFFFFF');
+    assert.ok(contrastRatio(palette.onField, palette.field) >= 4.5, `${label}: text on the field`);
+    assert.ok(contrastRatio(palette.ink, palette.plate) >= 7, `${label}: words and code on the plate`);
+    for (const foreground of ['#172033', '#FFFFFF', '#FFEE00', '#254C3C', 'red', undefined]) {
+      const qr = posterQrColors(palette, { foreground });
+      assert.ok(contrastRatio(qr.foreground, qr.background) >= 7, `${label}: code ${foreground}`);
+      assert.ok(light(qr.background) && !light(qr.foreground), `${label}: code ${foreground} is not inverted`);
+    }
+  }
+  assert.equal(posterQrColors(posterPalette('archway', '#6A9A55'), { foreground: '#254C3C' }).foreground, '#254C3C', 'a strong code colour chosen by the owner is kept');
+});
+
+test('every printed format keeps the code at least 1.9 inches wide, inside the sheet', () => {
+  for (const [format, size] of Object.entries(POSTER_SIZES)) {
+    assert.ok(size.qr >= 1.9 * 96, `${format} code size`);
+    assert.ok(size.qr < size.width && size.qr < size.height, `${format} fits`);
+  }
+});
+
+test('poster cover photos default to the shop cover, can be changed or turned off, and leave classic designs alone', async () => {
+  const image = '/api/images/0f0e0d0c-0b0a-4908-8706-050403020100';
+  const shop = '/api/images/aaaaaaaa-0b0a-4908-8706-050403020100';
+  const design = patch => normalizePosterDesign({ theme: 'archway', ...patch });
+  assert.equal(posterCover(design(), shop), shop);
+  assert.equal(posterCover(design(), ''), '');
+  assert.equal(posterCover(design({ cover: 'none' }), shop), '');
+  assert.equal(posterCover(design({ cover: 'custom', coverImage: image }), shop), image);
+  assert.equal(posterCover(design({ cover: 'custom' }), shop), '', 'no surprise photo before one is uploaded');
+  assert.equal(posterCover(design({ format: 'sticker' }), shop), '', 'stickers keep the code big');
+  assert.equal(posterCover(normalizePosterDesign({ theme: 'bright' }), shop), '', 'a saved classic design looks the same as before');
+  assert.equal(posterCover(normalizePosterDesign({ theme: 'bright', headline: 'Saved long ago' }), shop), '');
+
+  for (const bad of ['javascript:alert(1)', 'data:text/html;base64,AAAA', '/etc/passwd', 42, { a: 1 }, `data:image/png;base64,${'A'.repeat(1500001)}`]) assert.equal(normalizePosterDesign({ coverImage: bad }).coverImage, '');
+  assert.equal(normalizePosterDesign({ cover: 'surprise' }).cover, 'shop');
+  assert.equal(normalizePosterDesign({ coverFocus: 'left' }).coverFocus, 'center');
+  const saved = validateProfile({ name: 'Cafe', posterDesign: { theme: 'ticket', cover: 'custom', coverImage: image, coverFocus: 'top' } }, 'cafe').posterDesign;
+  assert.deepEqual([saved.theme, saved.cover, saved.coverImage, saved.coverFocus], ['ticket', 'custom', image, 'top']);
+});
+
+test('saving a shop keeps the photo its poster uses, and clears it once replaced', async () => {
+  const db = await localDatabase();
+  const store = await createStore(db);
+  try {
+    const profile = { name: 'Cafe', posterDesign: { theme: 'gallery', cover: 'custom' } };
+    await store.save(validateProfile(profile, 'cafe'), null);
+    const id = await store.addImage('cafe', 'image/png', 'AAAA', 10);
+    await db.query("UPDATE images SET created_at = now() - interval '2 days'");
+    const withPhoto = { ...profile, posterDesign: { ...profile.posterDesign, coverImage: `/api/images/${id}` } };
+    await store.save(validateProfile(withPhoto, 'cafe'), null);
+    assert.ok(await store.image(id), 'kept while the poster uses it');
+    await store.save(validateProfile(profile, 'cafe'), null);
+    assert.equal(await store.image(id), undefined, 'cleared after it is removed');
+  } finally { await store.close(); }
+});
 
 test('static payloads escape Wi-Fi delimiters, validate URLs, and preserve WhatsApp messages', () => {
   assert.equal(qrPayload('wifi', { ssid: 'Cafe;Guest', password: 'a:b\\c', security: 'WPA' }), 'WIFI:T:WPA;S:Cafe\\;Guest;P:a\\:b\\\\c;H:false;;');

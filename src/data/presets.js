@@ -69,7 +69,7 @@ export const INITIAL_PRESETS = [
 ];
 
 export function createBusiness() {
-  return { id: newShopId(), name: '', tagline: '', category: '', address: '', phone: '', email: '', hours: '', logo: '', coverImage: '', googleReviewUrl: '', accentColor: '#F59E0B', currency: 'LKR', menu: [], menuDesign: normalizeMenuDesign(), qrDesign: normalizeQrDesign(), qrDestination: 'menu', qrUrl: '', posterDesign: normalizePosterDesign(), quickTags: [], published: false };
+  return { id: newShopId(), name: '', tagline: '', category: '', address: '', phone: '', email: '', hours: '', logo: '', coverImage: '', googleReviewUrl: '', accentColor: '#F59E0B', currency: 'LKR', menu: [], menuDesign: normalizeMenuDesign(), qrDesign: normalizeQrDesign(), qrDestination: 'menu', qrUrl: '', posterDesign: normalizePosterDesign({ theme: 'archway' }), quickTags: [], published: false };
 }
 export function getStoredBusinessProfile() {
   try {
