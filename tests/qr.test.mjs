@@ -54,6 +54,15 @@ test('poster cover photos default to the shop cover, can be changed or turned of
   assert.deepEqual([saved.theme, saved.cover, saved.coverImage, saved.coverFocus], ['ticket', 'custom', image, 'top']);
 });
 
+test('a poster can have its own colour without changing the shop brand colour', () => {
+  assert.equal(normalizePosterDesign().accent, '', 'empty follows the brand colour');
+  assert.equal(normalizePosterDesign({ accent: '#7A1F2B' }).accent, '#7A1F2B');
+  for (const bad of ['red', '#12', 'url(x)', 7, null]) assert.equal(normalizePosterDesign({ accent: bad }).accent, '');
+  const saved = validateProfile({ name: 'Cafe', accentColor: '#519955', posterDesign: { theme: 'estate', accent: '#16324F' } }, 'cafe');
+  assert.equal(saved.posterDesign.accent, '#16324F');
+  assert.equal(saved.accentColor, '#519955');
+});
+
 test('saving a shop keeps the photo its poster uses, and clears it once replaced', async () => {
   const db = await localDatabase();
   const store = await createStore(db);

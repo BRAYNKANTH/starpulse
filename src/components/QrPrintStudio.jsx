@@ -26,6 +26,7 @@ const SIGNATURE_DESIGNS = [
   { id: 'ticket', name: 'Ticket', description: 'A perforated paper ticket' },
   { id: 'gallery', name: 'Gallery', description: 'Quiet white space and a colour edge' },
 ];
+const POSTER_COLOURS = [['#7A1F2B', 'Burgundy'], ['#16324F', 'Navy'], ['#0F5C5C', 'Teal'], ['#4A2C6F', 'Plum'], ['#8A4B14', 'Caramel'], ['#26282B', 'Charcoal']];
 const THEMES = [
   { id: 'bright', css: 'google_deluxe', name: 'Bright', description: 'White card with a strip in your brand colour', swatch: 'google-swatch', mark: <span aria-hidden="true">Aa</span> },
   { id: 'dark_luxe', css: 'dark_luxe', name: 'Obsidian & gold', description: 'Dark card with gold accents', swatch: 'dark-swatch', mark: <Star size={12} fill="#F59E0B" color="#F59E0B" /> },
@@ -162,7 +163,9 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
   const subtitle = poster.subtitle || SUBTITLE;
   const theme = THEMES.find(t => t.id === poster.theme) || THEMES[0];
   const posterBackground = poster.theme === 'dark_luxe' ? '#0F172A' : '#FFFFFF';
-  const accent = profile.accentColor || '#385e43';
+  const brandColour = profile.accentColor || '#385e43';
+  const accent = poster.accent || brandColour;
+  const colourChoice = signature || poster.theme === 'bright' || reviewCard;
 
   const copyLink = async () => { try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setCopied(false); } };
   const run = async action => { setBusy(true); setError(''); try { await action(); } catch (e) { setError(e.message); } finally { setBusy(false); } };
@@ -276,6 +279,15 @@ export default function QrPrintStudio({ businessProfile: profile, setBusinessPro
               {posterHasPhoto && <div className="form-group"><label className="form-label" htmlFor="poster-cover-focus">How the photo fits</label><select id="poster-cover-focus" className="form-input" value={poster.coverFocus} onChange={e => setPoster({ coverFocus: e.target.value })}><option value="whole">Show the whole photo</option><option value="center">Fill the space, keep the middle</option><option value="top">Fill the space, keep the top</option><option value="bottom">Fill the space, keep the bottom</option></select></div>}
             </fieldset> : <p className="field-help">Cover photos are on the designs at the top.</p>}
           </>}
+          {colourChoice && <fieldset className="ph-cover-field">
+            <legend>Poster colour</legend>
+            <div className="ph-colours">
+              <button type="button" className="ph-colour-brand" aria-pressed={!poster.accent} onClick={() => setPoster({ accent: '' })}><span style={{ background: brandColour }} aria-hidden="true" />My brand colour</button>
+              {POSTER_COLOURS.map(([value, name]) => <button key={value} type="button" className="ph-colour" title={name} aria-label={name} aria-pressed={poster.accent.toLowerCase() === value.toLowerCase()} style={{ background: value }} onClick={() => setPoster({ accent: value })} />)}
+              <label className="ph-colour-own"><input type="color" value={accent} onChange={e => setPoster({ accent: e.target.value })} />Choose another</label>
+            </div>
+            <p className="field-help">Only changes this poster. Your menu and shop page keep your brand colour.</p>
+          </fieldset>}
           <div className="form-grid print-options">
             <div className="form-group"><label className="form-label" htmlFor="poster-format">Size</label><select id="poster-format" className="form-input" value={poster.format} onChange={e => setPoster({ format: e.target.value })}>{FORMATS.map(([v, text]) => <option key={v} value={v}>{text}</option>)}</select></div>
             {profile.logo && <div className="form-group"><label className="form-label" htmlFor="poster-logo-shape">Logo shape</label><select id="poster-logo-shape" className="form-input" value={poster.logoShape} onChange={e => setPoster({ logoShape: e.target.value })}><option value="squircle">Rounded square</option><option value="circle">Circle</option><option value="banner">Wide banner</option></select></div>}
